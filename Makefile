@@ -52,7 +52,10 @@ CCADMIN=CCadmin
 
 # build
 build: .build-post
-
+	gcc auctioneer.c -o auctioneer
+	gcc client.c -o client
+	gcc main.c -o main
+	
 .build-pre:
 # Add your pre 'build' code here...
 
