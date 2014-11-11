@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   main.c
  * Author: federica
  *
@@ -16,25 +16,45 @@ int clientGenerator(){
  * Il main funge da generatore di clienti e avvia il sistema.
  */
 int main(int argc, char** argv) {
+    printf("[main] Started main.\n");
     // creazione clienti
     // registrazione clienti al banditore (pid, risorsa interessata)
-    
+
     int auctioneer_pid = fork();
     if ( auctioneer_pid == -1 ){
-        printf("Error: auctioneer not created.");
+        printf("[main] Error: auctioneer not created.");
     }
     //Non è stato creato il processo figlio
-    if ( auctioneer_pid ) {
-    // equivale a "if (pid_child != 0)"
-    /*codice del padre*/
-        
-    } else {
-    /*
-    codice del figlio*/
-        execve("./auctioneer", char *const argv[], char *const envp[]);
-    }
-    
-    
-    return (EXIT_SUCCESS);
-}
+    if ( auctioneer_pid == 0 ) {
+        /*  Child code */
+        char *envp[] = { NULL };
+        char *argv[] = { NULL };
+        execve("./auctioneer", argv, envp);
 
+    } else {
+        /* Parent code */
+        int i;
+        int client_pid;
+        for (i = 0; i < 5; i++){
+            client_pid = fork();
+            if ( client_pid == -1 ){
+                printf("[main] Error: auctioneer not created.");
+            }
+            if ( client_pid == 0 ) {
+                /*  Child code */
+                char *envp[] = { NULL };
+                char *argv[] = { NULL };
+                execve("./client", argv, envp);
+
+            } else {
+                /* Parent code */
+            }
+        }
+
+        sleep(1); 
+        return (EXIT_SUCCESS);
+    }
+
+
+    return (-1);
+}

@@ -3,7 +3,7 @@
 // un tao per risorsa
 // area di memoria condivisa
 // max 5 offerte per tao
-typedef struct{ 
+typedef struct{
     // pid client
     // quantita richiesta
     // offerta per unità
@@ -23,5 +23,6 @@ typedef client* clientList;
 // mai in sleep
 
 int main(){
+    printf("[auctioneer] Started auctioneer.\n");
     return 0;
 }
