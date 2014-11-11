@@ -22,14 +22,17 @@ int main(int argc, char** argv) {
 
     int auctioneer_pid = fork();
     if ( auctioneer_pid == -1 ){
-        printf("[main] Error: auctioneer not created.");
+        printf("[main] Error: auctioneer not created.\n");
     }
     //Non è stato creato il processo figlio
     if ( auctioneer_pid == 0 ) {
         /*  Child code */
         char *envp[] = { NULL };
         char *argv[] = { NULL };
-        execve("./auctioneer", argv, envp);
+        int auct_execve_err = execve("./auctioneer", argv, envp);
+        if (auct_execve_err == -1)
+            /* Cannot find the auctioneer binary in the working directory */
+            fprintf(stderr, "[auctioneer] Error: cannot start auctioneer process (Try running main from ./bin).\n");
 
     } else {
         /* Parent code */
@@ -44,14 +47,17 @@ int main(int argc, char** argv) {
                 /*  Child code */
                 char *envp[] = { NULL };
                 char *argv[] = { NULL };
-                execve("./client", argv, envp);
+                int auct_execve_err = execve("./client", argv, envp);
+                if (auct_execve_err == -1)
+                    /* Cannot find the auctioneer binary in the working directory */
+                    fprintf(stderr, "[client] Error: cannot start client process (Try running main from ./bin).\n");
 
             } else {
                 /* Parent code */
             }
         }
 
-        sleep(1); 
+        sleep(1);
         return (EXIT_SUCCESS);
     }
 

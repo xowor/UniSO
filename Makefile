@@ -1,7 +1,7 @@
 #
-#  There exist several targets which are by default empty and which can be 
-#  used for execution of your targets. These targets are usually executed 
-#  before and after some main targets. They are: 
+#  There exist several targets which are by default empty and which can be
+#  used for execution of your targets. These targets are usually executed
+#  before and after some main targets. They are:
 #
 #     .build-pre:              called before 'build' target
 #     .build-post:             called after 'build' target
@@ -17,13 +17,13 @@
 #  Targets beginning with '.' are not intended to be called on their own.
 #
 #  Main targets can be executed directly, and they are:
-#  
+#
 #     build                    build a specific configuration
 #     clean                    remove built files from a configuration
 #     clobber                  remove all built files
 #     all                      build all configurations
 #     help                     print help mesage
-#  
+#
 #  Targets .build-impl, .clean-impl, .clobber-impl, .all-impl, and
 #  .help-impl are implemented in nbproject/makefile-impl.mk.
 #
@@ -44,18 +44,24 @@
 # NOCDDL
 
 
-# Environment 
+# Environment
 MKDIR=mkdir
 CP=cp
 CCADMIN=CCadmin
 
 
 # build
-build: .build-post
-	gcc auctioneer.c -o auctioneer
-	gcc client.c -o client
-	gcc main.c -o main
-	
+build: main auctioneer client
+
+main: src/main.c
+	gcc src/main.c -o bin/main
+
+auctioneer: src/auctioneer.c
+	gcc src/auctioneer.c -o bin/auctioneer
+
+client: src/client.c
+	gcc src/client.c -o bin/client
+
 .build-pre:
 # Add your pre 'build' code here...
 
@@ -114,18 +120,13 @@ test: .test-post
 
 
 # help
-help: .help-post
-
-.help-pre:
-# Add your pre 'help' code here...
-
-.help-post: .help-impl
-# Add your post 'help' code here...
+help:
+	echo "run \"make\" to build, and then \"./run.sh\" to run. "
 
 
 
 # include project implementation makefile
-include nbproject/Makefile-impl.mk
+# include nbproject/Makefile-impl.mk
 
 # include project make variables
-include nbproject/Makefile-variables.mk
+# include nbproject/Makefile-variables.mk
