@@ -24,5 +24,25 @@ typedef client* clientList;
 
 int main(){
     printf("[auctioneer] Started auctioneer.\n");
+    /*
+    typedef client* clientList;
+    // legge da file le risorse e crea i tao per ciascuno
+    FILE* resources = fopen("resource.txt", "r");
+    if (resources != NULL){
+        int countAuction = 0;
+        // LEGGERE DA FILE I VARI TOKEN PER RIGA
+        while(1){        //finchè ci sono risorse da leggere
+            if(countAuction < MAXTAO){
+                //crea il tao corrispondente
+                countAuction += 1;
+            }else{
+                // attesa che un'altra asta termini per farne partire un'altra
+            }        
+        }
+    }else{
+        printf("Error: file isn't open.");
+    }
+    fclose(resources);
+    */
     return 0;
 }
