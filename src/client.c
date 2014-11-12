@@ -1,9 +1,9 @@
 #include <stdio.h>
 
-typedef struct{
+typedef struct _client {
     //pid
 
-}client;
+} client;
 
 int main(){
     printf("[client] Started client.\n");
