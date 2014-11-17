@@ -97,9 +97,6 @@ int main(int argc, char** argv){
     /* read each resource's token from the struct */
     for(; j < resourcesNumber; j++){   
         /* creates relative tao */    
-        // read each resource's token
-        
-
         if(countAuction < MAXTAO){
             // ...
             countAuction += 1;
@@ -109,5 +106,5 @@ int main(int argc, char** argv){
     }
     
     exit(EXIT_SUCCESS);
-    //return 0;
+
 }

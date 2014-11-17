@@ -25,8 +25,7 @@ int create_auctioneer(int msqid){
     if ( auctioneer_pid == -1 ){
         printf("[main] Error: auctioneer not created.\n");
         fprintf(stderr, "\t%s\n", strerror(errno));
-        //return -1;
-        exit(EXIT_FAILURE);                                                         // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
+        exit(EXIT_FAILURE);                                                         
     }
     if ( auctioneer_pid == 0 ) {
         /*  Child code */
@@ -42,13 +41,11 @@ int create_auctioneer(int msqid){
         }
     } else {
         /* Parent code */
-        //return 0;   /* Success */                                                 /* In questo punto, la funzione exit porta a visualizzare nel terminale il path del progetto -  lasciare così che il risultato è come il tuo!!*/
-        return EXIT_SUCCESS;                                                        // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
+        return EXIT_SUCCESS;        /* Success */                                               
     }
 
-    //return -1;
     perror("fork");
-    exit(EXIT_FAILURE);                                                             // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
+    exit(EXIT_FAILURE);                                                           
 }
 
 /**
@@ -64,8 +61,7 @@ int create_client(int msqid){
     if ( client_pid == -1 ){
         printf("[main] Error: client not created.");
         fprintf(stderr, "\t%s\n", strerror(errno));
-        //return -1;
-        exit(EXIT_FAILURE);                                                         // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
+        exit(EXIT_FAILURE);                                                        
     }
     if ( client_pid == 0 ) {
         /*  Child code */
@@ -81,14 +77,11 @@ int create_client(int msqid){
         }
     } else {
         /* Parent code */
-        //return 0;   /* Success */
-                                                                                    /* In questo punto, la funzione exit porta a visualizzare nel terminale il path del progetto -  lasciare così che il risultato è come il tuo!!*/
-        return EXIT_SUCCESS;                                                        // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
+        return EXIT_SUCCESS;                                                        
     }
-
-    //return -1;
+ 
     perror("fork");
-    exit(EXIT_FAILURE);                                                             // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
+    exit(EXIT_FAILURE);                                                             
 }
 
 
@@ -118,13 +111,11 @@ int main(int argc, char** argv) {
             int clnt_exit = create_client(msqid);
             /* If the client creation fails, will not try to create more clients */     /* Perchè non prova a crearne altri?? */
             if (clnt_exit != 0)
-                exit(EXIT_FAILURE);                                                     // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
-                //return -1;
+                exit(EXIT_FAILURE);                                                     
         }
 
         sleep(1);
         exit(EXIT_SUCCESS);
     }
     exit(EXIT_FAILURE);
-    //return -1;                                                                        // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
 }
