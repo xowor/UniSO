@@ -34,43 +34,42 @@ int main(){
     
     /* read from file the resources and creates connected struct and tao */
     FILE* resources;
-    resources = fopen("../resource.txt", "r");
     resourcesList listaR = NULL;
     char buffer[50];
-    char* tmp;
+    //char name[10];
     char* name;
-    int a, c, i = 0;
-    char* line;
-    // lettura da file http://forum.ubuntu-it.org/viewtopic.php?t=313100
+    char* tmp;
+    char* token;
+    int a = 0, c = 0, i = 0;
+    resources = fopen("../resource.txt", "r");
     if( resources != NULL ){ 
-        while(!feof(resources)){
-            line = fgets(buffer, 50, resources);
-            // legge la linea, finchè ce n'è
-            if( line != NULL ){
-                tmp = strtok(line, ";");
-                // legge i token
-                if( tmp != NULL ){
-                    switch(i%3){
-                        case 0:
-                            name = tmp;
-                            break;
-                        case 1:
-                            a = *tmp;
-                            //printf("a: %d", a);
-                            break;
-                        case 2:
-                            c = *tmp;
-                            //printf("c: %d", c);
-                            break;
-                    }
-                    //listaR = node_creation(name, a, c, NULL);
-                    printf("i=%d:\t%s\t%d\t%d\n", i, name, a, c);
-                    tmp = strtok(NULL, ";");
-                    i++;
+        /* read each line from file */
+        while( fgets(buffer, 50, resources) != NULL ){
+            /* read each token in the line */
+            token = strtok(buffer, ";");
+            i = 0;
+            while( token ){
+                switch(i%3){
+                    case 0:
+                        name = token;
+                        strcpy(name, token);
+                        break;
+                    case 1:
+                        tmp = token;
+                        a = atoi(tmp);
+                        break;
+                    case 2:
+                        tmp = token;
+                        c = atoi(tmp);
+                        break;
                 }
-            }else{
-                fprintf(stderr, "[auctioneer] Error: fgets. %s\n", strerror(errno));
+                i++;
+                token = strtok(NULL, ";");
+                //printf("#######  %s %d %d ######\n\n", name, a, c);
             }
+            printf("#######  %s %d %d ######\n\n", name, a, c);
+            fflush(stdout);
+            //listaR = node_creation(name, a, c, NULL);
         }
     }else{
         fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));

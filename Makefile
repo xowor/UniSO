@@ -52,7 +52,7 @@ CCADMIN=CCadmin
 
 # build
 build: resource main auctioneer client
-
+	
 auctioneer: src/auctioneer.c 
 	gcc src/auctioneer.c -o bin/auctioneer
 
