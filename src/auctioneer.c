@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include "resource.h"
+#include "tao.h"
 
 #define MAXTAO 3        /* At the same time, there are at the height 3 tao */
 #define N 20
@@ -10,14 +12,6 @@
 extern int errno;       /* Externally declared (by kernel) */
 
 // mai in sleep
-// un tao per risorsa
-// area di memoria condivisa
-// max 5 offerte per tao
-typedef struct{
-    int client_pid;
-    int availability;
-    int unitOffer;
-}tao;
 
 /* registerd clients */
 typedef struct client* clientList;
@@ -98,6 +92,7 @@ int main(int argc, char** argv){
     for(; j < resourcesNumber; j++){   
         /* creates relative tao */    
         if(countAuction < MAXTAO){
+            // NB timer 3 secondi prima che parta l'asta
             // ...
             countAuction += 1;
         }else{
@@ -105,6 +100,7 @@ int main(int argc, char** argv){
         }
     }
     
-    exit(EXIT_SUCCESS);
+    /* because auctioneer is main's son */
+    _exit(EXIT_SUCCESS);
 
 }

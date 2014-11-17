@@ -19,7 +19,7 @@ typedef struct _resource {
  * @param a Resource's availability
  * @param c Resource's cost
  * @param nextNode Next node of this resource 
- * @return 
+ * @return node of resourcesList
  */
 resourcesList node_creation(char name[N], int a, int c, resourcesList* nextNode){
     resourcesList rl = (resourcesList) malloc(sizeof(resource));
