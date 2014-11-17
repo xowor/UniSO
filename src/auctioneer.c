@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 // un tao per risorsa
 // area di memoria condivisa
@@ -20,10 +21,19 @@ typedef struct _node{
 typedef client* clientList;
 
 
+int msqid;
+
 // mai in sleep
 
-int main(){
+int main(int argc, char** argv){
     printf("[auctioneer] Started auctioneer.\n");
+
+    if (argc >= 2 && strcmp(argv[1], "-m") == 0){
+        msqid = atoi(argv[2]);
+    } else {
+        fprintf(stderr, "[auctioneer] Error: msqid (-m) argument not valid.\n");
+        return -1;
+    }
     /*
     typedef client* clientList;
     // legge da file le risorse e crea i tao per ciascuno
@@ -37,7 +47,7 @@ int main(){
                 countAuction += 1;
             }else{
                 // attesa che un'altra asta termini per farne partire un'altra
-            }        
+            }
         }
     }else{
         printf("Error: file isn't open.");
