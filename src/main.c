@@ -1,18 +1,13 @@
-/*
- * File:   main.c
- * Author: federica
- *
- * Created on 7 novembre 2014, 10.55
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-
+#include <sys/wait.h>
 #include "resource.h"
+
+#define NCLIENT 5
 
 extern int errno;       /* Externally declared (by kernel) */
 
@@ -25,10 +20,13 @@ int create_auctioneer(int msqid){
     sprintf(str_msqid, "%d", msqid);
 
     int auctioneer_pid = fork();
+    //int status = 0;
+
     if ( auctioneer_pid == -1 ){
         printf("[main] Error: auctioneer not created.\n");
         fprintf(stderr, "\t%s\n", strerror(errno));
-        return -1;
+        //return -1;
+        exit(EXIT_FAILURE);                                                         // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
     }
     if ( auctioneer_pid == 0 ) {
         /*  Child code */
@@ -41,13 +39,20 @@ int create_auctioneer(int msqid){
             fprintf(stderr, "[auctioneer] Error: cannot start auctioneer process (Try running main from ./bin).\n");
             /* strerror nterprets the value of errnum, generating a string with a message that describes the error */
             fprintf(stderr, "\t%s\n", strerror(errno));
-        }
+        }/*else{
+            while( wait(&status) == 0 ){                                            // PERCHè NON FUNZIONI WAIT?!?!
+                printf("[auctioneer] Exit wait.\n");
+            }
+        }*/
     } else {
         /* Parent code */
-        return 0;   /* Success */
+        //return 0;   /* Success */                                                 /* In questo punto, la funzione exit porta a visualizzare nel terminale il path del progetto -  lasciare così che il risultato è come il tuo!!*/
+        return EXIT_SUCCESS;                                                        // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
     }
 
-    return -1;
+    //return -1;
+    perror("fork");
+    exit(EXIT_FAILURE);                                                             // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
 }
 
 /**
@@ -59,10 +64,12 @@ int create_client(int msqid){
     sprintf(str_msqid, "%d", msqid);
 
     int client_pid = fork();
+
     if ( client_pid == -1 ){
-        printf("[main] Error: auctioneer not created.");
+        printf("[main] Error: client not created.");
         fprintf(stderr, "\t%s\n", strerror(errno));
-        return -1;
+        //return -1;
+        exit(EXIT_FAILURE);                                                         // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
     }
     if ( client_pid == 0 ) {
         /*  Child code */
@@ -78,10 +85,14 @@ int create_client(int msqid){
         }
     } else {
         /* Parent code */
-        return 0;   /* Success */
+        //return 0;   /* Success */
+                                                                                    /* In questo punto, la funzione exit porta a visualizzare nel terminale il path del progetto -  lasciare così che il risultato è come il tuo!!*/
+        return EXIT_SUCCESS;                                                        // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
     }
 
-    return -1;
+    //return -1;
+    perror("fork");
+    exit(EXIT_FAILURE);                                                             // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
 }
 
 
@@ -89,7 +100,9 @@ int create_client(int msqid){
  * Generates the auctioneer and some clients.
  */
 int main(int argc, char** argv) {
-    printf("[main] Started main.\n");
+
+    printf("[main] Started main.\t\tPid: %d\n", getpid());
+    fflush(stdout);
 
     // /* Creates the unique message queue key with system call ftok() */
     // key_t key = ;
@@ -99,22 +112,23 @@ int main(int argc, char** argv) {
 
     /* Get the message queue id, with the 0666 permissions. */
     int msqid = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
-    printf("%d", msqid);
-
-    int i;
+    int i = 0;
     int auctnr_exit = create_auctioneer(msqid);
 
     /* Checks the auctioneer creation was successful. */
     if (auctnr_exit == 0){
-        for (i = 0; i < 5; i++){
+
+        for (i = 0; i < NCLIENT; i++){
             int clnt_exit = create_client(msqid);
-            /* If the client creation fails, will not try to create more clients */
-            if (clnt_exit != 0) return -1;
+            /* If the client creation fails, will not try to create more clients */     /* Perchè non prova a crearne altri?? */
+            if (clnt_exit != 0)
+                exit(EXIT_FAILURE);                                                     // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
+                //return -1;
         }
 
         sleep(1);
-        return (EXIT_SUCCESS);
+        exit(EXIT_SUCCESS);
     }
-
-    return -1;
+    exit(EXIT_FAILURE);
+    //return -1;                                                                        // ########## EXIT FAILURE/SUCCESS MORE PORTABLE THAN 0 e -1
 }
