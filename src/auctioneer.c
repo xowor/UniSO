@@ -52,7 +52,7 @@ int main(){
                 switch(i%3){
                     case 0:
                         name = token;
-                        strcpy(name, token);
+                        //strcpy(name, token);
                         break;
                     case 1:
                         tmp = token;
@@ -65,7 +65,6 @@ int main(){
                 }
                 i++;
                 token = strtok(NULL, ";");
-                //printf("#######  %s %d %d ######\n\n", name, a, c);
             }
             printf("#######  %s %d %d ######\n\n", name, a, c);
             fflush(stdout);
