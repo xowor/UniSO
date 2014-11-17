@@ -52,20 +52,20 @@ CCADMIN=CCadmin
 
 # build
 build: resource main auctioneer client
-	
-auctioneer: src/auctioneer.c 
-	gcc src/auctioneer.c -o bin/auctioneer
+
+auctioneer: src/auctioneer.c
+	gcc src/auctioneer.c -o bin/auctioneer -g
 
 client: src/client.c
-	gcc src/client.c -o bin/client
+	gcc src/client.c -o bin/client -g
 
 resource: src/resource.c
-	gcc -c src/resource.c -o bin/resource.o
+	gcc -c src/resource.c -o bin/resource.o -g
 
 #main: src/main.c resource
-#	gcc src/main.c bin/resource.o -o bin/main
+#	gcc src/main.c bin/resource.o -o bin/main -g
 main: src/main.c
-	gcc src/main.c -o bin/main
+	gcc src/main.c -o bin/main -g
 
 .build-pre:
 # Add your pre 'build' code here...
