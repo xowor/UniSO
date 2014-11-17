@@ -10,7 +10,6 @@
 extern int errno;       /* Externally declared (by kernel) */
 
 // mai in sleep
-
 // un tao per risorsa
 // area di memoria condivisa
 // max 5 offerte per tao
@@ -28,10 +27,40 @@ typedef struct _node{
     struct _node* next;
 }client;
 
-int main(){
+
+int msqid;
+
+// mai in sleep
+
+int main(int argc, char** argv){
+    printf("[auctioneer] Started auctioneer.\tPid: %d\tPPid: %d\n", getpid(), getppid());
+
+    if (argc >= 2 && strcmp(argv[0], "-m") == 0){
+        msqid = atoi(argv[1]);
+        fprintf(stdout, "[auctioneer] Using message queue %d\n", msqid);
+    } else {
+        fprintf(stderr, "[auctioneer] Error: msqid (-m) argument not valid.\n");
+        return -1;
+    }
+    /*
+    typedef client* clientList;
+    // legge da file le risorse e crea i tao per ciascuno
+    FILE* resources = fopen("resource.txt", "r");
+    if (resources != NULL){
+        int countAuction = 0;
+        // LEGGERE DA FILE I VARI TOKEN PER RIGA
+        while(1){        //finchè ci sono risorse da leggere
+            if(countAuction < MAXTAO){
+                //crea il tao corrispondente
+                countAuction += 1;
+            }else{
+                // attesa che un'altra asta termini per farne partire un'altra
+            }
+
+    int main(){
     printf("[auctioneer] Started auctioneer.Pid: %d\tPPid: %d\n", getpid(), getppid());
     fflush(stdout);
-    
+
     /* read from file the resources and creates connected struct and tao */
     FILE* resources;
     resourcesList resourceList = NULL;
@@ -42,7 +71,7 @@ int main(){
     char* token;
     int a = 0, c = 0, i = 0, resourcesNumber = 0;
     resources = fopen("../resource.txt", "r");
-    if( resources != NULL ){ 
+    if( resources != NULL ){
         /* read each line from file */
         while( fgets(buffer, 50, resources) != NULL ){
             /* read each token in the line */
@@ -69,14 +98,19 @@ int main(){
             printf("#######  %s %d %d ######\n\n", name, a, c);
             resourcesNumber++;
             fflush(stdout);
+
             /* update the resource's struct */
             //resourceList = node_creation(name, a, c, nextNode);
             //nextNode = &resourceList;
         }
+
+            //listaR = node_creation(name, a, c, NULL);
+        }
+
     }else{
         fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
     }
-    
+
     fflush(stdout);
     fclose(resources);
     
@@ -85,12 +119,16 @@ int main(){
     /* read each resource's token from the struct */
     for(; i < resourcesNumber; i++){   
         /* creates relative tao */
+        int countAuction = 0;
+        // read each resource's token
+        while( //ci sono elementi nella lista ){
+
         if(countAuction < MAXTAO){
             // ...
             countAuction += 1;
         }else{
             // attesa che un'altra asta termini per farne partire un'altra
-        }        
+        }
     }
     
     exit(EXIT_SUCCESS);
