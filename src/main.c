@@ -25,12 +25,12 @@ int create_auctioneer(int msqid){
     if ( auctioneer_pid == -1 ){
         printf("[main] Error: auctioneer not created.\n");
         fprintf(stderr, "\t%s\n", strerror(errno));
-        exit(EXIT_FAILURE);                                                         
+        exit(EXIT_FAILURE);
     }
     if ( auctioneer_pid == 0 ) {
         /*  Child code */
         char *envp[] = { NULL };
-        char *argv[] = { "-m", str_msqid, NULL };
+        char *argv[] = { "./auctioneer", "-m", str_msqid, NULL };
         /* Run the auctioneer process. */
         int auct_execve_err = execve("./auctioneer", argv, envp);
         if (auct_execve_err == -1) {
@@ -41,11 +41,11 @@ int create_auctioneer(int msqid){
         }
     } else {
         /* Parent code */
-        return EXIT_SUCCESS;        /* Success */                                               
+        return EXIT_SUCCESS;        /* Success */
     }
 
     perror("fork");
-    exit(EXIT_FAILURE);                                                           
+    exit(EXIT_FAILURE);
 }
 
 /**
@@ -61,12 +61,12 @@ int create_client(int msqid){
     if ( client_pid == -1 ){
         printf("[main] Error: client not created.");
         fprintf(stderr, "\t%s\n", strerror(errno));
-        exit(EXIT_FAILURE);                                                        
+        exit(EXIT_FAILURE);
     }
     if ( client_pid == 0 ) {
         /*  Child code */
         char *envp[] = { NULL };
-        char *argv[] = { "-m", str_msqid, NULL };
+        char *argv[] = { "./client", "-m", str_msqid, NULL };
         /* Run the client process. */
         int clnt_execve_err = execve("./client", argv, envp);
         if (clnt_execve_err == -1) {
@@ -77,11 +77,11 @@ int create_client(int msqid){
         }
     } else {
         /* Parent code */
-        return EXIT_SUCCESS;                                                        
+        return EXIT_SUCCESS;
     }
- 
+
     perror("fork");
-    exit(EXIT_FAILURE);                                                             
+    exit(EXIT_FAILURE);
 }
 
 
@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
             int clnt_exit = create_client(msqid);
             /* If the client creation fails, will not try to create more clients */     /* Perchè non prova a crearne altri?? */
             if (clnt_exit != 0)
-                exit(EXIT_FAILURE);                                                     
+                exit(EXIT_FAILURE);
         }
 
         sleep(1);
