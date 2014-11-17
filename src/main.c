@@ -35,11 +35,7 @@ int create_auctioneer(){
             fprintf(stderr, "[auctioneer] Error: cannot start auctioneer process (Try running main from ./bin).\n");
             /* strerror nterprets the value of errnum, generating a string with a message that describes the error */
             fprintf(stderr, "\t%s\n", strerror(errno));
-        }/*else{
-            while( wait(&status) == 0 ){                                            // PERCHè NON FUNZIONI WAIT?!?!
-                printf("[auctioneer] Exit wait.\n");
-            }
-        }*/
+        }
     } else {
         /* Parent code */
         //return 0;   /* Success */                                                 /* In questo punto, la funzione exit porta a visualizzare nel terminale il path del progetto -  lasciare così che il risultato è come il tuo!!*/
