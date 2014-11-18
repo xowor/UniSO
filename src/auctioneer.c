@@ -77,8 +77,8 @@ int main(int argc, char** argv){
             fflush(stdout);
 
             /* update the resource's struct */
-            // resourceList = node_creation(name, avail, cost, nextNode);
-            // nextNode = &resourceList;
+            resourceList = node_creation(name, avail, cost, nextNode);
+            nextNode = &resourceList;
         }
     }else{
         fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
@@ -89,11 +89,30 @@ int main(int argc, char** argv){
 
     int countAuction = 0;
     int j = 0;
+    char nameRes[N] = NULL;
+    taoList* taoElements = NULL;
+    int id = 0;
     /* read each resource's token from the struct */
     for(; j < resourcesNumber; j++){
         /* creates relative tao */
         if(countAuction < MAXTAO){
-            // NB timer 3 secondi prima che parta l'asta
+            // recuperare il nome di una risorsa
+            strcpy(nameRes, resourceList->name);
+            // eliminare la risorsa dalla lista delle risorse da assegnare
+            // recuperare
+            // allocare memoria condivisa
+            taoElements = node_creation(id, );
+            // informare clienti con un messaggio <id shm del tao, id semaforo, prezzo base d'asta>
+            // TAO fa partire timer di 3 secondi
+            // inizia l'asta
+            // clienti fanno le offerte
+            // durata dell'asta variabile - allo scadere banditore chiude asta
+            // banditore legge contenuto tao
+            // banditore assegna risorse secondo offerte migliori = invio di un messaggio ai clienti vincitori
+            // ai clienti viene detratto il prezzo
+            // viene aggiornata la lista delle risorse richieste dal cliente
+            // deallocare memoria condivisa
+            
             // ...
             countAuction += 1;
         }else{

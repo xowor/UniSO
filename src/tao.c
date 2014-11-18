@@ -26,7 +26,7 @@ typedef struct _elementTao{
  * @param nextNode Next node of this tao 
  * @return node of taoList
  */
-taoList node_creation(int id, int a, Offer so, taoList* nextNode){
+taoList node_creation(int id, offer so, taoList* nextNode){
     taoList tl = (taoList) malloc(sizeof(tao));
     tl -> id = id;
     tl->singleOffer = so;

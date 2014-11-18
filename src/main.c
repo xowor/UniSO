@@ -52,7 +52,7 @@ int create_auctioneer(int msqid){
  * Creates a client process.
  */
 int create_client(int msqid){
-    // TODO: creare e scrivere il file con all'interno le risorse che il cliente deve acquisire e loro qta, budget disponibile
+
     char str_msqid [6];
     sprintf(str_msqid, "%d", msqid);
 

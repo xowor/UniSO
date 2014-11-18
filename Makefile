@@ -51,7 +51,7 @@ CCADMIN=CCadmin
 
 
 # build
-build: resource main auctioneer client
+build: resource tao main auctioneer client
 
 auctioneer: src/auctioneer.c
 	gcc src/auctioneer.c -o bin/auctioneer -g
@@ -62,8 +62,9 @@ client: src/client.c
 resource: src/resource.c
 	gcc -c src/resource.c -o bin/resource.o -g
 
-#main: src/main.c resource
-#	gcc src/main.c bin/resource.o -o bin/main -g
+tao: src/tao.c
+	gcc -c src/tao.c -o bin/tao -g
+
 main: src/main.c
 	gcc src/main.c -o bin/main -g
 
