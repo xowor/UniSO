@@ -5,28 +5,38 @@
 
 #define N 20
 
-typedef struct _resource* resourcesList;
+
+// typedef resource* resourcesList;
+
 typedef struct _resource {
     char* name;
     int availability;
     int cost;
-    resourcesList next;
-}resource;
+    struct _resource* next;
+} resource;
+
+
+resource* resource_list = NULL;
+
+int resources_count = 0;
+
 
 /**
  * Creates a node and adds it at the head of the list.
  * @param name Resource's name
- * @param a Resource's availability
- * @param c Resource's cost
- * @param nextNode Next node of this resource 
+ * @param avail Resource's availability
+ * @param cost Resource's cost
  * @return node of resourcesList
  */
-resourcesList node_creation(char name[N], int a, int c, resourcesList* nextNode){
-    resourcesList rl = (resourcesList) malloc(sizeof(resource));
-    strcpy(rl->name, name);
-    rl->availability = a;
-    rl->cost = c;
-    if ( *nextNode != NULL)
-        rl->next = *nextNode;
-    return rl;
+resource* add_resource(char name[N], int avail, int cost){
+    resource* new_resource = (resource*) malloc(sizeof(resource));
+    strcpy(new_resource->name, name);
+    new_resource->availability = avail;
+    new_resource->cost = cost;
+    if ( resource_list != NULL){
+        new_resource->next = resource_list;
+        resource_list = new_resource;
+        resources_count++;
+    }
+    return new_resource;
 }

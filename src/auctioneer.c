@@ -6,10 +6,10 @@
 #include "resource.h"
 #include "tao.h"
 
-#define MAXTAO 3        /* At the same time, there are at the height 3 tao */
-#define N 20
+#define MAX_OPEN_AUCTIONS 3         /* At the same time, there are at the height 3 tao */
+#define N 20                        /* Size of "an array" */
 
-extern int errno;       /* Externally declared (by kernel) */
+extern int errno;                   /* Externally declared (by kernel) */
 
 // mai in sleep
 
@@ -19,28 +19,17 @@ typedef struct _node{
     int client_pid;
     // risorse interessate (array)
     struct _node* next;
-}client;
+} client;
 
 
-int msqid;
+int msqid = 0;                       /* The id of the message queue*/
+int opened_auctions = 0;             /* The id of the message queue*/
 
 // mai in sleep
 
-int main(int argc, char** argv){
-    printf("[auctioneer] Started auctioneer.\tPid: %d\tPPid: %d\n", getpid(), getppid());
 
-    if (argc >= 2 && strcmp(argv[1], "-m") == 0){
-        msqid = atoi(argv[2]);
-        fprintf(stdout, "[auctioneer] Using message queue %d\n", msqid);
-    } else {
-        fprintf(stderr, "[auctioneer] Error: msqid (-m) argument not valid.\n");
-        return -1;
-    }
-
-    /* read from file the resources and creates connected struct and tao */
+void loadResources(){
     FILE* resources;
-    resourcesList resourceList = NULL;
-    resourcesList* nextNode = NULL;
     char line[64];
     char* name;
     char* tmp;
@@ -73,12 +62,10 @@ int main(int argc, char** argv){
                 token = strtok(NULL, ";");
             }
             printf("[auctioneer] Resource available: %s %d %d \n", name, avail, cost);
-            resourcesNumber++;
+            // resourcesNumber++;
             fflush(stdout);
 
-            /* update the resource's struct */
-            resourceList = node_creation(name, avail, cost, nextNode);
-            nextNode = &resourceList;
+            add_resource(name, avail, cost);
         }
     }else{
         fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
@@ -86,16 +73,23 @@ int main(int argc, char** argv){
 
     fflush(stdout);
     fclose(resources);
+}
 
-    int countAuction = 0;
-    int j = 0;
-    char nameRes[N] = NULL;
+
+// void create_tao(resource*){
+//
+// }
+
+void create_taos(){
+    char nameRes[N];
+    // nameRes = NULL;
     taoList* taoElements = NULL;
     int id = 0;
     /* read each resource's token from the struct */
-    for(; j < resourcesNumber; j++){
+    int j;
+    for(j = 0; j < resources_count; j++){
         /* creates relative tao */
-        if(countAuction < MAXTAO){
+        if(opened_auctions < MAX_OPEN_AUCTIONS){
             // recuperare il nome di una risorsa
             strcpy(nameRes, resourceList->name);
             // eliminare la risorsa dalla lista delle risorse da assegnare
@@ -112,14 +106,34 @@ int main(int argc, char** argv){
             // ai clienti viene detratto il prezzo
             // viene aggiornata la lista delle risorse richieste dal cliente
             // deallocare memoria condivisa
-            
+
             // ...
-            countAuction += 1;
+            opened_auctions += 1;
         }else{
             // attesa che un'altra asta termini per farne partire un'altra
         }
     }
-    
+}
+
+
+int main(int argc, char** argv){
+    printf("[auctioneer] Started auctioneer.\tPid: %d\tPPid: %d\n", getpid(), getppid());
+
+    /* Loads the message queue id from the passed argument */
+    if (argc >= 2 && strcmp(argv[1], "-m") == 0){
+        msqid = atoi(argv[2]);
+        fprintf(stdout, "[auctioneer] Using message queue %d\n", msqid);
+    } else {
+        fprintf(stderr, "[auctioneer] Error: msqid (-m) argument not valid.\n");
+        return -1;
+    }
+
+    /* read from file the resources and creates connected struct and tao */
+    loadResources();
+
+    create_taos();
+
+
     /* because auctioneer is main's son */
     _exit(EXIT_SUCCESS);
 
