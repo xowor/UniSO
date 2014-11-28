@@ -5,7 +5,7 @@
 
 // un tao per risorsa / ogni tao contiene max 5 offerte
 
-typedef struct{
+typedef struct _bid{
     int client_pid;
     int quantity;
     int unit_offer;
