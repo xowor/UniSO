@@ -3,7 +3,7 @@
 #include <string.h>
 #include <malloc.h>
 
-#define N 20
+#define MAX_RES_NAME_LENGTH 20
 
 
 // typedef resource* resourcesList;
@@ -28,8 +28,9 @@ int resources_count = 0;
  * @param cost Resource's cost
  * @return node of resourcesList
  */
-resource* add_resource(char name[N], int avail, int cost){
+resource* add_resource(char name[MAX_RES_NAME_LENGTH], int avail, int cost){
     resource* new_resource = (resource*) malloc(sizeof(resource));
+    new_resource->name = malloc(MAX_RES_NAME_LENGTH);
     strcpy(new_resource->name, name);
     new_resource->availability = avail;
     new_resource->cost = cost;
