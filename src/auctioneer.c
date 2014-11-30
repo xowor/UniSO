@@ -81,14 +81,14 @@ void loadResources(){
 // }
 
 void create_taos(){
-    char nameRes[N];
+ /*   char nameRes[N];
     // nameRes = NULL;
     taoList* taoElements = NULL;
     int id = 0;
-    /* read each resource's token from the struct */
+    // read each resource's token from the struct 
     int j;
     for(j = 0; j < resources_count; j++){
-        /* creates relative tao */
+        // creates relative tao 
         if(opened_auctions < MAX_OPEN_AUCTIONS){
             // recuperare il nome di una risorsa
             strcpy(nameRes, resourceList->name);
@@ -112,7 +112,7 @@ void create_taos(){
         }else{
             // attesa che un'altra asta termini per farne partire un'altra
         }
-    }
+    }*/
 }
 
 
