@@ -1,10 +1,12 @@
-#ifndef RESOURCE_H
-#define RESOURCE_H
+#ifndef TAO_H
+#define TAO_H
 
 #include "tao.c"
 
-typedef struct _elementTao* taoList;
-taoList node_creation(int id, offer so, taoList* nextNode);
+typedef struct _bid bid;
+typedef struct _tao tao;
 
-#endif // RESOURCE_H
+tao* create_tao();
+int make_bid(int pid, int quantity, int unit_offer);
 
+#endif // TAO_H

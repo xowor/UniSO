@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include "resource.h"
 #include "tao.h"
+#include "introduction.h"
 
 #define MAX_OPEN_AUCTIONS 3         /* At the same time, there are at the height 3 tao */
 #define N 20                        /* Size of "an array" */
@@ -63,15 +64,16 @@ void loadResources(){
             }
             printf("[auctioneer] Resource available: %s %d %d \n", name, avail, cost);
             // resourcesNumber++;
-            fflush(stdout);
+
 
             add_resource(name, avail, cost);
+            fflush(stdout);
         }
     }else{
         fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
     }
 
-    fflush(stdout);
+    // fflush(stdout);
     fclose(resources);
 }
 
@@ -83,7 +85,7 @@ void loadResources(){
 void create_taos(){
  /*   char nameRes[N];
     // nameRes = NULL;
-    taoList* taoElements = NULL;
+    tao* taoElements = NULL;
     int id = 0;
     // read each resource's token from the struct 
     int j;
@@ -91,11 +93,11 @@ void create_taos(){
         // creates relative tao 
         if(opened_auctions < MAX_OPEN_AUCTIONS){
             // recuperare il nome di una risorsa
-            strcpy(nameRes, resourceList->name);
+            // strcpy(nameRes, resourceList->name);
             // eliminare la risorsa dalla lista delle risorse da assegnare
             // recuperare
             // allocare memoria condivisa
-            taoElements = node_creation(id, );
+            // taoElements = node_creation(id, );
             // informare clienti con un messaggio <id shm del tao, id semaforo, prezzo base d'asta>
             // TAO fa partire timer di 3 secondi
             // inizia l'asta
@@ -132,6 +134,12 @@ int main(int argc, char** argv){
     loadResources();
 
     create_taos();
+
+    introduction* intr = (introduction*) malloc(sizeof(introduction));
+    while (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1){
+        printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
+        // printf("WTF??????\n");
+    }
 
 
     /* because auctioneer is main's son */

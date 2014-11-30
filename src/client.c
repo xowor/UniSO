@@ -1,4 +1,6 @@
+#include <stdlib.h>
 #include <stdio.h>
+#include "introduction.h"
 
 typedef struct _client {
     //pid
@@ -6,9 +8,13 @@ typedef struct _client {
 } client;
 
 int msqid;
+int pid;
+int ppid;
 
 int main(int argc, char** argv){
-    printf("[client] Started client.\tPid: %d\tPPid: %d\n", getpid(), getppid());
+    pid = getpid();
+    ppid = getppid();
+    printf("[client] Started client.\tPid: %d\tPPid: %d\n", pid, ppid);
 
     // scrittura + lettura da file delle risorse: risorse da acquisire + loro quantità + budget
     // registrazione al banditore con messaggio che contiene pid + risorse che gli interessano
@@ -22,6 +28,12 @@ int main(int argc, char** argv){
     }
 
     fflush(stdout);
+
+    // char*
+    introduction* intr = (introduction*) malloc(sizeof(introduction));
+    intr->pid = pid;
+    // intr->resources =
+    msgsnd(msqid, intr, sizeof(introduction) - sizeof(long), 0777);
 
     // attesa della chiamata dal banditore
 
