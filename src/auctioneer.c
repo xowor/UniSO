@@ -88,9 +88,9 @@ void loadResources(){
 // }
 
 void create_taos(){
- /*   char nameRes[N];
+    char nameRes[N];
     // nameRes = NULL;
-    tao* taoElements = NULL;
+  /*  tao* taoElements = NULL;
     int id = 0;
     // read each resource's token from the struct
     int j;

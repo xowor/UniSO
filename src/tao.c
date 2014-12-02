@@ -40,10 +40,7 @@ tao* create_tao(){
  * Precondizione: l'agente ha già controllato se la sua offerta è tra le migliori --> non fa l'offerta con make bid
  * Precondizione: l'agente ha già aumentato la unit_offer rispetto alla offerta precedente
  * Precondizione: l'agente si può permettere la unit_offer
- */
-int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
-    /*
-     * controlla l'offerta minima nel tao
+ *   * controlla l'offerta minima nel tao
      * l'agente ha già un'offerta nel tao?
      * 	se si --> controlla se l'offerta che vuole fare sia maggiore del minimo
      * 		  se si --> la sovrascrive quella già presente
@@ -54,12 +51,13 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
      * 				se si --> aggiunge la propria offerta nello spazio vuoto
      * 				se no --> sovrascrive l'offerta di prezzo minore
      * 		  se no --> return
-     */
-
+ */
+int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
     // controlla l'offerta minima nel tao
     int i = 0, index_min_bid = 0;
     int min_bid = auction_tao->bids[0].unit_offer;
     int pid_min_bid = auction_tao->bids[0].client_pid;
+    
     for(; i < MAX_OFFER; i++){
       if(auction_tao->bids[i].unit_offer < min_bid){
 	min_bid = auction_tao->bids[i].unit_offer;
@@ -67,7 +65,6 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 	pid_min_bid = auction_tao->bids[i].client_pid;
       }
     }
-   
     // nuovo bid
     bid* new_bid = (bid*) malloc(sizeof(bid));
     new_bid->client_pid = pid;
@@ -81,7 +78,8 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 	empty_index = i;
       }
     }
-  // l'agente ha già un'offerta nel tao?
+    
+    // l'agente ha già un'offerta nel tao?
     int has_bid = 0, own_bid = NULL;
     for(i = 0; i < MAX_OFFER; i++){
       if(auction_tao->bids[i].client_pid == pid){
@@ -89,9 +87,10 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 	own_bid = i;
       }
     }
-    // controlla se l'offerta che vuole fare sia maggiore del minimo
+    
+    // controlla se l'offerta che vuole fare è maggiore del minimo
     if(unit_offer > min_bid){
-      // ha già un'offerta nel tao
+      // ha già un'offerta nel tao --> sostituisce la "propria entry"
       if(has_bid){
 	/*
 	auction_tao->bids[own_bid].client_pid = new_bid->client_pid;
@@ -99,6 +98,7 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 	auction_tao->bids[own_bid].unit_offer = new_bid->unit_offer;	
 	*/
 	replace_bids(own_bid, new_bid, auction_tao);
+      // non ha offerte nel tao
       }else{
 	// aggiunge la propria offerta nello spazio vuoto
 	if(empty_index >= 0){
@@ -121,6 +121,9 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
       return -1;    
 }
 
+/**
+ * Support function to make_bid.
+ */
 replace_bids(int n, bid* new_bid, tao* auction_tao){
   bid tmp;
   tmp = auction_tao->bids[n];
