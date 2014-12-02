@@ -138,6 +138,7 @@ int main(int argc, char** argv){
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     while (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1){
         printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
+        // free(intr);
         // printf("WTF??????\n");
     }
 

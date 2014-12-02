@@ -7,7 +7,7 @@
 #include <sys/wait.h>
 #include "resource.h"
 
-#define NCLIENT 5
+#define MAX_CLIENTS 5
 
 extern int errno;       /* Externally declared (by kernel) */
 
@@ -16,7 +16,7 @@ extern int errno;       /* Externally declared (by kernel) */
  */
 int create_auctioneer(int msqid){
     // TODO: registrazione clienti al banditore (pid, risorsa interessata)
-    char str_msqid [6];
+    char str_msqid [32];
     sprintf(str_msqid, "%d", msqid);
 
     int auctioneer_pid = fork();
@@ -51,10 +51,12 @@ int create_auctioneer(int msqid){
 /**
  * Creates a client process.
  */
-int create_client(int msqid){
+int create_client(int msqid, int client_num){
 
-    char str_msqid [6];
+    char str_msqid [32];
+    char str_client_num [6];
     sprintf(str_msqid, "%d", msqid);
+    sprintf(str_client_num, "%d", client_num);
 
     int client_pid = fork();
 
@@ -66,7 +68,7 @@ int create_client(int msqid){
     if ( client_pid == 0 ) {
         /*  Child code */
         char *envp[] = { NULL };
-        char *argv[] = { "./client", "-m", str_msqid, NULL };
+        char *argv[] = { "./client", "-m", str_msqid, "-c", str_client_num, NULL };
         /* Run the client process. */
         int clnt_execve_err = execve("./client", argv, envp);
         if (clnt_execve_err == -1) {
@@ -107,8 +109,8 @@ int main(int argc, char** argv) {
     /* Checks the auctioneer creation was successful. */
     if (auctnr_exit == 0){
 
-        for (i = 0; i < NCLIENT; i++){
-            int clnt_exit = create_client(msqid);
+        for (i = 0; i < MAX_CLIENTS; i++){
+            int clnt_exit = create_client(msqid, i);
             /* If the client creation fails, will not try to create more clients */     /* Perchè non prova a crearne altri?? */
             if (clnt_exit != 0)
                 exit(EXIT_FAILURE);

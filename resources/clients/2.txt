@@ -1,0 +1,6 @@
+cpu;10;20;
+memory;400;20;
+hdd;100;10;
+cache;1;20;
+ethernet;10;21;
+optical;20;15;
