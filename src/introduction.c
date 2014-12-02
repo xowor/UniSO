@@ -4,5 +4,6 @@
 
 typedef struct _introduction {
     int pid;
-    char* resources[MAX_REQUIRE_RESOURCES];
+    char resources[MAX_REQUIRE_RESOURCES][MAX_RES_NAME_LENGTH];
+    int resources_length;
 } introduction;

@@ -24,7 +24,9 @@ typedef struct _node{
 
 
 int msqid = 0;                       /* The id of the message queue*/
-int opened_auctions = 0;             /* The id of the message queue*/
+int opened_auctions = 0;             /* The number of opened auctions*/
+resource_list* avail_resources;
+
 
 // mai in sleep
 
@@ -36,6 +38,9 @@ void loadResources(){
     char* tmp;
     char* token;
     int avail = 0, cost = 0, i = 0, resourcesNumber = 0;
+
+    avail_resources = (resource_list*) malloc(sizeof(resource_list));
+
     resources = fopen("../resource.txt", "r");
     if( resources != NULL ){
         /* Reads each line from file */
@@ -66,7 +71,7 @@ void loadResources(){
             // resourcesNumber++;
 
 
-            add_resource(name, avail, cost);
+            add_resource(avail_resources, name, avail, cost);
             fflush(stdout);
         }
     }else{
@@ -87,10 +92,10 @@ void create_taos(){
     // nameRes = NULL;
     tao* taoElements = NULL;
     int id = 0;
-    // read each resource's token from the struct 
+    // read each resource's token from the struct
     int j;
     for(j = 0; j < resources_count; j++){
-        // creates relative tao 
+        // creates relative tao
         if(opened_auctions < MAX_OPEN_AUCTIONS){
             // recuperare il nome di una risorsa
             // strcpy(nameRes, resourceList->name);
@@ -137,13 +142,18 @@ int main(int argc, char** argv){
 
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     while (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1){
+        int res_lenght = intr->resources_length;
         printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
-        // free(intr);
-        // printf("WTF??????\n");
+        int i = 0;
+        for (; i < intr->resources_length; i++){
+            printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
+        }
     }
 
 
-    /* because auctioneer is main's son */
+    fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
+    fflush(stdout);
+    /* because auctioneer is main's child */
     _exit(EXIT_SUCCESS);
 
 }

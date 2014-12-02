@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include "resource.h"
 #include "introduction.h"
 
 typedef struct _client {
@@ -16,6 +17,8 @@ int ppid;
 char* required_resources[MAX_REQUIRE_RESOURCES];
 int required_resources_length = 0;
 
+resource_list* req_resources;
+
 
 void load_resources(){
     FILE* resources;
@@ -25,8 +28,8 @@ void load_resources(){
     char* token;
     int avail = 0, cost = 0, i = 0, resourcesNumber = 0;
     char filename[1024];
+
     sprintf(filename, "../resources/clients/%d.txt", client_num);
-    printf("%s\n", filename);
     resources = fopen(filename, "r");
     if( resources != NULL ){
         /* Reads each line from file */
@@ -53,11 +56,11 @@ void load_resources(){
                 i++;
                 token = strtok(NULL, ";");
             }
-            printf("[client][%d][%d] Resource desired: %s %d %d \n", client_num, pid, name, avail, cost);
+            printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
             // resourcesNumber++;
 
             required_resources[required_resources_length++] = name;
-            // add_resource(name, avail, cost);
+            add_resource(req_resources, name, avail, cost);
             fflush(stdout);
         }
     }else{
@@ -82,24 +85,37 @@ int main(int argc, char** argv){
         client_num = atoi(argv[4]);
         fprintf(stdout, "[client][%d][%d] Using message queue %d\n", client_num, pid, msqid);
     } else {
-        fprintf(stderr, "[client][%d] Error: msqid (-m) argument not valid.\n", pid);
+        fprintf(stderr, "[client][%d] Error: msqid (-m) or client number (-c) argument not valid.\n", pid);
         return -1;
     }
 
 
     // char*
 
-    load_resources();
-    printf("[client] AAAAAAAAAAA\n");
-    fflush(stdout);
 
+    req_resources = (resource_list*) malloc(sizeof(resource_list));
+    load_resources();
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     intr->pid = pid;
+    // intr->resources = malloc(MAX_REQUIRE_RESOURCES * sizeof(char*));
+    intr->resources_length = 0;
     // [TODO] Inserire la lista delle risorse richieste.
     /* Sends a message to the auctioneer containing the client pid and the required resources */
+
+    resource* res = req_resources->list;
+    int i = 0;
+    do {
+        strcpy(intr->resources[i], res->name);
+        intr->resources_length++;
+        i++;
+        res = res->next;
+    }
+    while(res != NULL);
+
     msgsnd(msqid, intr, sizeof(introduction) - sizeof(long), 0777);
 
-
+    fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
+    fflush(stdout);
     // attesa della chiamata dal banditore
     // se banditore comunica acquisizione di risorsa --> scrivere su file di log : risorsa acquisita; quantità; prezzoComplessivo
     // fork --> agenti --> agenti exit --> client
