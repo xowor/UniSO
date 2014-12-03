@@ -3,7 +3,7 @@
 #include <string.h>
 #include <malloc.h>
 
-#define MAX_RES_NAME_LENGTH 20
+#define MAX_RES_NAME_LENGTH 16
 
 
 // typedef resource* resourcesList;

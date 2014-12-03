@@ -44,6 +44,18 @@ tao* create_tao(){
 
 
 /**
+ * Support function to make_bid.
+ */
+void replace_bids(int n, bid* new_bid, tao* auction_tao){
+  bid tmp;
+  tmp = auction_tao->bids[n];
+  tmp.client_pid = new_bid->client_pid;
+  tmp.quantity = new_bid->quantity;
+  tmp.unit_offer = new_bid->unit_offer;
+}
+
+
+/**
  * Precondizione: l'agente ha già controllato se la sua offerta è tra le migliori --> non fa l'offerta con make bid
  * Precondizione: l'agente ha già aumentato la unit_offer rispetto alla offerta precedente
  * Precondizione: l'agente si può permettere la unit_offer
@@ -64,7 +76,7 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
     int i = 0, index_min_bid = 0;
     int min_bid = auction_tao->bids[0].unit_offer;
     int pid_min_bid = auction_tao->bids[0].client_pid;
-    
+
     for(; i < MAX_OFFER; i++){
       if(auction_tao->bids[i].unit_offer < min_bid){
 	min_bid = auction_tao->bids[i].unit_offer;
@@ -77,7 +89,7 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
     new_bid->client_pid = pid;
     new_bid->quantity = quantity;
     new_bid->unit_offer = unit_offer;
-     
+
     // cerca entry vuota
     int empty_index = -1;
     for(i = 0; i < MAX_OFFER; i++){
@@ -85,7 +97,7 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 	empty_index = i;
       }
     }
-    
+
     // l'agente ha già un'offerta nel tao?
     int has_bid = 0, own_bid = NULL;
     for(i = 0; i < MAX_OFFER; i++){
@@ -94,9 +106,10 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 	own_bid = i;
       }
     }
-    
+
     // controlla se l'offerta che vuole fare è maggiore del minimo
     if(unit_offer > min_bid){
+<<<<<<< HEAD
 		// ha già un'offerta nel tao --> sostituisce la "propria entry"
 		if(has_bid){
 			replace_bids(own_bid, new_bid, auction_tao);
@@ -123,6 +136,37 @@ replace_bids(int n, bid* new_bid, tao* auction_tao){
   tmp.client_pid = new_bid->client_pid;
   tmp.quantity = new_bid->quantity;
   tmp.unit_offer = new_bid->unit_offer;
+=======
+      // ha già un'offerta nel tao --> sostituisce la "propria entry"
+      if(has_bid){
+	/*
+	auction_tao->bids[own_bid].client_pid = new_bid->client_pid;
+	auction_tao->bids[own_bid].quantity = new_bid->quantity;
+	auction_tao->bids[own_bid].unit_offer = new_bid->unit_offer;
+	*/
+	replace_bids(own_bid, new_bid, auction_tao);
+      // non ha offerte nel tao
+      }else{
+	// aggiunge la propria offerta nello spazio vuoto
+	if(empty_index >= 0){
+	  /*
+	  auction_tao->bids[empty_index].client_pid = new_bid->client_pid;
+	  auction_tao->bids[empty_index].quantity = new_bid->quantity;
+	  auction_tao->bids[empty_index].unit_offer = new_bid->unit_offer;*/
+	  replace_bids(empty_index, new_bid, auction_tao);
+	// sovrascrive l'offerta di prezzo minore
+	}else{
+	  /*
+	  auction_tao->bids[index_min_bid].client_pid = new_bid->client_pid;
+	  auction_tao->bids[index_min_bid].quantity = new_bid->quantity;
+	  auction_tao->bids[index_min_bid].unit_offer = new_bid->unit_offer;
+	  */
+	  replace_bids(index_min_bid, new_bid, auction_tao);
+	}
+      }
+    }else
+      return -1;
+>>>>>>> 630667997be0ad40a602c71ef17c8e7ee3422594
 }
 
 // /**
