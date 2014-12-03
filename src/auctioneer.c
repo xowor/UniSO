@@ -7,6 +7,7 @@
 #include "tao.h"
 #include "introduction.h"
 
+#define MAX_RESOURCES 32            /* The maximum number of available resources */
 #define MAX_OPEN_AUCTIONS 3         /* At the same time, there are at the height 3 tao */
 #define N 20                        /* Size of "an array" */
 
@@ -36,7 +37,7 @@ resource_list* avail_resources;      /* The list containing all the available re
  */
 void loadResources(){
     FILE* resources;
-    char line[64];
+    char line[MAX_RES_NAME_LENGTH];
     char* name;
     char* tmp;
     char* token;
@@ -47,10 +48,10 @@ void loadResources(){
     resources = fopen("../resource.txt", "r");
     if( resources != NULL ){
         /* Reads each line from file */
-        while( fgets(line, 64, resources) != NULL ){
+        while( fgets(line, MAX_RES_NAME_LENGTH, resources) != NULL ){
             token = strtok(line, ";");
             i = 0;
-            name = (char*) malloc(64);
+            name = (char*) malloc(MAX_RES_NAME_LENGTH);
             while( token ){
                 /* In each line there are 4 tokens: name, available, cost and \n */
                 switch(i%4){
