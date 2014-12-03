@@ -23,14 +23,17 @@ typedef struct _node{
 } client;
 
 
-int msqid = 0;                       /* The id of the message queue*/
-int opened_auctions = 0;             /* The number of opened auctions*/
-resource_list* avail_resources;
+int msqid = 0;                       /* The id of the message queue */
+int opened_auctions = 0;             /* The number of opened auctions */
+resource_list* avail_resources;      /* The list containing all the available resources */
 
 
 // mai in sleep
 
 
+/**
+ * Reads from file all the available resources.
+ */
 void loadResources(){
     FILE* resources;
     char line[64];
@@ -87,6 +90,10 @@ void loadResources(){
 //
 // }
 
+
+/**
+ *
+ */
 void create_taos(){
     char nameRes[N];
     // nameRes = NULL;
@@ -126,7 +133,9 @@ void create_taos(){
 int main(int argc, char** argv){
     printf("[auctioneer] Started auctioneer.\tPid: %d\tPPid: %d\n", getpid(), getppid());
 
-    /* Loads the message queue id from the passed argument */
+    /**
+     * Loads the message queue id from the passed argument.
+     */
     if (argc >= 2 && strcmp(argv[1], "-m") == 0){
         msqid = atoi(argv[2]);
         fprintf(stdout, "[auctioneer] Using message queue %d\n", msqid);
@@ -135,11 +144,11 @@ int main(int argc, char** argv){
         return -1;
     }
 
-    /* read from file the resources and creates connected struct and tao */
     loadResources();
 
-    create_taos();
-
+    /**
+     * Listen to all clients introduction.
+     */
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     while (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1){
         int res_lenght = intr->resources_length;
@@ -150,6 +159,7 @@ int main(int argc, char** argv){
         }
     }
 
+    create_taos();
 
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
