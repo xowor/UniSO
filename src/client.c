@@ -5,9 +5,11 @@
 #include "resource.h"
 #include "introduction.h"
 
-typedef struct _client {
-    //pid
+#define MAX_RESOURCE 10
 
+typedef struct _client {
+    pid_t client_pid;
+	resource interested_resource[MAX_RESOURCE];
 } client;
 
 int msqid;

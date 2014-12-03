@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
+
 #define MAX_OFFER 5
+#define MAX_CLIENT 5;
 // TAO = LISTA DI OFFERTE
 
 // un tao per risorsa / ogni tao contiene max 5 offerte
@@ -13,9 +15,14 @@ typedef struct _bid{
 
 // area di memoria condivisa
 // typedef struct _tao* taoList;
+/**
+ * Contiene i bids = offerte dei clienti
+ * Manca taoInformation = clienti interessati a quel tao
+ */
 typedef struct _tao{
     // char* id;
     // bid singleOffer;
+    client interested_client[MAX_CLIENT];
     bid bids[MAX_OFFER];
     //int riempimento = 0;
     // struct _tao* next;
@@ -90,41 +97,27 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
     
     // controlla se l'offerta che vuole fare è maggiore del minimo
     if(unit_offer > min_bid){
-      // ha già un'offerta nel tao --> sostituisce la "propria entry"
-      if(has_bid){
-	/*
-	auction_tao->bids[own_bid].client_pid = new_bid->client_pid;
-	auction_tao->bids[own_bid].quantity = new_bid->quantity;
-	auction_tao->bids[own_bid].unit_offer = new_bid->unit_offer;	
-	*/
-	replace_bids(own_bid, new_bid, auction_tao);
-      // non ha offerte nel tao
-      }else{
-	// aggiunge la propria offerta nello spazio vuoto
-	if(empty_index >= 0){
-	  /*
-	  auction_tao->bids[empty_index].client_pid = new_bid->client_pid;
-	  auction_tao->bids[empty_index].quantity = new_bid->quantity;
-	  auction_tao->bids[empty_index].unit_offer = new_bid->unit_offer;*/
-	  replace_bids(empty_index, new_bid, auction_tao);
-	// sovrascrive l'offerta di prezzo minore
-	}else{
-	  /*
-	  auction_tao->bids[index_min_bid].client_pid = new_bid->client_pid;
-	  auction_tao->bids[index_min_bid].quantity = new_bid->quantity;
-	  auction_tao->bids[index_min_bid].unit_offer = new_bid->unit_offer;
-	  */
-	  replace_bids(index_min_bid, new_bid, auction_tao);
+		// ha già un'offerta nel tao --> sostituisce la "propria entry"
+		if(has_bid){
+			replace_bids(own_bid, new_bid, auction_tao);
+			// non ha offerte nel tao
+		}else{
+			// aggiunge la propria offerta nello spazio vuoto
+			if(empty_index >= 0){
+				replace_bids(empty_index, new_bid, auction_tao);
+			// sovrascrive l'offerta di prezzo minore
+			}else{
+				replace_bids(index_min_bid, new_bid, auction_tao);
+			}
+		}
 	}
-      }
-    }else
-      return -1;    
+    return -1;    
 }
 
 /**
  * Support function to make_bid.
  */
-replace_bids(int n, bid* new_bid, tao auction_tao){
+replace_bids(int n, bid* new_bid, tao* auction_tao){
   bid tmp;
   tmp = auction_tao->bids[n];
   tmp.client_pid = new_bid->client_pid;
