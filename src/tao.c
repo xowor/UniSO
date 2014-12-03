@@ -124,7 +124,7 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 /**
  * Support function to make_bid.
  */
-replace_bids(int n, bid* new_bid, tao* auction_tao){
+replace_bids(int n, bid* new_bid, tao auction_tao){
   bid tmp;
   tmp = auction_tao->bids[n];
   tmp.client_pid = new_bid->client_pid;
