@@ -8,6 +8,7 @@
 
 // typedef resource* resourcesList;
 
+/* Information related to each resource. */
 typedef struct _resource {
     char* name;
     int availability;
@@ -15,16 +16,11 @@ typedef struct _resource {
     struct _resource* next;
 } resource;
 
-
+/* List of general resources available to be sell. */
 typedef struct _resource_list {
     resource* list;
-    int resources_count;
+    int resources_count;	// cos'è???? quantità di risorse totali??
 } resource_list;
-
-
-// resource* resource_list = NULL;
-//
-// int resources_count = 0;
 
 
 /**

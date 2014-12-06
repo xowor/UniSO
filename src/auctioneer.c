@@ -3,6 +3,11 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sys/shm.h>
+#include <sys/sem.h>
+#include <sys/ipc.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "resource.h"
 #include "tao.h"
 #include "introduction.h"
@@ -10,19 +15,16 @@
 #define MAX_RESOURCES 32            /* The maximum number of available resources */
 #define MAX_OPEN_AUCTIONS 3         /* At the same time, there are at the height 3 tao */
 #define N 20                        /* Size of "an array" */
+#define MAX_RESOURCE 10				/* Max number of resources for each client */
 
 extern int errno;                   /* Externally declared (by kernel) */
 
 // mai in sleep
 
-/* registerd clients */
-typedef struct client* clientList;
-typedef struct _node{
-    int client_pid;
-    // risorse interessate (array)
-    struct _node* next;
+typedef struct _client {
+    pid_t client_pid;
+	resource interested_resource[MAX_RESOURCE];
 } client;
-
 
 int msqid = 0;                       /* The id of the message queue */
 int opened_auctions = 0;             /* The number of opened auctions */
@@ -74,43 +76,25 @@ void loadResources(){
             printf("[auctioneer] Resource available: %s %d %d \n", name, avail, cost);
             // resourcesNumber++;
 
-
             add_resource(avail_resources, name, avail, cost);
             fflush(stdout);
         }
     }else{
         fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
     }
-
+    // 	QUI SI PIANTA!!!!
     // fflush(stdout);
     fclose(resources);
 }
 
 
-// void create_tao(resource*){
-//
-// }
-
-
 /**
- *
- */
-void create_taos(){
-    char nameRes[N];
-    // nameRes = NULL;
-  /*  tao* taoElements = NULL;
-    int id = 0;
-    // read each resource's token from the struct
-    int j;
-    for(j = 0; j < resources_count; j++){
-        // creates relative tao
-        if(opened_auctions < MAX_OPEN_AUCTIONS){
-            // recuperare il nome di una risorsa
-            // strcpy(nameRes, resourceList->name);
-            // eliminare la risorsa dalla lista delle risorse da assegnare
-            // recuperare
-            // allocare memoria condivisa
-            // taoElements = node_creation(id, );
+ * // SPOSTARLO IN TAO IN UN SECONDO MOMENTO
+ * 	PRECONDIZIONE: SI HA UNA LISTA DI CLIENTI CON LE LORO RISORSE INTERESSATE!!!!!!
+ *  definire i semafori ++ e -- dei semafori
+ *  contattare i clienti con un messaggio
+ *  definire la durata dell'asta
+ * 
             // informare clienti con un messaggio <id shm del tao, id semaforo, prezzo base d'asta>
             // TAO fa partire timer di 3 secondi
             // inizia l'asta
@@ -121,13 +105,43 @@ void create_taos(){
             // ai clienti viene detratto il prezzo
             // viene aggiornata la lista delle risorse richieste dal cliente
             // deallocare memoria condivisa
+ */
+void create_taos(){
+	int i = 0;
+	while(avail_resources->list->next){
+		// definire un qualche modo per inserire il limite di 3 tao per volta {
+			printf("[AUCTIONEER CREAZIONE TAO] %s\n", avail_resources->list->name);
+			fflush(stdout);
+			int shm_id;
+			/* tao creation */
+			shm_id = shmget(IPC_PRIVATE, sizeof(tao), IPC_CREAT | 0600);
+			if(shm_id == -1)
+				perror("shmget");
+			/* tao attach */
+			tao* t;
+			t = (tao*) shmat(shm_id, NULL, 0);
+			/* tao use */
+			// settare la base d'asta
+			t->min_price = avail_resources->list->cost;
+			int sem_id;
+			/* semaphore creation */
+			sem_id = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
+			if(sem_id == -1)
+				perror("semget");
+			/* semaphore regulation // CONTROLLARE I PARAMETRI */
+			int ctl = semctl(sem_id, 1, SETVAL, 1);
+			/* get interested client to current resource*/
+			/* association of sem and shm to interested client with message */
+			/* timer of 3 seconds before the start of auction*/
+			/* start of auction -> clients can do their bids */
+			/* auction's lifetime is set */
+			/* reading of tao */
+			/* resource's assignment to clients with messsage */
+			/* and reducing of budget and update of his resource */
+			/* deallocare tao */
+		//} 
+	}
 
-            // ...
-            opened_auctions += 1;
-        }else{
-            // attesa che un'altra asta termini per farne partire un'altra
-        }
-    }*/
 }
 
 
@@ -139,7 +153,7 @@ int main(int argc, char** argv){
      */
     if (argc >= 2 && strcmp(argv[1], "-m") == 0){
         msqid = atoi(argv[2]);
-        fprintf(stdout, "[auctioneer] Using message queue %d\n", msqid);
+        //fprintf(stdout, "[auctioneer] Using message queue %d\n", msqid);
     } else {
         fprintf(stderr, "[auctioneer] Error: msqid (-m) argument not valid.\n");
         return -1;
@@ -147,21 +161,25 @@ int main(int argc, char** argv){
 
     loadResources();
 
+	
     /**
      * Listen to all clients introduction.
      */
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     while (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1){
         int res_lenght = intr->resources_length;
-        printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
+        //printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
         int i = 0;
         for (; i < intr->resources_length; i++){
-            printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
+            //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
         }
     }
+    
 
     create_taos();
 
+	
+	
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
     /* because auctioneer is main's child */

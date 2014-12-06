@@ -2,11 +2,15 @@
 #include <stdio.h>
 
 #define MAX_OFFER 5
-#define MAX_CLIENT 5;
+#define MAX_CLIENT 5
+
+
 // TAO = LISTA DI OFFERTE
 
 // un tao per risorsa / ogni tao contiene max 5 offerte
 
+
+/* Client's bid in the tao */
 typedef struct _bid{
     int client_pid;
     int quantity;
@@ -20,17 +24,14 @@ typedef struct _bid{
  * Manca taoInformation = clienti interessati a quel tao
  */
 typedef struct _tao{
-    // char* id;
-    // bid singleOffer;
-    client interested_client[MAX_CLIENT];
+    //client interested_client[MAX_CLIENT];
     bid bids[MAX_OFFER];
+    int min_price; /* base d'asta */
     //int riempimento = 0;
     // struct _tao* next;
 } tao;
 
-
-int offers_count = 0;
-
+/*
 tao* create_tao(){
     tao* new_tao = (tao*) malloc(sizeof(tao));
     int j = 0;
@@ -41,7 +42,7 @@ tao* create_tao(){
     //     new_tao->next = *nextNode;
     return new_tao;
 }
-
+*/
 
 /**
  * Support function to make_bid.
@@ -56,9 +57,11 @@ void replace_bids(int n, bid* new_bid, tao* auction_tao){
 
 
 /**
+ * Adds bid from the client.
  * Precondizione: l'agente ha già controllato se la sua offerta è tra le migliori --> non fa l'offerta con make bid
  * Precondizione: l'agente ha già aumentato la unit_offer rispetto alla offerta precedente
- * Precondizione: l'agente si può permettere la unit_offer
+ * Precondizione: l'agente si può permettere (come budget) la unit_offer
+ * Algoritmo:
  *   * controlla l'offerta minima nel tao
      * l'agente ha già un'offerta nel tao?
      * 	se si --> controlla se l'offerta che vuole fare sia maggiore del minimo
@@ -79,9 +82,9 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 
     for(; i < MAX_OFFER; i++){
       if(auction_tao->bids[i].unit_offer < min_bid){
-	min_bid = auction_tao->bids[i].unit_offer;
-	index_min_bid = i;
-	pid_min_bid = auction_tao->bids[i].client_pid;
+			min_bid = auction_tao->bids[i].unit_offer;
+			index_min_bid = i;
+			pid_min_bid = auction_tao->bids[i].client_pid;
       }
     }
     // nuovo bid
@@ -100,16 +103,15 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 
     // l'agente ha già un'offerta nel tao?
     int has_bid = 0, own_bid = NULL;
-    for(i = 0; i < MAX_OFFER; i++){
-      if(auction_tao->bids[i].client_pid == pid){
-	has_bid = 1;
-	own_bid = i;
+		for(i = 0; i < MAX_OFFER; i++){
+		  if(auction_tao->bids[i].client_pid == pid){
+			has_bid = 1;
+			own_bid = i;
       }
     }
 
     // controlla se l'offerta che vuole fare è maggiore del minimo
     if(unit_offer > min_bid){
-<<<<<<< HEAD
 		// ha già un'offerta nel tao --> sostituisce la "propria entry"
 		if(has_bid){
 			replace_bids(own_bid, new_bid, auction_tao);
@@ -125,48 +127,6 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 		}
 	}
     return -1;    
-}
-
-/**
- * Support function to make_bid.
- */
-replace_bids(int n, bid* new_bid, tao* auction_tao){
-  bid tmp;
-  tmp = auction_tao->bids[n];
-  tmp.client_pid = new_bid->client_pid;
-  tmp.quantity = new_bid->quantity;
-  tmp.unit_offer = new_bid->unit_offer;
-=======
-      // ha già un'offerta nel tao --> sostituisce la "propria entry"
-      if(has_bid){
-	/*
-	auction_tao->bids[own_bid].client_pid = new_bid->client_pid;
-	auction_tao->bids[own_bid].quantity = new_bid->quantity;
-	auction_tao->bids[own_bid].unit_offer = new_bid->unit_offer;
-	*/
-	replace_bids(own_bid, new_bid, auction_tao);
-      // non ha offerte nel tao
-      }else{
-	// aggiunge la propria offerta nello spazio vuoto
-	if(empty_index >= 0){
-	  /*
-	  auction_tao->bids[empty_index].client_pid = new_bid->client_pid;
-	  auction_tao->bids[empty_index].quantity = new_bid->quantity;
-	  auction_tao->bids[empty_index].unit_offer = new_bid->unit_offer;*/
-	  replace_bids(empty_index, new_bid, auction_tao);
-	// sovrascrive l'offerta di prezzo minore
-	}else{
-	  /*
-	  auction_tao->bids[index_min_bid].client_pid = new_bid->client_pid;
-	  auction_tao->bids[index_min_bid].quantity = new_bid->quantity;
-	  auction_tao->bids[index_min_bid].unit_offer = new_bid->unit_offer;
-	  */
-	  replace_bids(index_min_bid, new_bid, auction_tao);
-	}
-      }
-    }else
-      return -1;
->>>>>>> 630667997be0ad40a602c71ef17c8e7ee3422594
 }
 
 // /**

@@ -5,12 +5,6 @@
 #include "resource.h"
 #include "introduction.h"
 
-#define MAX_RESOURCE 10
-
-typedef struct _client {
-    pid_t client_pid;
-	resource interested_resource[MAX_RESOURCE];
-} client;
 
 int msqid;
 int client_num;
@@ -61,9 +55,9 @@ void load_resources(){
                 i++;
                 token = strtok(NULL, ";");
             }
-            printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
+            //printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
+            
             // resourcesNumber++;
-
             // required_resources[required_resources_length++] = name;
 
             /* Adds the read resources inside the required resources ist */
@@ -118,7 +112,7 @@ int main(int argc, char** argv){
     if (argc >= 4 && strcmp(argv[1], "-m") == 0 && strcmp(argv[3], "-c") == 0){
         msqid = atoi(argv[2]);
         client_num = atoi(argv[4]);
-        fprintf(stdout, "[client][%d][%d] Using message queue %d\n", client_num, pid, msqid);
+        //fprintf(stdout, "[client][%d][%d] Using message queue %d\n", client_num, pid, msqid);
     } else {
         fprintf(stderr, "[client][%d] Error: msqid (-m) or client number (-c) argument not valid.\n", pid);
         return -1;
@@ -126,8 +120,6 @@ int main(int argc, char** argv){
 
     load_resources();
     send_presentation();
-
-
 
     fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
     fflush(stdout);

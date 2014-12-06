@@ -15,7 +15,6 @@ extern int errno;       /* Externally declared (by kernel) */
  * Creates the auctioneer process.
  */
 int create_auctioneer(int msqid){
-    // TODO: registrazione clienti al banditore (pid, risorsa interessata)
     char str_msqid [32];
     sprintf(str_msqid, "%d", msqid);
 
