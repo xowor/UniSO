@@ -12,6 +12,7 @@
 #include "resource.h"
 #include "tao.h"
 #include "introduction.h"
+#include "config.h"
 
 #define MAX_RESOURCES 32            /* The maximum number of available resources */
 #define MAX_OPEN_AUCTIONS 3         /* At the same time, there are at the height 3 tao */
@@ -104,7 +105,7 @@ void alarm_handler(){
  *  definire i semafori ++ e -- dei semafori
  *  contattare i clienti con un messaggio
  *  definire la durata dell'asta
- * 
+ *
             // informare clienti con un messaggio <id shm del tao, id semaforo, prezzo base d'asta>
             // TAO fa partire timer di 3 secondi
             // inizia l'asta
@@ -125,6 +126,7 @@ void create_taos(){
 	int ctl_max_tao;
 	ctl_max_tao = semctl(sem_max_tao, 1, SETVAL, 1);
 	int i = 0;
+
 	while(avail_resources->list->next){
 		
 		// definire un qualche modo per inserire il limite di 3 tao per volta {
@@ -176,25 +178,33 @@ int main(int argc, char** argv){
 
     loadResources();
 
-	
+
     /**
      * Listen to all clients introduction.
      */
     introduction* intr = (introduction*) malloc(sizeof(introduction));
-    while (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1){
+    int introd_count = 0;
+    while ( (introd_count >= MAX_CLIENTS) && (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1) ){
+        introd_count++;
         int res_lenght = intr->resources_length;
         //printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
         int i = 0;
         for (; i < intr->resources_length; i++){
             //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
         }
+
+        // /*  */
+        // if (introd_count >= MAX_CLIENTS){
+        //     msgctl(msqid, )
+        // }
+
     }
-    
+
 
     create_taos();
 
-	
-	
+
+
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
     /* because auctioneer is main's child */

@@ -6,8 +6,7 @@
 #include <sys/msg.h>
 #include <sys/wait.h>
 #include "resource.h"
-
-#define MAX_CLIENTS 5
+#include "config.h"
 
 extern int errno;       /* Externally declared (by kernel) */
 
