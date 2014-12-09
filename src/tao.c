@@ -1,8 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include "config.h"
+
+#include "log.c"
 
 #define MAX_OFFER 5
-#define MAX_CLIENT 5
 
 
 // TAO = LISTA DI OFFERTE
@@ -24,7 +27,10 @@ typedef struct _bid{
  * Manca taoInformation = clienti interessati a quel tao
  */
 typedef struct _tao{
-    //client interested_client[MAX_CLIENT];
+    char name[MAX_RES_NAME_LENGTH];
+    pid_t interested_clients[MAX_CLIENTS];
+    int interested_clients_count;
+    int base_bid;
     bid bids[MAX_OFFER];
     int min_price; /* base d'asta */
     //int riempimento = 0;
@@ -55,6 +61,96 @@ void replace_bids(int n, bid* new_bid, tao* auction_tao){
   tmp.unit_offer = new_bid->unit_offer;
 }
 
+
+tao** taos;
+int taos_count;
+
+
+/**
+ * Initializes the TAO array with the given number of required TAOs
+ */
+void init_taos(int number){
+    tao* taos_arr[number];
+    taos_count = taos_count;
+    taos = taos_arr;
+}
+
+
+void create_tao(char name[MAX_RES_NAME_LENGTH]){
+    tao* new_tao = (tao*) malloc(sizeof(tao));
+    // new_tao->name = (char*) malloc(sizeof(char) * MAX_RES_NAME_LENGTH);
+    strcpy(new_tao->name, name);
+    new_tao->interested_clients_count = 0;
+
+    new_tao->base_bid = BASE_BID;
+
+    /* Adds the new TAO to the TAOs array */
+    taos[taos_count++] = new_tao;
+
+    // printf("\x1b[32m%s\x1b[0m\n",  taos[0]->name);
+}
+
+
+tao* get_tao(int i){
+    return taos[i];
+}
+
+
+/**
+ * Registers the the client with the given pid to the given TAO (identified by
+ * its name)
+ */
+void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
+    // printf("\x1b[32m%s\x1b[0m\n",  taos[0]->name);
+    // printf("\x1b[32m%d\x1b[0m\n",  taos_count);
+    int i = 0;
+    for (; i < taos_count; i++){
+        so_log_b();
+        printf("%p\n", taos[i]);
+        printf("%s\n", taos[i]->name);
+    // if(strcmp(taos[i]->name, name) == -1)
+    //     perror("strcmp");
+    // else{
+    //     taos[i]->interested_clients[taos[i]->interested_clients_count++] = pid;
+
+        // if ( strcmp(taos[i]->name, name) == 0 ){
+        //     taos[i]->interested_clients[taos[i]->interested_clients_count++] = pid;
+        // }
+            so_log();
+    }
+    printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", pid, name);
+}
+
+
+/**
+ * Start (crates the shared memory area) the TAO with the given name.
+ */
+void start_tao(char name[MAX_RES_NAME_LENGTH]){
+    // int shm_id;
+    // /* tao creation */
+    // shm_id = shmget(IPC_PRIVATE, sizeof(tao), IPC_CREAT | 0600);
+    // if(shm_id == -1)
+    //     perror("shmget");
+    //     /* tao attach */
+    //     tao* t;
+    //     t = (tao*) shmat(shm_id, NULL, 0);
+    //     /* tao use */
+    //     // settare la base d'asta
+    //     t->min_price = avail_resources->list->cost;
+    //     int sem_id;
+    //     /* semaphore creation */
+    //     sem_id = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
+    //     if(sem_id == -1)
+    //         perror("semget");
+    //         /* semaphore regulation // CONTROLLARE I PARAMETRI */
+    //         int ctl = semctl(sem_id, 1, SETVAL, 1);
+    //         /* get interested client to current resource*/
+    //         /* association of sem and shm to interested client with message */
+    //         /* timer of 3 seconds before the start of auction */
+    //         alarm(3);
+    //         if(signal(SIGALRM, alarm_handler) == SIG_ERR)
+    //             perror("signal (SIG_ERR) error");
+}
 
 /**
  * Adds bid from the client.
@@ -126,7 +222,7 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 			}
 		}
 	}
-    return -1;    
+    return -1;
 }
 
 // /**

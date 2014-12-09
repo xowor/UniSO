@@ -1,6 +1,6 @@
-cpu;10;20;
-memory;400;20;
-hdd;100;10;
-cache;1;20;
-ethernet;10;21;
-optical;20;15;
+hdd;20;10;
+vga;10;75;
+cache;1;50;
+ethernet;15;22;
+wifi;20;13;
+bluetooth;10;6;

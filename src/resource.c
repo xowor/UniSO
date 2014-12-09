@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
+#include "config.h"
 
-#define MAX_RES_NAME_LENGTH 16
+// #include "log.c"
 
 
 // typedef resource* resourcesList;
@@ -37,10 +38,9 @@ resource* add_resource(resource_list* list, char name[MAX_RES_NAME_LENGTH], int 
     strcpy(new_resource->name, name);
     new_resource->availability = avail;
     new_resource->cost = cost;
-    // if ( list->list != NULL){
-        new_resource->next = list->list;
-        list->list = new_resource;
-        list->resources_count++;
-    // }
+    new_resource->next = list->list;
+    list->list = new_resource;
+    list->resources_count++;
+    printf("[[add_resource]] resource_list* list : %p , char name[MAX_RES_NAME_LENGTH] : %s , int avail %d , int cost %d \n", list, name, avail, cost);
     return new_resource;
 }
