@@ -8,6 +8,7 @@
 #include <sys/ipc.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include "resource.h"
 #include "tao.h"
 #include "introduction.h"
@@ -20,12 +21,12 @@
 extern int errno;                   /* Externally declared (by kernel) */
 
 // mai in sleep
-
+/*
 typedef struct _client {
     pid_t client_pid;
 	resource interested_resource[MAX_RESOURCE];
 } client;
-
+*/
 int msqid = 0;                       /* The id of the message queue */
 int opened_auctions = 0;             /* The number of opened auctions */
 resource_list* avail_resources;      /* The list containing all the available resources */
@@ -87,6 +88,15 @@ void loadResources(){
     fclose(resources);
 }
 
+void alarm_handler(){
+	printf("HERE WE ARE!!!!");
+	/* start of auction -> clients can do their bids */
+	/* auction's lifetime is set */
+	/* reading of tao */
+	/* resource's assignment to clients with messsage */
+	/* and reducing of budget and update of his resource */
+	/* deallocare tao */
+}
 
 /**
  * // SPOSTARLO IN TAO IN UN SECONDO MOMENTO
@@ -107,8 +117,16 @@ void loadResources(){
             // deallocare memoria condivisa
  */
 void create_taos(){
+	/* semaphore for 3 tao at the same time */
+	int sem_max_tao;
+	sem_max_tao = semget(IPC_PRIVATE, 3, S_IRUSR | S_IWUSR);
+	if(sem_max_tao == -1)
+		perror("semget");
+	int ctl_max_tao;
+	ctl_max_tao = semctl(sem_max_tao, 1, SETVAL, 1);
 	int i = 0;
 	while(avail_resources->list->next){
+		
 		// definire un qualche modo per inserire il limite di 3 tao per volta {
 			printf("[AUCTIONEER CREAZIONE TAO] %s\n", avail_resources->list->name);
 			fflush(stdout);
@@ -132,14 +150,11 @@ void create_taos(){
 			int ctl = semctl(sem_id, 1, SETVAL, 1);
 			/* get interested client to current resource*/
 			/* association of sem and shm to interested client with message */
-			/* timer of 3 seconds before the start of auction*/
-			/* start of auction -> clients can do their bids */
-			/* auction's lifetime is set */
-			/* reading of tao */
-			/* resource's assignment to clients with messsage */
-			/* and reducing of budget and update of his resource */
-			/* deallocare tao */
-		//} 
+			/* timer of 3 seconds before the start of auction */
+			alarm(3);
+			if(signal(SIGALRM, alarm_handler) == SIG_ERR)
+				perror("signal (SIG_ERR) error");
+		
 	}
 
 }

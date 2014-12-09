@@ -40,17 +40,17 @@ void load_resources(){
                 /* In each line there are 4 tokens: name, available, cost and \n */
                 switch(i%4){
                     case 0:
-                    strcat(token, "\0");
-                    strcpy(name, token);
-                    break;
+						strcat(token, "\0");
+						strcpy(name, token);
+						break;
                     case 1:
-                    tmp = token;
-                    avail = atoi(tmp);
-                    break;
+						tmp = token;
+						avail = atoi(tmp);
+						break;
                     case 2:
-                    tmp = token;
-                    cost = atoi(tmp);
-                    break;
+						tmp = token;
+						cost = atoi(tmp);
+						break;
                 }
                 i++;
                 token = strtok(NULL, ";");
