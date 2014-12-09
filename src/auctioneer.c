@@ -8,7 +8,6 @@
 #include <sys/ipc.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <signal.h>
 #include "resource.h"
 #include "tao.h"
 #include "introduction.h"
@@ -22,12 +21,12 @@
 extern int errno;                   /* Externally declared (by kernel) */
 
 // mai in sleep
-/*
+
 typedef struct _client {
     pid_t client_pid;
 	resource interested_resource[MAX_RESOURCE];
 } client;
-*/
+
 int msqid = 0;                       /* The id of the message queue */
 int opened_auctions = 0;             /* The number of opened auctions */
 resource_list* avail_resources;      /* The list containing all the available resources */
@@ -87,15 +86,6 @@ void loadResources(){
     fclose(resources);
 }
 
-void alarm_handler(){
-	printf("HERE WE ARE!!!!");
-	/* start of auction -> clients can do their bids */
-	/* auction's lifetime is set */
-	/* reading of tao */
-	/* resource's assignment to clients with messsage */
-	/* and reducing of budget and update of his resource */
-	/* deallocare tao */
-}
 
 /**
  * // SPOSTARLO IN TAO IN UN SECONDO MOMENTO
@@ -116,14 +106,8 @@ void alarm_handler(){
             // deallocare memoria condivisa
  */
 void create_taos(){
-	/* semaphore for 3 tao at the same time */
-	int sem_max_tao;
-	sem_max_tao = semget(IPC_PRIVATE, 3, S_IRUSR | S_IWUSR);
-	if(sem_max_tao == -1)
-		perror("semget");
-	int ctl_max_tao;
-	ctl_max_tao = semctl(sem_max_tao, 1, SETVAL, 1);
 	int i = 0;
+
 	resource* tmp_resource = avail_resources->list;
 
 	while(tmp_resource->next){
@@ -156,6 +140,7 @@ void create_taos(){
 		tmp_resource = tmp_resource->next;
 	}
 
+
 }
 
 
@@ -187,14 +172,8 @@ int main(int argc, char** argv){
         //printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
         int i = 0;
         for (; i < intr->resources_length; i++){
-            //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
+            printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
         }
-
-        // /*  */
-        // if (introd_count >= MAX_CLIENTS){
-        //     msgctl(msqid, )
-        // }
-
     }
 
 
