@@ -52,7 +52,7 @@ void loadResources(){
     resources = fopen("../resource.txt", "r");
     if( resources != NULL ){
         /* Reads each line from file */
-        while( fgets(line, MAX_RES_NAME_LENGTH, resources) != NULL ){
+        while( fgets(line, MAX_RES_NAME_LENGTH + 32, resources) != NULL ){
             token = strtok(line, ";");
             i = 0;
             name = (char*) malloc(MAX_RES_NAME_LENGTH);
@@ -84,8 +84,6 @@ void loadResources(){
     }else{
         fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
     }
-    // 	QUI SI PIANTA!!!!
-    // fflush(stdout);
     fclose(resources);
 }
 
@@ -126,37 +124,36 @@ void create_taos(){
 	int ctl_max_tao;
 	ctl_max_tao = semctl(sem_max_tao, 1, SETVAL, 1);
 	int i = 0;
+	resource* tmp_resource = avail_resources->list;
 
-	while(avail_resources->list->next){
-		
-		// definire un qualche modo per inserire il limite di 3 tao per volta {
-			printf("[AUCTIONEER CREAZIONE TAO] %s\n", avail_resources->list->name);
+	while(tmp_resource->next){
+			printf("[AUCTIONEER CREAZIONE TAO] %s;%d;%d;\n", tmp_resource->name,tmp_resource->availability,tmp_resource->cost);
 			fflush(stdout);
-			int shm_id;
-			/* tao creation */
-			shm_id = shmget(IPC_PRIVATE, sizeof(tao), IPC_CREAT | 0600);
-			if(shm_id == -1)
-				perror("shmget");
-			/* tao attach */
-			tao* t;
-			t = (tao*) shmat(shm_id, NULL, 0);
-			/* tao use */
-			// settare la base d'asta
-			t->min_price = avail_resources->list->cost;
-			int sem_id;
-			/* semaphore creation */
-			sem_id = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
-			if(sem_id == -1)
-				perror("semget");
-			/* semaphore regulation // CONTROLLARE I PARAMETRI */
-			int ctl = semctl(sem_id, 1, SETVAL, 1);
-			/* get interested client to current resource*/
-			/* association of sem and shm to interested client with message */
-			/* timer of 3 seconds before the start of auction */
-			alarm(3);
-			if(signal(SIGALRM, alarm_handler) == SIG_ERR)
-				perror("signal (SIG_ERR) error");
-		
+			//~ int shm_id;
+			//~ /* tao creation */
+			//~ shm_id = shmget(IPC_PRIVATE, sizeof(tao), IPC_CREAT | 0600);
+			//~ if(shm_id == -1)
+				//~ perror("shmget");
+			//~ /* tao attach */
+			//~ tao* t;
+			//~ t = (tao*) shmat(shm_id, NULL, 0);
+			//~ /* tao use */
+			//~ // settare la base d'asta
+			//~ t->min_price = avail_resources->list->cost;
+			//~ int sem_id;
+			//~ /* semaphore creation */
+			//~ sem_id = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
+			//~ if(sem_id == -1)
+				//~ perror("semget");
+			//~ /* semaphore regulation // CONTROLLARE I PARAMETRI */
+			//~ int ctl = semctl(sem_id, 1, SETVAL, 1);
+			//~ /* get interested client to current resource*/
+			//~ /* association of sem and shm to interested client with message */
+			//~ /* timer of 3 seconds before the start of auction */
+			//~ alarm(3);
+			//~ if(signal(SIGALRM, alarm_handler) == SIG_ERR)
+				//~ perror("signal (SIG_ERR) error");
+		tmp_resource = tmp_resource->next;
 	}
 
 }
@@ -201,7 +198,7 @@ int main(int argc, char** argv){
     }
 
 
-    create_taos();
+    //create_taos();
 
 
 
