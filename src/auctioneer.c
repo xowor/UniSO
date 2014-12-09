@@ -11,6 +11,7 @@
 #include "resource.h"
 #include "tao.h"
 #include "introduction.h"
+#include "config.h"
 
 #define MAX_RESOURCES 32            /* The maximum number of available resources */
 #define MAX_OPEN_AUCTIONS 3         /* At the same time, there are at the height 3 tao */
@@ -94,7 +95,7 @@ void loadResources(){
  *  definire i semafori ++ e -- dei semafori
  *  contattare i clienti con un messaggio
  *  definire la durata dell'asta
- * 
+ *
             // informare clienti con un messaggio <id shm del tao, id semaforo, prezzo base d'asta>
             // TAO fa partire timer di 3 secondi
             // inizia l'asta
@@ -108,39 +109,40 @@ void loadResources(){
  */
 void create_taos(){
 	int i = 0;
-	while(avail_resources->list->next){
-		// definire un qualche modo per inserire il limite di 3 tao per volta {
-			printf("[AUCTIONEER CREAZIONE TAO] %s\n", avail_resources->list->name);
-			fflush(stdout);
-			int shm_id;
-			/* tao creation */
-			shm_id = shmget(IPC_PRIVATE, sizeof(tao), IPC_CREAT | 0600);
-			if(shm_id == -1)
-				perror("shmget");
-			/* tao attach */
-			tao* t;
-			t = (tao*) shmat(shm_id, NULL, 0);
-			/* tao use */
-			// settare la base d'asta
-			t->min_price = avail_resources->list->cost;
-			int sem_id;
-			/* semaphore creation */
-			sem_id = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
-			if(sem_id == -1)
-				perror("semget");
-			/* semaphore regulation // CONTROLLARE I PARAMETRI */
-			int ctl = semctl(sem_id, 1, SETVAL, 1);
-			/* get interested client to current resource*/
-			/* association of sem and shm to interested client with message */
-			/* timer of 3 seconds before the start of auction*/
-			/* start of auction -> clients can do their bids */
-			/* auction's lifetime is set */
-			/* reading of tao */
-			/* resource's assignment to clients with messsage */
-			/* and reducing of budget and update of his resource */
-			/* deallocare tao */
-		//} 
-	}
+
+	// while(avail_resources->list->next){
+	// 	// definire un qualche modo per inserire il limite di 3 tao per volta {
+	// 		printf("[AUCTIONEER CREAZIONE TAO] %s\n", avail_resources->list->name);
+	// 		fflush(stdout);
+	// 		int shm_id;
+	// 		/* tao creation */
+	// 		shm_id = shmget(IPC_PRIVATE, sizeof(tao), IPC_CREAT | 0600);
+	// 		if(shm_id == -1)
+	// 			perror("shmget");
+	// 		/* tao attach */
+	// 		tao* t;
+	// 		t = (tao*) shmat(shm_id, NULL, 0);
+	// 		/* tao use */
+	// 		// settare la base d'asta
+	// 		t->min_price = avail_resources->list->cost;
+	// 		int sem_id;
+	// 		/* semaphore creation */
+	// 		sem_id = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
+	// 		if(sem_id == -1)
+	// 			perror("semget");
+	// 		/* semaphore regulation // CONTROLLARE I PARAMETRI */
+	// 		int ctl = semctl(sem_id, 1, SETVAL, 1);
+	// 		/* get interested client to current resource*/
+	// 		/* association of sem and shm to interested client with message */
+	// 		/* timer of 3 seconds before the start of auction*/
+	// 		/* start of auction -> clients can do their bids */
+	// 		/* auction's lifetime is set */
+	// 		/* reading of tao */
+	// 		/* resource's assignment to clients with messsage */
+	// 		/* and reducing of budget and update of his resource */
+	// 		/* deallocare tao */
+	// 	//}
+	// }
 
 }
 
@@ -161,25 +163,33 @@ int main(int argc, char** argv){
 
     loadResources();
 
-	
+
     /**
      * Listen to all clients introduction.
      */
     introduction* intr = (introduction*) malloc(sizeof(introduction));
-    while (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1){
+    int introd_count = 0;
+    while ( (introd_count >= MAX_CLIENTS) && (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1) ){
+        introd_count++;
         int res_lenght = intr->resources_length;
         //printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
         int i = 0;
         for (; i < intr->resources_length; i++){
             //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
         }
+
+        // /*  */
+        // if (introd_count >= MAX_CLIENTS){
+        //     msgctl(msqid, )
+        // }
+
     }
-    
+
 
     create_taos();
 
-	
-	
+
+
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
     /* because auctioneer is main's child */
