@@ -39,6 +39,8 @@ void so_log(char c){
         printf("%s[##############]%s\n", ANSI_COLOR_RED, ANSI_COLOR_RESET);
         break;
     }
+
+    fflush(stdout);
 }
 
 void so_log_i(char c, int i){
@@ -72,6 +74,8 @@ void so_log_i(char c, int i){
         printf("%s[####### %d #######]%s\n", ANSI_COLOR_RED, i, ANSI_COLOR_RESET);
         break;
     }
+
+    fflush(stdout);
 }
 
 void so_log_s(char c, char* s){
@@ -105,6 +109,8 @@ void so_log_s(char c, char* s){
         printf("%s[####### %s #######]%s\n", ANSI_COLOR_RED, s, ANSI_COLOR_RESET);
         break;
     }
+
+    fflush(stdout);
 }
 
 void so_log_p(char c, void* p){
@@ -138,4 +144,41 @@ void so_log_p(char c, void* p){
         printf("%s[####### %p #######]%s\n", ANSI_COLOR_RED, p, ANSI_COLOR_RESET);
         break;
     }
+
+    fflush(stdout);
+}
+
+void so_log_is(char c, int i, char* s){
+    switch (c)
+    {
+        case 'r':
+        printf("%s[###### %d ## %s ######]%s\n", ANSI_COLOR_RED, i, s, ANSI_COLOR_RESET);
+        break;
+
+        case 'g':
+        printf("%s[###### %d ## %s ######]%s\n", ANSI_COLOR_GREEN, i, s, ANSI_COLOR_RESET);
+        break;
+
+        case 'y':
+        printf("%s[###### %d ## %s ######]%s\n", ANSI_COLOR_YELLOW, i, s, ANSI_COLOR_RESET);
+        break;
+
+        case 'b':
+        printf("%s[###### %d ## %s ######]%s\n", ANSI_COLOR_BLUE, i, s, ANSI_COLOR_RESET);
+        break;
+
+        case 'm':
+        printf("%s[###### %d ## %s ######]%s\n", ANSI_COLOR_MAGENTA, i, s, ANSI_COLOR_RESET);
+        break;
+
+        case 'c':
+        printf("%s[###### %d ## %s ######]%s\n", ANSI_COLOR_CYAN, i, s, ANSI_COLOR_RESET);
+        break;
+
+        default:
+        printf("%s[###### %d ## %s ######]%s\n", ANSI_COLOR_RED, i, s, ANSI_COLOR_RESET);
+        break;
+    }
+
+    fflush(stdout);
 }

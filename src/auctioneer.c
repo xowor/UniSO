@@ -12,6 +12,7 @@
 #include "tao.h"
 #include "introduction.h"
 #include "semaphore.h"
+#include "simple_message.h"
 #include "config.h"
 
 
@@ -33,6 +34,8 @@ int opened_auctions = 0;             /* The number of opened auctions */
 
 resource_list* avail_resources;      /* The list containing all the available resources */
 int avail_resources_count;           /* The number of all the available resources */
+
+int registered_clients;
 
 /**
  * Reads from file all the available resources.
@@ -107,6 +110,50 @@ void alarm_handler(int sig){
 	// clienti iniziano a fare le offerte
 }
 
+
+void notify_tao_opened(char* tao_res){
+    // [TODO] SEMAFORO PER LA SCRITTURA
+    int i = 0;
+    for (; i < registered_clients; i++){
+        /* Allocates the simple_message message */
+        simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+        msg_content content;
+        msg->content = content;
+
+        /* Initializes PID */
+        msg->pid = getpid();
+        strcpy(msg->msg, AUCTION_READY_MSG);
+        strcpy(msg->content.s, tao_res);
+
+        /**
+        * Sends a message to the auctioneer containing the client pid and the
+        * required resources.
+        */
+        msgsnd(msqid, msg, sizeof(simple_message) - sizeof(long), 0600);
+    }
+}
+
+
+/**
+ * Listen to all clients introduction.
+ */
+void listen_introductions(){
+    // [TODO] SEMAFORO PER LA LETTURA
+    introduction* intr = (introduction*) malloc(sizeof(introduction));
+    registered_clients = 0;
+
+    while ( (registered_clients < MAX_CLIENTS) && (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1) ){
+        registered_clients++;
+        printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
+        int i = 0;
+        /* associates the pid's client to related tao, where there is the resource interested to client */
+        for (; i < intr->resources_length; i++){
+            sign_to_tao(intr->pid, intr->resources[i]);
+            //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
+        }
+    }
+}
+
 /* Starts 3 tao at a time */
 void start_auction(){
 	int sem_id;
@@ -121,10 +168,16 @@ void start_auction(){
 	for(; i < avail_resources_count; i++){
 		current_tao = get_tao(i);
 		/* NON STAMPA TUTTE LE RISORSE E NON ENTRA IN START TAO */
-		so_log_s('r', current_tao->name);
+
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
-		
+        char name[MAX_RES_NAME_LENGTH];
+        so_log_p('r', current_tao->name);
+        so_log_s('r', current_tao->name);
+        strcpy(name, current_tao->name);
+		so_log_s('r', name);
+        notify_tao_opened(name);
+
 		/* timer of 3 seconds before the start of auction */
 		if(signal(SIGALRM, alarm_handler) == SIG_ERR)
 			perror("signal (SIG_ERR) error");
@@ -141,7 +194,7 @@ int main(int argc, char** argv){
      */
     if (argc >= 2 && strcmp(argv[1], "-m") == 0){
         msqid = atoi(argv[2]);
-        //fprintf(stdout, "[auctioneer] Using message queue %d\n", msqid);
+        fprintf(stdout, "[auctioneer] Using message queue %d\n", msqid);
     } else {
         fprintf(stderr, "[auctioneer] Error: msqid (-m) argument not valid.\n");
         return -1;
@@ -149,25 +202,14 @@ int main(int argc, char** argv){
 
 	/* Read resources from file */
     load_resources();
+
     /* Create only the structure of all taos, without the client's list and relative bids */
     create_taos();
 
-    /**
-     * Listen to all clients introduction.
-     */
-    introduction* intr = (introduction*) malloc(sizeof(introduction));
-    int introd_count = 0;
-    while ( (introd_count < MAX_CLIENTS) && (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1) ){
-        introd_count++;
-        printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
-        int i = 0;
-        /* associates the pid's client to related tao, where there is the resource interested to client */
-        for (; i < intr->resources_length; i++){
-            sign_to_tao(intr->pid, intr->resources[i]);
-            //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
-        }
-    }    
-    
+    listen_introductions();
+
+            so_log('g');
+
     /* Start max 3 tao at a time */
     start_auction();
 
