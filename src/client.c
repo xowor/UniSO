@@ -142,7 +142,6 @@ int main(int argc, char** argv){
     send_introduction();
     listen_auction_start();
 
-    // msgctl();
 
     fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
     fflush(stdout);

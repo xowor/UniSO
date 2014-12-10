@@ -54,10 +54,12 @@ void load_resources(){
     resources = fopen("../resource.txt", "r");
     if( resources != NULL ){
         /* Reads each line from file */
-        while( fgets(line, MAX_RES_NAME_LENGTH + 32, resources) != NULL ){
+        while( fgets(line, MAX_RES_NAME_LENGTH + 32, resources) != NULL  && line ){
             token = strtok(line, ";");
             i = 0;
             name = (char*) malloc(MAX_RES_NAME_LENGTH);
+            // so_log_i('g', strlen(line));
+            so_log_p('g', line);
             while( token ){
                 /* In each line there are 4 tokens: name, available, cost and \n */
                 switch(i%4){
@@ -206,13 +208,17 @@ int main(int argc, char** argv){
     /* Create only the structure of all taos, without the client's list and relative bids */
     create_taos();
 
+            so_log('g');
     listen_introductions();
 
-            so_log('g');
 
     /* Start max 3 tao at a time */
     start_auction();
 
+    // if( msgctl( msqid, IPC_RMID, NULL) == -1){
+    //     perror( strerror(errno) );
+    //     return(-1);
+    // }
 
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
