@@ -70,14 +70,8 @@ int taos_count;
  * Initializes the TAO array with the given number of required TAOs
  */
 void init_taos(int number){
-<<<<<<< HEAD
+	taos_count = 0;
     taos = (tao**) malloc(sizeof(tao) * number);
-    taos_count = 0;
-=======
-    tao* taos_arr[number];
-    taos_count = 0;
-    taos = taos_arr;
->>>>>>> 8adb4a407dc71a8564926900753f3b9b47429ab1
 }
 
 
