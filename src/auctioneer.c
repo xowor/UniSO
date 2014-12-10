@@ -74,13 +74,13 @@ void load_resources(){
             printf("[auctioneer] Resource available: %s %d %d \n", name, avail, cost);
             avail_resources_count++;
 
-            printf("[[NAME: %s]]", name);
 			add_resource(avail_resources, name, avail, cost);
             fflush(stdout);
         }
+    } else {
+        fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
+        fclose(resources);
     }
-    fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
-    fclose(resources);
 }
 
 
@@ -111,9 +111,6 @@ void create_taos(){
 
 	/* adds name's resource and common informations to each tao */
 	while(tmp_resource->next){
-		// printf("[AUCTIONEER CREAZIONE TAO] %s;%d;%d;\n", tmp_resource->name,tmp_resource->availability,tmp_resource->cost);
-		// fflush(stdout);
-        printf("\x1b[32m%s\x1b[0m\n",  get_tao(0)->name);
         create_tao(tmp_resource->name);
 		tmp_resource = tmp_resource->next;
 	}
@@ -135,9 +132,8 @@ int main(int argc, char** argv){
     }
 
 	/* Read resources from file */
-    if(!load_resources())
-		printf("Errore nel caricamento delle risorse.\n");
-    /* create only the structure of all taos, without the client's list and relative bids */
+    load_resources();
+    /* Create only the structure of all taos, without the client's list and relative bids */
     create_taos();
 
     /**
@@ -157,7 +153,7 @@ int main(int argc, char** argv){
     }
     
     /* Associates each tao to an shm */
-    start_tao();
+    //start_tao();
 
 
 
