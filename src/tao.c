@@ -70,14 +70,8 @@ int taos_count;
  * Initializes the TAO array with the given number of required TAOs
  */
 void init_taos(int number){
-<<<<<<< HEAD
     taos = (tao**) malloc(sizeof(tao) * number);
     taos_count = 0;
-=======
-    tao* taos_arr[number];
-    taos_count = 0;
-    taos = taos_arr;
->>>>>>> 8adb4a407dc71a8564926900753f3b9b47429ab1
 }
 
 
@@ -103,22 +97,13 @@ tao* get_tao(int i){
  * its name)
  */
 void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
-    so_log_p('y', taos[0]);
     int i = 0;
     for (; i < taos_count; i++){
-        // printf("%p\n", taos[i]);
-        // printf("%s\n", taos[i]->name);
-    // if(strcmp(taos[i]->name, name) == -1)
-    //     perror("strcmp");
-    // else{
-    //     taos[i]->interested_clients[taos[i]->interested_clients_count++] = pid;
-
-        // if ( strcmp(taos[i]->name, name) == 0 ){
-        //     taos[i]->interested_clients[taos[i]->interested_clients_count++] = pid;
-        // }
-            // so_log();
+        if(strcmp(taos[i]->name, name) == 0){
+            taos[i]->interested_clients[taos[i]->interested_clients_count++] = pid;
+        }
     }
-    // printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", pid, name);
+    printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", pid, name);
 }
 
 
