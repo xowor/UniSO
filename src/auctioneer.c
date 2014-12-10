@@ -11,6 +11,7 @@
 #include "resource.h"
 #include "tao.h"
 #include "introduction.h"
+#include "semaphore.h"
 #include "config.h"
 
 
@@ -165,11 +166,11 @@ int main(int argc, char** argv){
             sign_to_tao(intr->pid, intr->resources[i]);
             //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
         }
-    }
-    
+    }    
     
     /* Start max 3 tao at a time */
     start_auction();
+
 
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
