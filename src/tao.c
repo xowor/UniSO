@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "so_log.h"
 #include "config.h"
 
-#include "log.c"
 
 #define MAX_OFFER 5
 
@@ -70,9 +70,8 @@ int taos_count;
  * Initializes the TAO array with the given number of required TAOs
  */
 void init_taos(int number){
-    tao* taos_arr[number];
-    taos_count = taos_count;
-    taos = taos_arr;
+    taos = (tao**) malloc(sizeof(tao) * number);
+    taos_count = 0;
 }
 
 
@@ -87,7 +86,7 @@ void create_tao(char name[MAX_RES_NAME_LENGTH]){
     /* Adds the new TAO to the TAOs array */
     taos[taos_count++] = new_tao;
 
-    // printf("\x1b[32m%s\x1b[0m\n",  taos[0]->name);
+    so_log_p('m', taos[0]);
 }
 
 
@@ -101,13 +100,11 @@ tao* get_tao(int i){
  * its name)
  */
 void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
-    // printf("\x1b[32m%s\x1b[0m\n",  taos[0]->name);
-    // printf("\x1b[32m%d\x1b[0m\n",  taos_count);
+    so_log_p('y', taos[0]);
     int i = 0;
     for (; i < taos_count; i++){
-        so_log_b();
-        printf("%p\n", taos[i]);
-        printf("%s\n", taos[i]->name);
+        // printf("%p\n", taos[i]);
+        // printf("%s\n", taos[i]->name);
     // if(strcmp(taos[i]->name, name) == -1)
     //     perror("strcmp");
     // else{
@@ -116,9 +113,9 @@ void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
         // if ( strcmp(taos[i]->name, name) == 0 ){
         //     taos[i]->interested_clients[taos[i]->interested_clients_count++] = pid;
         // }
-            so_log();
+            // so_log();
     }
-    printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", pid, name);
+    // printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", pid, name);
 }
 
 

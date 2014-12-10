@@ -34,10 +34,6 @@ int opened_auctions = 0;             /* The number of opened auctions */
 resource_list* avail_resources;      /* The list containing all the available resources */
 int avail_resources_count;           /* The number of all the available resources */
 
-
-// mai in sleep
-
-
 /**
  * Reads from file all the available resources.
  */
@@ -83,9 +79,7 @@ void load_resources(){
 
             printf("[[NAME: %s]]", name);
             add_resource(avail_resources, name, avail, cost);
-            // so_log();
             fflush(stdout);
-            // so_log();
         }
     }else{
         fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
@@ -118,15 +112,12 @@ void create_taos(){
 	int i = 0;
 
 	resource* tmp_resource = avail_resources->list;
-
 	while(tmp_resource->next){
 		// printf("[AUCTIONEER CREAZIONE TAO] %s;%d;%d;\n", tmp_resource->name,tmp_resource->availability,tmp_resource->cost);
 		// fflush(stdout);
         create_tao(tmp_resource->name);
-        // printf("\x1b[32m%s\x1b[0m\n",  get_tao(0)->name);
 		tmp_resource = tmp_resource->next;
 	}
-    // printf("\x1b[32m%s\x1b[0m\n",  get_tao(0)->name);
 }
 
 
@@ -152,14 +143,13 @@ int main(int argc, char** argv){
      */
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     int introd_count = 0;
-    while ( (introd_count <= MAX_CLIENTS) && (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1) ){
+    while ( (introd_count < MAX_CLIENTS) && (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1) ){
         introd_count++;
         int res_lenght = intr->resources_length;
         //printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
         int i = 0;
         for (; i < intr->resources_length; i++){
             sign_to_tao(intr->pid, intr->resources[i]);
-            so_log();
             //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
         }
     }

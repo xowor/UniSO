@@ -106,3 +106,36 @@ void so_log_s(char c, char* s){
         break;
     }
 }
+
+void so_log_p(char c, void* p){
+    switch (c)
+    {
+        case 'r':
+        printf("%s[####### %p #######]%s\n", ANSI_COLOR_RED, p, ANSI_COLOR_RESET);
+        break;
+
+        case 'g':
+        printf("%s[####### %p #######]%s\n", ANSI_COLOR_GREEN, p, ANSI_COLOR_RESET);
+        break;
+
+        case 'y':
+        printf("%s[####### %p #######]%s\n", ANSI_COLOR_YELLOW, p, ANSI_COLOR_RESET);
+        break;
+
+        case 'b':
+        printf("%s[####### %p #######]%s\n", ANSI_COLOR_BLUE, p, ANSI_COLOR_RESET);
+        break;
+
+        case 'm':
+        printf("%s[####### %p #######]%s\n", ANSI_COLOR_MAGENTA, p, ANSI_COLOR_RESET);
+        break;
+
+        case 'c':
+        printf("%s[####### %p #######]%s\n", ANSI_COLOR_CYAN, p, ANSI_COLOR_RESET);
+        break;
+
+        default:
+        printf("%s[####### %p #######]%s\n", ANSI_COLOR_RED, p, ANSI_COLOR_RESET);
+        break;
+    }
+}

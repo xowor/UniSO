@@ -51,7 +51,10 @@ CCADMIN=CCadmin
 
 
 # build
-build: resource tao main auctioneer client
+build:  resource tao main auctioneer client
+
+log: src/so_log.c
+	gcc -c src/so_log.c bin/so_log -g
 
 auctioneer: src/auctioneer.c
 	gcc src/auctioneer.c -o bin/auctioneer -g
@@ -76,7 +79,8 @@ main: src/main.c
 
 
 # clean
-clean: .clean-post
+clean:
+	rm -rf bin/*
 
 .clean-pre:
 # Add your pre 'clean' code here...

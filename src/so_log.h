@@ -6,5 +6,8 @@
 void so_log(char c);
 void so_log_i(char c, int i);
 void so_log_s(char c, char* s);
+void so_log_p(char c, void* p);
+
+// void so_deb(char* file, int line, )
 
 #endif // SO_LOG_H
