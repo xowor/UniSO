@@ -1,3 +1,4 @@
+#include <stdio.h>
 
 #define ANSI_COLOR_RED "\x1b[31m"
 #define ANSI_COLOR_GREEN "\x1b[32m"
@@ -11,31 +12,31 @@ void so_log(char c){
     switch (c)
     {
         case 'r':
-        printf("ANSI_COLOR_RED[##############]ANSI_COLOR_RESET");
+        printf("%s[##############]%s\n", ANSI_COLOR_RED, ANSI_COLOR_RESET);
         break;
 
         case 'g':
-        printf("ANSI_COLOR_GREEN[##############]ANSI_COLOR_RESET");
+        printf("%s[##############]%s\n", ANSI_COLOR_GREEN, ANSI_COLOR_RESET);
         break;
 
         case 'y':
-        printf("ANSI_COLOR_YELLOW[##############]ANSI_COLOR_RESET");
+        printf("%s[##############]%s\n", ANSI_COLOR_YELLOW, ANSI_COLOR_RESET);
         break;
 
         case 'b':
-        printf("ANSI_COLOR_BLUE[##############]ANSI_COLOR_RESET");
+        printf("%s[##############]%s\n", ANSI_COLOR_BLUE, ANSI_COLOR_RESET);
         break;
 
         case 'm':
-        printf("ANSI_COLOR_MAGENTA[##############]ANSI_COLOR_RESET");
+        printf("%s[##############]%s\n", ANSI_COLOR_MAGENTA, ANSI_COLOR_RESET);
         break;
 
         case 'c':
-        printf("ANSI_COLOR_CYAN[##############]ANSI_COLOR_RESET");
+        printf("%s[##############]%s\n", ANSI_COLOR_CYAN, ANSI_COLOR_RESET);
         break;
 
         default:
-        printf("ANSI_COLOR_RED[##############]ANSI_COLOR_RESET");
+        printf("%s[##############]%s\n", ANSI_COLOR_RED, ANSI_COLOR_RESET);
         break;
     }
 }
@@ -44,31 +45,31 @@ void so_log_i(char c, int i){
     switch (c)
     {
         case 'r':
-        printf("ANSI_COLOR_RED[####### %d #######]ANSI_COLOR_RESET", i);
+        printf("%s[####### %d #######]%s\n", ANSI_COLOR_RED, i, ANSI_COLOR_RESET);
         break;
 
         case 'g':
-        printf("ANSI_COLOR_GREEN[####### %d #######]ANSI_COLOR_RESET", i);
+        printf("%s[####### %d #######]%s\n", ANSI_COLOR_GREEN, i, ANSI_COLOR_RESET);
         break;
 
         case 'y':
-        printf("ANSI_COLOR_YELLOW[####### %d #######]ANSI_COLOR_RESET", i);
+        printf("%s[####### %d #######]%s\n", ANSI_COLOR_YELLOW, i, ANSI_COLOR_RESET);
         break;
 
         case 'b':
-        printf("ANSI_COLOR_BLUE[####### %d #######]ANSI_COLOR_RESET", i);
+        printf("%s[####### %d #######]%s\n", ANSI_COLOR_BLUE, i, ANSI_COLOR_RESET);
         break;
 
         case 'm':
-        printf("ANSI_COLOR_MAGENTA[####### %d #######]ANSI_COLOR_RESET", i);
+        printf("%s[####### %d #######]%s\n", ANSI_COLOR_MAGENTA, i, ANSI_COLOR_RESET);
         break;
 
         case 'c':
-        printf("ANSI_COLOR_CYAN[####### %d #######]ANSI_COLOR_RESET", i);
+        printf("%s[####### %d #######]%s\n", ANSI_COLOR_CYAN, i, ANSI_COLOR_RESET);
         break;
 
         default:
-        printf("ANSI_COLOR_RED[####### %d #######]ANSI_COLOR_RESET", i);
+        printf("%s[####### %d #######]%s\n", ANSI_COLOR_RED, i, ANSI_COLOR_RESET);
         break;
     }
 }
@@ -77,31 +78,31 @@ void so_log_s(char c, char* s){
     switch (c)
     {
         case 'r':
-        printf("ANSI_COLOR_RED[####### %s #######]ANSI_COLOR_RESET", s);
+        printf("%s[####### %s #######]%s\n", ANSI_COLOR_RED, s, ANSI_COLOR_RESET);
         break;
 
         case 'g':
-        printf("ANSI_COLOR_GREEN[####### %s #######]ANSI_COLOR_RESET", s);
+        printf("%s[####### %s #######]%s\n", ANSI_COLOR_GREEN, s, ANSI_COLOR_RESET);
         break;
 
         case 'y':
-        printf("ANSI_COLOR_YELLOW[####### %s #######]ANSI_COLOR_RESET", s);
+        printf("%s[####### %s #######]%s\n", ANSI_COLOR_YELLOW, s, ANSI_COLOR_RESET);
         break;
 
         case 'b':
-        printf("ANSI_COLOR_BLUE[####### %s #######]ANSI_COLOR_RESET", s);
+        printf("%s[####### %s #######]%s\n", ANSI_COLOR_BLUE, s, ANSI_COLOR_RESET);
         break;
 
         case 'm':
-        printf("ANSI_COLOR_MAGENTA[####### %s #######]ANSI_COLOR_RESET", s);
+        printf("%s[####### %s #######]%s\n", ANSI_COLOR_MAGENTA, s, ANSI_COLOR_RESET);
         break;
 
         case 'c':
-        printf("ANSI_COLOR_CYAN[####### %s #######]ANSI_COLOR_RESET", s);
+        printf("%s[####### %s #######]%s\n", ANSI_COLOR_CYAN, s, ANSI_COLOR_RESET);
         break;
 
         default:
-        printf("ANSI_COLOR_RED[####### %s #######]ANSI_COLOR_RESET", s);
+        printf("%s[####### %s #######]%s\n", ANSI_COLOR_RED, s, ANSI_COLOR_RESET);
         break;
     }
 }
