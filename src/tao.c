@@ -4,6 +4,7 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <sys/ipc.h>
+#include <sys/stat.h>
 #include "so_log.h"
 #include "config.h"
 
@@ -31,25 +32,11 @@ typedef struct _tao{
     char name[MAX_RES_NAME_LENGTH];
     pid_t interested_clients[MAX_CLIENTS];
     int interested_clients_count;
-    int base_bid;
     bid bids[MAX_OFFERS];
-    int min_price; /* base d'asta */
-    //int riempimento = 0;
-    // struct _tao* next;
+    int base_bid; /* base d'asta */
+    int shm_id;
+    int sem_id;
 } tao;
-
-/*
-tao* create_tao(){
-    tao* new_tao = (tao*) malloc(sizeof(tao));
-    int j = 0;
-    // new_tao -> id = id;
-    // new_tao->singleOffer = so;
-    // new_tao->bids = {};
-    // if ( *nextNode != NULL)
-    //     new_tao->next = *nextNode;
-    return new_tao;
-}
-*/
 
 /**
  * Support function to make_bid.
@@ -82,6 +69,8 @@ void create_tao(char name[MAX_RES_NAME_LENGTH]){
     strcpy(new_tao->name, name);
     new_tao->interested_clients_count = 0;
     new_tao->base_bid = BASE_BID;
+    new_tao->shm_id = -1;
+    new_tao->sem_id = -1;
 
     /* Adds the new TAO to the TAOs array */
     taos[taos_count++] = new_tao;
@@ -111,35 +100,46 @@ void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
 /**
  * Start (crates the shared memory area) the TAO with the given name.
  */
-void start_tao(char name[MAX_RES_NAME_LENGTH]){
-    int shm_id;
+ /**
+ *  definire la durata dell'asta
+ *
+            
+            // TAO fa partire timer di 3 secondi
+            // inizia l'asta
+            // clienti fanno le offerte
+            // durata dell'asta variabile - allo scadere banditore chiude asta
+            // banditore legge contenuto tao
+            // banditore assegna risorse secondo offerte migliori = invio di un messaggio ai clienti vincitori
+            // ai clienti viene detratto il prezzo
+            // viene aggiornata la lista delle risorse richieste dal cliente
+            // deallocare memoria condivisa
+ */
+void start_tao(tao* current_tao){
     /* tao creation */
+    int shm_id;
     shm_id = shmget(IPC_PRIVATE, sizeof(tao), IPC_CREAT | 0600);
-    // if(shm_id == -1)
-    //     perror("shmget");
-    //     /* tao attach */
-    //     tao* t;
-    //     t = (tao*) shmat(shm_id, NULL, 0);
-    //     /* tao use */
-    //     // settare la base d'asta
-    //     t->min_price = avail_resources->list->cost;
-    //     int sem_id;
-    //     /* semaphore creation */
-    //     sem_id = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
-    //     if(sem_id == -1)
-    //         perror("semget");
-    //         /* semaphore regulation // CONTROLLARE I PARAMETRI */
-    //         int ctl = semctl(sem_id, 1, SETVAL, 1);
-    //         /* get interested client to current resource*/
-    //         /* association of sem and shm to interested client with message */
-    //         /* timer of 3 seconds before the start of auction */
-    //         alarm(3);
-    //         if(signal(SIGALRM, alarm_handler) == SIG_ERR)
-    //             perror("signal (SIG_ERR) error");
+    if(shm_id == -1)
+		perror("shmget");
+    tao* t;
+    t = (tao*) shmat(shm_id, NULL, 0);
+    
+    current_tao->shm_id = shm_id;
+    
+    /* semaphore creation */
+    int sem_id;    
+    sem_id = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
+    if(sem_id == -1)
+		perror("semget");
+    int ctl = semctl(sem_id, 1, SETVAL, 1);
+    
+    current_tao->sem_id = sem_id;
+    
+    /* association of sem and shm to interested client with message */
+    // informare clienti con un messaggio <id shm del tao, id semaforo, prezzo base d'asta>
 }
 
 /**
- * Adds bid from the client.
+ * Adds bid from the agent.
  * Precondizione: l'agente ha già controllato se la sua offerta è tra le migliori --> non fa l'offerta con make bid
  * Precondizione: l'agente ha già aumentato la unit_offer rispetto alla offerta precedente
  * Precondizione: l'agente si può permettere (come budget) la unit_offer
@@ -210,19 +210,3 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 	}
     return -1;
 }
-
-// /**
-//  * Creates a node and adds it at the head of the list.
-//  * @param id single tao's id
-//  * @param so client's bid
-//  * @param nextNode Next node of this tao
-//  * @return node of taoList
-//  */
-// tao* node_creation(int id, bid so){
-//     tao* new_tao = (tao*) malloc(sizeof(tao));
-//     new_tao -> id = id;
-//     new_tao->singleOffer = so;
-//     if ( *nextNode != NULL)
-//         new_tao->next = *nextNode;
-//     return new_tao;
-// }
