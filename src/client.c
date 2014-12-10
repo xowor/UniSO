@@ -60,7 +60,7 @@ void load_resources(){
             // resourcesNumber++;
             // required_resources[required_resources_length++] = name;
 
-            /* Adds the read resources inside the required resources ist */
+            /* Adds the read resources inside the required resources list */
             add_resource(req_resources, name, avail, cost);
         }
     }else{

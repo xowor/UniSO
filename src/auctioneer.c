@@ -41,7 +41,7 @@ int avail_resources_count;           /* The number of all the available resource
 /**
  * Reads from file all the available resources.
  */
-void load_resources(){
+int load_resources(){
     FILE* resources;
     char line[MAX_RES_NAME_LENGTH];
     char* name;
@@ -82,15 +82,17 @@ void load_resources(){
             avail_resources_count++;
 
             printf("[[NAME: %s]]", name);
-            add_resource(avail_resources, name, avail, cost);
-            // so_log();
+			add_resource(avail_resources, name, avail, cost);
             fflush(stdout);
-            // so_log();
+            fclose(resources);
+            return 1;
         }
-    }else{
+    }//else{
         fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
-    }
-    fclose(resources);
+        fclose(resources);
+        return -1;
+    //}
+    
 }
 
 
@@ -113,17 +115,19 @@ void load_resources(){
             // deallocare memoria condivisa
  */
 void create_taos(){
+	/* creates tao's array with empty tao */
     init_taos(avail_resources_count);
 
 	int i = 0;
 
 	resource* tmp_resource = avail_resources->list;
-
+	
+	/* adds name's resource and common informations to each tao */
 	while(tmp_resource->next){
 		// printf("[AUCTIONEER CREAZIONE TAO] %s;%d;%d;\n", tmp_resource->name,tmp_resource->availability,tmp_resource->cost);
 		// fflush(stdout);
+        printf("\x1b[32m%s\x1b[0m\n",  get_tao(0)->name);
         create_tao(tmp_resource->name);
-        // printf("\x1b[32m%s\x1b[0m\n",  get_tao(0)->name);
 		tmp_resource = tmp_resource->next;
 	}
     // printf("\x1b[32m%s\x1b[0m\n",  get_tao(0)->name);
@@ -144,9 +148,13 @@ int main(int argc, char** argv){
         return -1;
     }
 
-    load_resources();
+	/* Read resources from file */
+    if(!load_resources())
+		printf("Errore nel caricamento delle risorse.\n");
+    /* create only the structure of all taos, without the client's list and relative bids */
     create_taos();
-
+	so_log();
+	
     /**
      * Listen to all clients introduction.
      */
@@ -159,7 +167,7 @@ int main(int argc, char** argv){
         int i = 0;
         for (; i < intr->resources_length; i++){
             sign_to_tao(intr->pid, intr->resources[i]);
-            so_log();
+            //so_log();
             //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
         }
     }
@@ -169,6 +177,7 @@ int main(int argc, char** argv){
 
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
+    
     /* because auctioneer is main's child */
     _exit(EXIT_SUCCESS);
 

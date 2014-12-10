@@ -71,7 +71,7 @@ int taos_count;
  */
 void init_taos(int number){
     tao* taos_arr[number];
-    taos_count = taos_count;
+    taos_count = 0;
     taos = taos_arr;
 }
 
@@ -81,13 +81,12 @@ void create_tao(char name[MAX_RES_NAME_LENGTH]){
     // new_tao->name = (char*) malloc(sizeof(char) * MAX_RES_NAME_LENGTH);
     strcpy(new_tao->name, name);
     new_tao->interested_clients_count = 0;
-
     new_tao->base_bid = BASE_BID;
 
     /* Adds the new TAO to the TAOs array */
     taos[taos_count++] = new_tao;
-
-    // printf("\x1b[32m%s\x1b[0m\n",  taos[0]->name);
+	so_log();
+    printf("\x1b[32m%s\x1b[0m\n",  taos[0]->name);
 }
 
 
