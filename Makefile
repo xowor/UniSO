@@ -57,7 +57,7 @@ log: src/so_log.c
 	gcc -c src/so_log.c bin/so_log -g
 
 auctioneer: src/auctioneer.c
-	gcc src/auctioneer.c -o bin/auctioneer -g
+	gcc src/auctioneer.c -o bin/auctioneer -g -fno-stack-protector
 
 client: src/client.c
 	gcc src/client.c -o bin/client -g
