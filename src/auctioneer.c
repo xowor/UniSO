@@ -117,7 +117,6 @@ void create_taos(){
     init_taos(avail_resources_count);
 
 	int i = 0;
-
 	resource* tmp_resource = avail_resources->list;
 	
 	/* adds name's resource and common informations to each tao */
@@ -151,7 +150,6 @@ int main(int argc, char** argv){
 		printf("Errore nel caricamento delle risorse.\n");
     /* create only the structure of all taos, without the client's list and relative bids */
     create_taos();
-	//so_log();
 	
     /**
      * Listen to all clients introduction.
@@ -159,8 +157,6 @@ int main(int argc, char** argv){
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     int introd_count = 0;
 	
-	
-
     while ( (introd_count < MAX_CLIENTS) && (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1)){
         introd_count++;
         int res_lenght = intr->resources_length;
@@ -168,8 +164,7 @@ int main(int argc, char** argv){
         int i = 0;
         for (; i < intr->resources_length; i++){
             sign_to_tao(intr->pid, intr->resources[i]);
-            ////so_log();
-            ////printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
+            //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
         }
     }
 
