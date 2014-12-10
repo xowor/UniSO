@@ -5,8 +5,6 @@
 #include "config.h"
 
 
-#define MAX_OFFER 5
-
 
 // TAO = LISTA DI OFFERTE
 
@@ -31,7 +29,7 @@ typedef struct _tao{
     pid_t interested_clients[MAX_CLIENTS];
     int interested_clients_count;
     int base_bid;
-    bid bids[MAX_OFFER];
+    bid bids[MAX_OFFERS];
     int min_price; /* base d'asta */
     //int riempimento = 0;
     // struct _tao* next;
@@ -161,7 +159,7 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
     int min_bid = auction_tao->bids[0].unit_offer;
     int pid_min_bid = auction_tao->bids[0].client_pid;
 
-    for(; i < MAX_OFFER; i++){
+    for(; i < MAX_OFFERS; i++){
       if(auction_tao->bids[i].unit_offer < min_bid){
 			min_bid = auction_tao->bids[i].unit_offer;
 			index_min_bid = i;
@@ -176,7 +174,7 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 
     // cerca entry vuota
     int empty_index = -1;
-    for(i = 0; i < MAX_OFFER; i++){
+    for(i = 0; i < MAX_OFFERS; i++){
       if(auction_tao->bids[i].client_pid < 0){
 	empty_index = i;
       }
@@ -184,7 +182,7 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 
     // l'agente ha già un'offerta nel tao?
     int has_bid = 0, own_bid = NULL;
-		for(i = 0; i < MAX_OFFER; i++){
+		for(i = 0; i < MAX_OFFERS; i++){
 		  if(auction_tao->bids[i].client_pid == pid){
 			has_bid = 1;
 			own_bid = i;
