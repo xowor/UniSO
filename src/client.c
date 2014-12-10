@@ -4,6 +4,7 @@
 #include <errno.h>
 #include "resource.h"
 #include "introduction.h"
+#include "simple_message.h"
 
 
 int msqid;
@@ -56,7 +57,7 @@ void load_resources(){
                 token = strtok(NULL, ";");
             }
             //printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
-            
+
             // resourcesNumber++;
             // required_resources[required_resources_length++] = name;
 
@@ -101,6 +102,17 @@ void send_presentation(){
 }
 
 
+void listen_auction_start(){
+    simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+    if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), 0, 0) != -1 ) {
+        char* msg_txt = msg->msg;
+        if ( strcmp(msg_txt, AUCTION_READY_MSG) ){
+            // FAI PARTIRE AGENTE, ECC
+        }
+    }
+}
+
+
 int main(int argc, char** argv){
     pid = getpid();
     ppid = getppid();
@@ -120,6 +132,7 @@ int main(int argc, char** argv){
 
     load_resources();
     send_presentation();
+    listen_auction_start();
 
     fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
     fflush(stdout);
