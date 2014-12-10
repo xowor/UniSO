@@ -8,6 +8,7 @@
 #include "resource.h"
 #include "tao.h"
 #include "introduction.h"
+#include "semaphore.h"
 #include "config.h"
 
 
@@ -151,7 +152,7 @@ int main(int argc, char** argv){
             //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
         }
     }
-    
+
     /* Associates each tao to an shm */
     //start_tao();
 
