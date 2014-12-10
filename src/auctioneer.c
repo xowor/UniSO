@@ -146,9 +146,9 @@ int main(int argc, char** argv){
     int introd_count = 0;
     while ( (introd_count < MAX_CLIENTS) && (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1) ){
         introd_count++;
-        int res_lenght = intr->resources_length;
         printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
         int i = 0;
+        /* associates the pid's client to related tao, where there is the resource interested to client */
         for (; i < intr->resources_length; i++){
             sign_to_tao(intr->pid, intr->resources[i]);
             //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
