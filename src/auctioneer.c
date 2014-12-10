@@ -3,9 +3,6 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <sys/shm.h>
-#include <sys/sem.h>
-#include <sys/ipc.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "resource.h"
@@ -158,6 +155,9 @@ int main(int argc, char** argv){
             //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
         }
     }
+    
+    /* Associates each tao to an shm */
+    start_tao();
 
 
 

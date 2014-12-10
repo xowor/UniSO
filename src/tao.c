@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/shm.h>
+#include <sys/sem.h>
+#include <sys/ipc.h>
 #include "so_log.h"
 #include "config.h"
 
@@ -120,9 +123,9 @@ void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
  * Start (crates the shared memory area) the TAO with the given name.
  */
 void start_tao(char name[MAX_RES_NAME_LENGTH]){
-    // int shm_id;
-    // /* tao creation */
-    // shm_id = shmget(IPC_PRIVATE, sizeof(tao), IPC_CREAT | 0600);
+    int shm_id;
+    /* tao creation */
+    shm_id = shmget(IPC_PRIVATE, sizeof(tao), IPC_CREAT | 0600);
     // if(shm_id == -1)
     //     perror("shmget");
     //     /* tao attach */
