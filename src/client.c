@@ -4,6 +4,8 @@
 #include <errno.h>
 #include "resource.h"
 #include "introduction.h"
+#include "so_log.h"
+#include "simple_message.h"
 
 
 int msqid;
@@ -56,7 +58,7 @@ void load_resources(){
                 token = strtok(NULL, ";");
             }
             //printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
-            
+
             // resourcesNumber++;
             // required_resources[required_resources_length++] = name;
 
@@ -75,7 +77,9 @@ void load_resources(){
  *  Sends an introduction message to the auctioneer, telling it which resources
  *  this client requires.
  */
-void send_presentation(){
+void send_introduction(){
+    // so_log('m');
+    // [TODO] SEMAFORO PER LA SCRITTURA
     /* Allocates the introduction message */
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     /* Initializes PID */
@@ -98,6 +102,22 @@ void send_presentation(){
      * required resources.
      */
     msgsnd(msqid, intr, sizeof(introduction) - sizeof(long), 0600);
+    // so_log('r');
+}
+
+
+void listen_auction_start(){
+    // [TODO] SEMAFORO PER LA LETTURA
+    simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+    if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), 0, 0) != -1 ) {
+        char* msg_txt = msg->msg;
+        if ( strcmp(msg_txt, AUCTION_READY_MSG) ){
+            char* started_tao;
+            strcpy(started_tao, msg->content.s);
+            so_log_is('m', pid, "started_tao");
+            // FAI PARTIRE AGENTE, ECC
+        }
+    }
 }
 
 
@@ -119,7 +139,9 @@ int main(int argc, char** argv){
     }
 
     load_resources();
-    send_presentation();
+    send_introduction();
+    listen_auction_start();
+
 
     fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
     fflush(stdout);
