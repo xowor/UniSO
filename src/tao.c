@@ -62,7 +62,10 @@ void init_taos(int number){
     taos_count = 0;
 }
 
-
+/**
+ * Initializes the TAO with basic informations.
+ * Name is the resource's name.
+ */
 void create_tao(char name[MAX_RES_NAME_LENGTH]){
     tao* new_tao = (tao*) malloc(sizeof(tao));
     // new_tao->name = (char*) malloc(sizeof(char) * MAX_RES_NAME_LENGTH);
@@ -133,7 +136,6 @@ void start_tao(tao* current_tao){
     int ctl = semctl(sem_id, 1, SETVAL, 1);
     
     current_tao->sem_id = sem_id;
-    
     /* association of sem and shm to interested client with message */
     // informare clienti con un messaggio <id shm del tao, id semaforo, prezzo base d'asta>
 }

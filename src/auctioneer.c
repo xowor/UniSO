@@ -94,14 +94,14 @@ void create_taos(){
 	resource* tmp_resource = avail_resources->list;
 
 	/* adds name's resource and common informations to each tao */
-	while(tmp_resource->next){
+	while(tmp_resource){
         create_tao(tmp_resource->name);
 		tmp_resource = tmp_resource->next;
 	}
 }
 
-void alarm_handler(int sig){
-	so_log_i('b', sig);
+void alarm_handler(){
+	so_log('b');
 	/* fai partire effettivamente l'asta */
 	// manda un segnale di partenza ai clienti per creare l'agente
 	// clienti iniziano a fare le offerte
@@ -119,15 +119,16 @@ void start_auction(){
     int i = 0;
     tao* current_tao;
 	for(; i < avail_resources_count; i++){
+		/* gets one tao from the array */
 		current_tao = get_tao(i);
-		/* NON STAMPA TUTTE LE RISORSE E NON ENTRA IN START TAO */
-		so_log_s('r', current_tao->name);
+		
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
 		
 		/* timer of 3 seconds before the start of auction */
+		/* ALARM DOESN'T WORK */
 		if(signal(SIGALRM, alarm_handler) == SIG_ERR)
-			perror("signal (SIG_ERR) error");
+			printf("!!! Error in the alarm signal");
 		alarm(3);
 	}
 }
