@@ -105,17 +105,11 @@ void create_taos(){
 }
 
 void alarm_handler(){
-<<<<<<< HEAD
 	// clienti iniziano a fare le offerte = inizia l'asta
 	
 	// tao che muore decrementa semaforo
 
 	/* Stop the queue message */
-=======
-    so_log('m');
-	// clienti iniziano a fare le offerte
-
->>>>>>> f3dc00b7ec76c0fe8eaddceeb0671ea1998e8fc3
     void* p;
     msgctl(msqid, IPC_RMID, p);
 
