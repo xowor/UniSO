@@ -83,6 +83,7 @@ void send_introduction(){
     /* Allocates the introduction message */
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     /* Initializes PID */
+    intr->mtype = INTRODUCTION_MTYPE;
     intr->pid = pid;
     intr->resources_length = 0;
 
@@ -109,12 +110,13 @@ void send_introduction(){
 void listen_auction_start(){
     // [TODO] SEMAFORO PER LA LETTURA
     simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
-    if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), 0, 0) != -1 ) {
+    if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
         char* msg_txt = msg->msg;
         if ( strcmp(msg_txt, AUCTION_READY_MSG) ){
             char* started_tao;
             strcpy(started_tao, msg->content.s);
             so_log_is('m', pid, "started_tao");
+            so_log_i('m', msg->pid);
             // FAI PARTIRE AGENTE, ECC
         }
     }

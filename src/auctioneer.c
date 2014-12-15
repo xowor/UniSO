@@ -119,6 +119,7 @@ void notify_tao_opened(char* tao_res){
     for (; i < registered_clients; i++){
         /* Allocates the simple_message message */
         simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+        msg->mtype = SIMPLE_MESSAGE_MTYPE;
         msg_content content;
         msg->content = content;
 
@@ -144,7 +145,7 @@ void listen_introductions(){
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     registered_clients = 0;
 
-    while ( (registered_clients < MAX_CLIENTS) && (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), 0, 0) != -1) ){
+    while ( (registered_clients < MAX_CLIENTS) && (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), INTRODUCTION_MTYPE, 0) != -1) ){
         registered_clients++;
         printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
         int i = 0;
@@ -174,16 +175,16 @@ void start_auction(){
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
         char name[MAX_RES_NAME_LENGTH];
-        so_log_p('r', current_tao->name);
-        so_log_s('r', current_tao->name);
+        // so_log_p('r', current_tao->name);
+        // so_log_s('r', current_tao->name);
         strcpy(name, current_tao->name);
-		so_log_s('r', name);
+		// so_log_s('r', name);
         notify_tao_opened(name);
 
 		/* timer of 3 seconds before the start of auction */
-		if(signal(SIGALRM, alarm_handler) == SIG_ERR)
-			perror("signal (SIG_ERR) error");
-		alarm(3);
+		// if(signal(SIGALRM, alarm_handler) == SIG_ERR)
+		// 	perror("signal (SIG_ERR) error");
+		// alarm(3);
 	}
 }
 
@@ -208,12 +209,12 @@ int main(int argc, char** argv){
     /* Create only the structure of all taos, without the client's list and relative bids */
     create_taos();
 
-            so_log('g');
     listen_introductions();
 
-
     /* Start max 3 tao at a time */
+    // _exit(EXIT_SUCCESS);
     start_auction();
+            so_log('y');
 
     // if( msgctl( msqid, IPC_RMID, NULL) == -1){
     //     perror( strerror(errno) );
