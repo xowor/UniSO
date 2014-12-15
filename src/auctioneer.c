@@ -58,8 +58,6 @@ void load_resources(){
             token = strtok(line, ";");
             i = 0;
             name = (char*) malloc(MAX_RES_NAME_LENGTH);
-            // so_log_i('g', strlen(line));
-            so_log_p('g', line);
             while( token ){
                 /* In each line there are 4 tokens: name, available, cost and \n */
                 switch(i%4){
@@ -186,6 +184,7 @@ void start_auction(){
 		// 	perror("signal (SIG_ERR) error");
 		// alarm(3);
 	}
+            so_log('y');
 }
 
 
@@ -214,7 +213,6 @@ int main(int argc, char** argv){
     /* Start max 3 tao at a time */
     // _exit(EXIT_SUCCESS);
     start_auction();
-            so_log('y');
 
     // if( msgctl( msqid, IPC_RMID, NULL) == -1){
     //     perror( strerror(errno) );
