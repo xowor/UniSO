@@ -41,6 +41,7 @@ resource* add_resource(resource_list* list, char name[MAX_RES_NAME_LENGTH], int 
     new_resource->next = list->list;
     list->list = new_resource;
     list->resources_count++;
-    // printf("[[add_resource]] resource_list* list : %p , char name[MAX_RES_NAME_LENGTH] : %s , int avail %d , int cost %d \n", list, name, avail, cost);
+    //printf("[[add_resource]] resource_list* list : %p , char name[MAX_RES_NAME_LENGTH] : %s , int avail %d , int cost %d \n", list, name, avail, cost);
+
     return new_resource;
 }
