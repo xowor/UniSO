@@ -85,6 +85,7 @@ void load_resources(){
 
 			add_resource(avail_resources, name, avail, cost);
             fflush(stdout);
+            free(name);
         }
     } else {
         fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
@@ -135,6 +136,7 @@ void notify_tao_opened(char* name, int shm_id, int sem_id, int base_bid){
         * required resources.
         */
         msgsnd(msqid, msg, sizeof(tao_opening) - sizeof(long), 0600);
+        free(msg);
     }
 }
 
@@ -157,6 +159,8 @@ void listen_introductions(){
             //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
         }
     }
+
+    free(intr);
 }
 
 
@@ -218,6 +222,12 @@ void ipc_gc(){
     }
 }
 
+/**
+ * Cleans the heap after quitting (heard is a good pratice...)
+ */
+void gc(){
+    free(avail_resources);
+}
 
 int main(int argc, char** argv){
     printf("[auctioneer] Started auctioneer.\tPid: %d\tPPid: %d\n", getpid(), getppid());
@@ -245,8 +255,11 @@ int main(int argc, char** argv){
 
     while (canexit == 1) {}
 
-    fprintf(stdout, "[auctioneer] \x1b[31mRemoving all the IPC objects... \x1b[0m \n");
+    fprintf(stdout, "[auctioneer] \x1b[31mRemoving all the IPC structures... \x1b[0m \n");
     ipc_gc();
+
+    fprintf(stdout, "[auctioneer] \x1b[31mCleaning heap... \x1b[0m \n");
+    gc();
 
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
