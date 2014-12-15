@@ -105,6 +105,10 @@ void create_taos(){
 
 void alarm_handler(){
 	// clienti iniziano a fare le offerte
+
+    void* p;
+    msgctl(msqid, IPC_RMID, p);
+    
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
 
@@ -209,6 +213,5 @@ int main(int argc, char** argv){
     listen_introductions();
 
     /* Start max 3 tao at a time */
-    // _exit(EXIT_SUCCESS);
     start_auction();
 }
