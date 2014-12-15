@@ -104,17 +104,15 @@ void create_taos(){
 }
 
 void alarm_handler(){
-	// clienti iniziano a fare le offerte
+	// clienti iniziano a fare le offerte = inizia l'asta
+	
 	// tao che muore decrementa semaforo
-  
-	fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
 
-
+	/* Stop the queue message */
     void* p;
     msgctl(msqid, IPC_RMID, p);
 
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
-
     fflush(stdout);
     /* because auctioneer is main's child */
     _exit(EXIT_SUCCESS);
@@ -188,7 +186,6 @@ void start_auction(){
         sem_p(sem_id, 0);
         
         /* says to client the opening tao */
-        // deve dire al cliente current_tao->shm_id, current_tao->sem_id, current_tao->base_bid
         notify_tao_opened(current_tao->name);
 
 		/* timer of 3 seconds before the start of auction */
@@ -196,6 +193,9 @@ void start_auction(){
 			printf("Error in the alarm signal");
 		alarm(3);
 	}
+	/* ends semaphor */
+	if(semctl(sem_id, 0, GETVAL, 0) == 0)
+		semctl(sem_id, 0, IPC_RMID, 0);
 }
 
 

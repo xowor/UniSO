@@ -3,7 +3,7 @@ int sem_p (int semid, int semnum) {
     struct sembuf cmd;
     cmd.sem_num = semnum;
     cmd.sem_op = -1;
-    cmd.sem_flg = 0;
+    cmd.sem_flg = 0; /* wait for zero */
     semop(semid, &cmd, 1);
 }
 

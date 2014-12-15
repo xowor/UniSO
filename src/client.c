@@ -17,6 +17,12 @@ int required_resources_length = 0;
 
 resource_list* req_resources;       /* The list containing all the available resources */
 
+/* create a single agent for each tao call */
+void start_agent(){
+	pid_t pid_agent;
+	//pid_agent = fork();
+}
+
 /**
  * Loads the resources required by the client from file.
  */
@@ -106,7 +112,9 @@ void send_introduction(){
     // so_log('r');
 }
 
-
+// viene richiamato quando il cliente riceve il messaggio dal banditore che gli comunica
+// dell'esistenza dell'asta di suo interesse
+// richiama start agent
 void listen_auction_start(){
     // [TODO] SEMAFORO PER LA LETTURA
     simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
