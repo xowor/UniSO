@@ -169,22 +169,19 @@ void start_auction(){
     int i = 0;
     tao* current_tao;
 	for(; i < avail_resources_count; i++){
+		
 		/* gets one tao from the array */
 		current_tao = get_tao(i);
+		
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
         char name[MAX_RES_NAME_LENGTH];
-        so_log_p('r', current_tao->name);
-        so_log_s('r', current_tao->name);
-        //strcpy(name, current_tao->name);
-		//so_log_s('r', name);
         notify_tao_opened(name);
-
+        
 		/* timer of 3 seconds before the start of auction */
-		/* ALARM DOESN'T WORK */
 		if(signal(SIGALRM, alarm_handler) == SIG_ERR)
 			printf("!!! Error in the alarm signal");
-		//alarm(3);	
+		alarm(3);	
 	}
 }
 
