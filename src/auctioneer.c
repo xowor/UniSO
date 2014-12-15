@@ -105,9 +105,11 @@ void create_taos(){
 
 void alarm_handler(){
 	// clienti iniziano a fare le offerte
-    fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
+    
+    // tao che muore decrementa semaforo
+    
+	fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
-
     /* because auctioneer is main's child */
     _exit(EXIT_SUCCESS);
 }
@@ -175,12 +177,17 @@ void start_auction(){
 
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
-        char name[MAX_RES_NAME_LENGTH];
-        notify_tao_opened(name);
+        
+        /* Increments semaphore, 0 = ignore flag */
+        sem_p(sem_id, 0);
+        
+        /* says to client the opening tao */
+        // deve dire al cliente current_tao->shm_id, current_tao->sem_id, current_tao->base_bid
+        notify_tao_opened(current_tao->name);
 
 		/* timer of 3 seconds before the start of auction */
 		if(signal(SIGALRM, alarm_handler) == SIG_ERR)
-			printf("!!! Error in the alarm signal");
+			printf("Error in the alarm signal");
 		alarm(3);
 	}
 }
