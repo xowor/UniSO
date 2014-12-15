@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "config.h"
+#include "../config.h"
 
 #define SIMPLE_MESSAGE_MTYPE 1
 

@@ -10,9 +10,9 @@
 #include <sys/ipc.h>
 #include "resource.h"
 #include "tao.h"
-#include "introduction.h"
+#include "messages/introduction.h"
 #include "semaphore.h"
-#include "simple_message.h"
+#include "messages/simple_message.h"
 #include "config.h"
 
 
@@ -105,10 +105,16 @@ void create_taos(){
 
 void alarm_handler(){
 	// clienti iniziano a fare le offerte
-    
-    // tao che muore decrementa semaforo
-    
+	// tao che muore decrementa semaforo
+  
 	fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
+
+
+    void* p;
+    msgctl(msqid, IPC_RMID, p);
+
+    fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
+
     fflush(stdout);
     /* because auctioneer is main's child */
     _exit(EXIT_SUCCESS);
@@ -216,6 +222,5 @@ int main(int argc, char** argv){
     listen_introductions();
 
     /* Start max 3 tao at a time */
-    // _exit(EXIT_SUCCESS);
     start_auction();
 }
