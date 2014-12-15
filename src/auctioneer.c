@@ -173,8 +173,8 @@ void start_auction(){
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
         char name[MAX_RES_NAME_LENGTH];
-        //so_log_p('r', current_tao->name);
-        //so_log_s('r', current_tao->name);
+        so_log_p('r', current_tao->name);
+        so_log_s('r', current_tao->name);
         //strcpy(name, current_tao->name);
 		//so_log_s('r', name);
         notify_tao_opened(name);
@@ -183,7 +183,8 @@ void start_auction(){
 		/* ALARM DOESN'T WORK */
 		if(signal(SIGALRM, alarm_handler) == SIG_ERR)
 			printf("!!! Error in the alarm signal");
-		alarm(3);
+		//alarm(3);	
+		
 	}
 }
 
