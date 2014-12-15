@@ -13,6 +13,7 @@
 #include "messages/introduction.h"
 #include "semaphore.h"
 #include "messages/simple_message.h"
+#include "messages/tao_opening.h"
 #include "config.h"
 
 
@@ -104,11 +105,17 @@ void create_taos(){
 }
 
 void alarm_handler(){
+<<<<<<< HEAD
 	// clienti iniziano a fare le offerte = inizia l'asta
 	
 	// tao che muore decrementa semaforo
 
 	/* Stop the queue message */
+=======
+    so_log('m');
+	// clienti iniziano a fare le offerte
+
+>>>>>>> f3dc00b7ec76c0fe8eaddceeb0671ea1998e8fc3
     void* p;
     msgctl(msqid, IPC_RMID, p);
 
@@ -119,26 +126,25 @@ void alarm_handler(){
 }
 
 
-void notify_tao_opened(char* tao_res){
+void notify_tao_opened(char* name, int shm_id, int sem_id, int base_bid){
     // [TODO] SEMAFORO PER LA SCRITTURA
     int i = 0;
     for (; i < registered_clients; i++){
         /* Allocates the simple_message message */
-        simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
-        msg->mtype = SIMPLE_MESSAGE_MTYPE;
-        msg_content content;
-        msg->content = content;
+        tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
+        msg->mtype = TAO_OPENING_MTYPE;
+        strcpy(msg->resource, name);
+        msg->shmid = shm_id;
+        msg->semid = sem_id;
+        msg->base_bid = base_bid;
 
-        /* Initializes PID */
-        msg->pid = getpid();
-        strcpy(msg->msg, AUCTION_READY_MSG);
-        strcpy(msg->content.s, tao_res);
+        // strcpy(msg->content.s, tao_res);
 
         /**
         * Sends a message to the auctioneer containing the client pid and the
         * required resources.
         */
-        msgsnd(msqid, msg, sizeof(simple_message) - sizeof(long), 0600);
+        msgsnd(msqid, msg, sizeof(tao_opening) - sizeof(long), 0600);
     }
 }
 
@@ -184,14 +190,15 @@ void start_auction(){
         
         /* Increments semaphore, 0 = ignore flag */
         sem_p(sem_id, 0);
-        
-        /* says to client the opening tao */
-        notify_tao_opened(current_tao->name);
 
-		/* timer of 3 seconds before the start of auction */
-		if(signal(SIGALRM, alarm_handler) == SIG_ERR)
-			printf("Error in the alarm signal");
-		alarm(3);
+		/* says to client starting tao */
+        notify_tao_opened(current_tao->name, current_tao->shm_id, current_tao->sem_id ,current_tao->base_bid);
+
+    	/* timer of 3 seconds before the start of auction */
+    	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
+    		printf("Error in alarm signal");
+        so_log('r');
+    	alarm(3);
 	}
 	/* ends semaphor */
 	if(semctl(sem_id, 0, GETVAL, 0) == 0)

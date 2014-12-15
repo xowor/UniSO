@@ -5,7 +5,7 @@
 #include "resource.h"
 #include "so_log.h"
 #include "messages/introduction.h"
-#include "messages/simple_message.h"
+#include "messages/tao_opening.h"
 
 
 int msqid;
@@ -117,18 +117,18 @@ void send_introduction(){
 // richiama start agent
 void listen_auction_start(){
     // [TODO] SEMAFORO PER LA LETTURA
-    simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
-    if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
-        char* msg_txt = msg->msg;
-        if ( strcmp(msg_txt, AUCTION_READY_MSG) == 0 ){
+    tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
+    if ( msgrcv(msqid, msg, sizeof(tao_opening) - sizeof(long), TAO_OPENING_MTYPE, 0) != -1 ) {
+        // char* msg_txt = msg->msg;
+        // if ( strcmp(msg_txt, AUCTION_READY_MSG) == 0 ){
             // so_log_i('m', msg->pid);
             // so_log_s('m', msg_txt);
             // so_log_s('m', AUCTION_READY_MSG);
             // char* started_tao;
             // strcpy(started_tao, msg->content.s);
-            // so_log_is('m', pid, "started_tao");
+            so_log_is('m', pid, "started_tao");
             // FAI PARTIRE AGENTE, ECC
-        }
+        // }
     }
 }
 
