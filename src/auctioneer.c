@@ -104,10 +104,12 @@ void create_taos(){
 }
 
 void alarm_handler(){
-	so_log('b');
-	/* fai partire effettivamente l'asta */
-	// manda un segnale di partenza ai clienti per creare l'agente
 	// clienti iniziano a fare le offerte
+    fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
+    fflush(stdout);
+
+    /* because auctioneer is main's child */
+    _exit(EXIT_SUCCESS);
 }
 
 
@@ -167,21 +169,20 @@ void start_auction(){
     int i = 0;
     tao* current_tao;
 	for(; i < avail_resources_count; i++){
-		
+
 		/* gets one tao from the array */
 		current_tao = get_tao(i);
-		
+
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
         char name[MAX_RES_NAME_LENGTH];
         notify_tao_opened(name);
-        
+
 		/* timer of 3 seconds before the start of auction */
 		if(signal(SIGALRM, alarm_handler) == SIG_ERR)
 			printf("!!! Error in the alarm signal");
-		alarm(3);	
+		alarm(3);
 	}
-            so_log('y');
 }
 
 
@@ -210,16 +211,4 @@ int main(int argc, char** argv){
     /* Start max 3 tao at a time */
     // _exit(EXIT_SUCCESS);
     start_auction();
-
-    // if( msgctl( msqid, IPC_RMID, NULL) == -1){
-    //     perror( strerror(errno) );
-    //     return(-1);
-    // }
-
-    fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
-    fflush(stdout);
-
-    /* because auctioneer is main's child */
-    _exit(EXIT_SUCCESS);
-
 }
