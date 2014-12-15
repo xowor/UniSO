@@ -31,12 +31,14 @@ typedef struct _client {
 } client;
 
 int msqid = 0;                       /* The id of the message queue */
+int semid;                           /* The id of the the TAOs creation semaphore */
 int opened_auctions = 0;             /* The number of opened auctions */
 
 resource_list* avail_resources;      /* The list containing all the available resources */
 int avail_resources_count;           /* The number of all the available resources */
 
 int registered_clients;
+int canexit = 0;
 
 /**
  * Reads from file all the available resources.
@@ -104,19 +106,13 @@ void create_taos(){
 	}
 }
 
-void alarm_handler(){
+void alarm_handler() {
+    so_log('c');
 	// clienti iniziano a fare le offerte = inizia l'asta
-	
+
 	// tao che muore decrementa semaforo
+    canexit = 0;
 
-	/* Stop the queue message */
-    void* p;
-    msgctl(msqid, IPC_RMID, p);
-
-    fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
-    fflush(stdout);
-    /* because auctioneer is main's child */
-    _exit(EXIT_SUCCESS);
 }
 
 
@@ -163,40 +159,63 @@ void listen_introductions(){
     }
 }
 
+
 /* Starts 3 tao at a time */
 void start_auction(){
-	int sem_id;
     /* semaphore creation */
-    sem_id = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
-    if(sem_id == -1)
-		perror("semget");
+    semid = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
+    if(semid == -1)
+		perror("");
     /* semaphore regulation // CONTROLLARE I PARAMETRI */
-    int ctl = semctl(sem_id, 3, SETVAL, 1);
+    int ctl = semctl(semid, 3, SETVAL, 1);
     int i = 0;
     tao* current_tao;
-	for(; i < avail_resources_count; i++){
+	for(; i < avail_resources_count -4; i++){
 
 		/* gets one tao from the array */
 		current_tao = get_tao(i);
 
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
-        
+
         /* Increments semaphore, 0 = ignore flag */
-        sem_p(sem_id, 0);
+        sem_v(semid, 0);
 
 		/* says to client starting tao */
         notify_tao_opened(current_tao->name, current_tao->shm_id, current_tao->sem_id ,current_tao->base_bid);
 
     	/* timer of 3 seconds before the start of auction */
-    	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
+    	if(signal(SIGALRM, alarm_handler) == SIG_ERR){
     		printf("Error in alarm signal");
-        so_log('r');
-    	alarm(3);
+        }
+        alarm(3);
 	}
-	/* ends semaphor */
-	if(semctl(sem_id, 0, GETVAL, 0) == 0)
-		semctl(sem_id, 0, IPC_RMID, 0);
+
+
+}
+
+/**
+ * Collects all the IPC garbage
+ */
+void ipc_gc(){
+    int i;
+
+    /* Removes the queue message */
+    msgctl(msqid, IPC_RMID,0);
+
+	/* Removes the TAOS creation semaphor */
+	// if(semctl(sem_id, 0, GETVAL, 0) == 0) {
+	semctl(semid, 0, IPC_RMID, 0);
+
+    /* Removes all the TAOS access semaphor */
+    for (i = 1; i <= taos_count; i++){              /* Sem. 0 is the TAO creation one */
+        semctl(tao_access_semid, i, IPC_RMID, 0);
+    }
+
+    /* Removes all the TAOS shared memory  */
+    for (i = 0; i < taos_count; i++){
+        shmctl(taos[i]->shm_id, IPC_RMID, 0);
+    }
 }
 
 
@@ -219,9 +238,18 @@ int main(int argc, char** argv){
 
     /* Create only the structure of all taos, without the client's list and relative bids */
     create_taos();
-
     listen_introductions();
 
     /* Start max 3 tao at a time */
     start_auction();
+
+    while (canexit == 1) {}
+
+    fprintf(stdout, "[auctioneer] \x1b[31mRemoving all the IPC objects... \x1b[0m \n");
+    ipc_gc();
+
+    fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
+    fflush(stdout);
+    /* because auctioneer is main's child */
+    _exit(EXIT_SUCCESS);
 }

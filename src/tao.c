@@ -52,7 +52,7 @@ void replace_bids(int n, bid* new_bid, tao* auction_tao){
 
 tao** taos;
 int taos_count;
-
+int tao_access_semid;
 
 /**
  * Initializes the TAO array with the given number of required TAOs
@@ -60,6 +60,9 @@ int taos_count;
 void init_taos(int number){
     taos = (tao**) malloc(sizeof(tao) * number);
     taos_count = 0;
+
+    /* Adds a semaphore for each TAO */
+    tao_access_semid = semget(IPC_PRIVATE, number, S_IRUSR | S_IWUSR);
 }
 
 /**
@@ -130,9 +133,9 @@ void start_tao(tao* current_tao){
 
     /* semaphore creation */
     int sem_id;
-    sem_id = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
+    sem_id = (IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
     if(sem_id == -1)
-		perror("semget");
+		perror("");
     int ctl = semctl(sem_id, 1, SETVAL, 1);
 
     current_tao->sem_id = sem_id;
