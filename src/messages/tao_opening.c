@@ -1,13 +1,13 @@
 #include <stdlib.h>
 #include "../config.h"
 
-#define INTRODUCTION_MTYPE 2
-#define MAX_REQUIRE_RESOURCES 32    /* The maximum number of resource a client can require. */
+#define TAO_OPENING_MTYPE 3
 
 
-typedef struct _introduction {
+typedef struct _tao_opening {
     long int mtype;
-    pid_t pid;
-    char resources[MAX_REQUIRE_RESOURCES][MAX_RES_NAME_LENGTH];
-    int resources_length;
-} introduction;
+    char resource[MAX_RES_NAME_LENGTH];
+    int shmid;
+    int semid;
+    int base_bid;
+} tao_opening;

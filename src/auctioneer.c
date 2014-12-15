@@ -13,6 +13,7 @@
 #include "messages/introduction.h"
 #include "semaphore.h"
 #include "messages/simple_message.h"
+#include "messages/tao_opening.h"
 #include "config.h"
 
 
@@ -104,6 +105,7 @@ void create_taos(){
 }
 
 void alarm_handler(){
+    so_log('m');
 	// clienti iniziano a fare le offerte
 
     void* p;
@@ -117,26 +119,25 @@ void alarm_handler(){
 }
 
 
-void notify_tao_opened(char* tao_res){
+void notify_tao_opened(char* name, int shm_id, int sem_id, int base_bid){
     // [TODO] SEMAFORO PER LA SCRITTURA
     int i = 0;
     for (; i < registered_clients; i++){
         /* Allocates the simple_message message */
-        simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
-        msg->mtype = SIMPLE_MESSAGE_MTYPE;
-        msg_content content;
-        msg->content = content;
+        tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
+        msg->mtype = TAO_OPENING_MTYPE;
+        strcpy(msg->resource, name);
+        msg->shmid = shm_id;
+        msg->semid = sem_id;
+        msg->base_bid = base_bid;
 
-        /* Initializes PID */
-        msg->pid = getpid();
-        strcpy(msg->msg, AUCTION_READY_MSG);
-        strcpy(msg->content.s, tao_res);
+        // strcpy(msg->content.s, tao_res);
 
         /**
         * Sends a message to the auctioneer containing the client pid and the
         * required resources.
         */
-        msgsnd(msqid, msg, sizeof(simple_message) - sizeof(long), 0600);
+        msgsnd(msqid, msg, sizeof(tao_opening) - sizeof(long), 0600);
     }
 }
 
@@ -180,12 +181,13 @@ void start_auction(){
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
         char name[MAX_RES_NAME_LENGTH];
-        notify_tao_opened(name);
+        notify_tao_opened(current_tao->name, current_tao->shm_id, current_tao->sem_id ,current_tao->base_bid);
 
-		/* timer of 3 seconds before the start of auction */
-		if(signal(SIGALRM, alarm_handler) == SIG_ERR)
-			printf("!!! Error in the alarm signal");
-		alarm(3);
+    	/* timer of 3 seconds before the start of auction */
+    	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
+    		printf("!!! Error in the alarm signal");
+        so_log('r');
+    	alarm(3);
 	}
 }
 

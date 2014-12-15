@@ -1,8 +1,8 @@
-#ifndef INTRODUCTION_H
-#define INTRODUCTION_H
+#ifndef TAO_OPENING_H
+#define TAO_OPENING_H
 
-#include "introduction.c"
+#include "tao_opening.c"
 
-typedef struct _introduction introduction;
+typedef struct _tao_opening tao_opening;
 
-#endif // INTRODUCTION_H
+#endif // TAO_OPENING_H
