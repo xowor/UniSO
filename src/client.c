@@ -3,9 +3,9 @@
 #include <string.h>
 #include <errno.h>
 #include "resource.h"
-#include "introduction.h"
 #include "so_log.h"
-#include "simple_message.h"
+#include "messages/introduction.h"
+#include "messages/simple_message.h"
 
 
 int msqid;

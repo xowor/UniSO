@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "config.h"
+#include "../config.h"
 
 #define INTRODUCTION_MTYPE 2
 #define MAX_REQUIRE_RESOURCES 32    /* The maximum number of resource a client can require. */

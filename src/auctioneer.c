@@ -10,9 +10,9 @@
 #include <sys/ipc.h>
 #include "resource.h"
 #include "tao.h"
-#include "introduction.h"
+#include "messages/introduction.h"
 #include "semaphore.h"
-#include "simple_message.h"
+#include "messages/simple_message.h"
 #include "config.h"
 
 
@@ -108,7 +108,7 @@ void alarm_handler(){
 
     void* p;
     msgctl(msqid, IPC_RMID, p);
-    
+
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
 
