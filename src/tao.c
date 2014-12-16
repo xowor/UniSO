@@ -74,7 +74,7 @@ void init_taos(int number){
 void create_tao(char name[MAX_RES_NAME_LENGTH]){
     tao* new_tao = (tao*) malloc(sizeof(tao));
     // new_tao->name = (char*) malloc(sizeof(char) * MAX_RES_NAME_LENGTH);
-    new_tao->id = taos_count++;
+    new_tao->id = taos_count;
     strcpy(new_tao->name, name);
     new_tao->interested_clients_count = 0;
     new_tao->base_bid = BASE_BID;
@@ -82,7 +82,7 @@ void create_tao(char name[MAX_RES_NAME_LENGTH]){
     new_tao->sem_id = -1;
 
     /* Adds the new TAO to the TAOs array */
-    taos[taos_count] = new_tao;
+    taos[taos_count++] = new_tao;
 }
 
 

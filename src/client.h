@@ -3,9 +3,52 @@
 
 #include "client.c"
 
-typedef struct _client client;
+
+/**
+ * Creates the agent.
+ */
+void start_agent();
+
+
+
+/**
+ * Loads the resources required by the client from file.
+ */
 void load_resources();
-void send_presentation();
+
+
+
+/**
+*  Sends an introduction message to the auctioneer, telling it which resources
+*  this client requires.
+*/
+void send_introduction();
+
+
+
+/**
+ * Listen to the auction start message. The function stops when has received an
+ * auction opening message.
+ */
+void listen_auction_start();
+
+
+
+/**
+ * Collects all the IPC garbage
+ */
+void ipc_gc();
+
+
+
+/**
+ * Cleans the heap after quitting (heard is a good pratice...)
+ */
+void gc();
+
+
+
+int main(int argc, char** argv);
 
 
 #endif // CLIENT_H

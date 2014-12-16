@@ -3,7 +3,6 @@
 
 #define TAO_OPENING_MTYPE 3
 
-
 typedef struct _tao_opening {
     long int mtype;
     char resource[MAX_RES_NAME_LENGTH];
