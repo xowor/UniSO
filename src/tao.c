@@ -29,6 +29,7 @@ typedef struct _bid{
  * Manca taoInformation = clienti interessati a quel tao
  */
 typedef struct _tao{
+    int id;
     char name[MAX_RES_NAME_LENGTH];
     pid_t interested_clients[MAX_CLIENTS];
     int interested_clients_count;
@@ -36,6 +37,7 @@ typedef struct _tao{
     int base_bid; /* base d'asta */
     int shm_id;
     int sem_id;
+    int lifetime;
 } tao;
 
 /**
@@ -72,6 +74,7 @@ void init_taos(int number){
 void create_tao(char name[MAX_RES_NAME_LENGTH]){
     tao* new_tao = (tao*) malloc(sizeof(tao));
     // new_tao->name = (char*) malloc(sizeof(char) * MAX_RES_NAME_LENGTH);
+    new_tao->id = taos_count++;
     strcpy(new_tao->name, name);
     new_tao->interested_clients_count = 0;
     new_tao->base_bid = BASE_BID;
@@ -79,7 +82,7 @@ void create_tao(char name[MAX_RES_NAME_LENGTH]){
     new_tao->sem_id = -1;
 
     /* Adds the new TAO to the TAOs array */
-    taos[taos_count++] = new_tao;
+    taos[taos_count] = new_tao;
 }
 
 
