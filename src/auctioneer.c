@@ -105,6 +105,7 @@ void create_taos(){
 }
 
 void alarm_handler(){
+	so_log_s('r', "ellamiseria");
 	// clienti iniziano a fare le offerte = inizia l'asta
 	
 	// tao che muore decrementa semaforo
@@ -183,7 +184,7 @@ void start_auction(){
 		start_tao(current_tao);
         
         /* Increments semaphore, 0 = ignore flag */
-        sem_p(sem_id, 0);
+        sem_v(sem_id, 0);
 
 		/* says to client starting tao */
         notify_tao_opened(current_tao->name, current_tao->shm_id, current_tao->sem_id ,current_tao->base_bid);
@@ -191,7 +192,6 @@ void start_auction(){
     	/* timer of 3 seconds before the start of auction */
     	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
     		printf("Error in alarm signal");
-        so_log('r');
     	alarm(3);
 	}
 	/* ends semaphor */
