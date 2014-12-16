@@ -60,6 +60,18 @@ int taos_count;
 int tao_access_semid;
 
 /**
+ *  Check if agent in the argument is between the most bids.
+ */
+int is_best_bid(int pid_agent, tao* current_tao){
+	int i = 0;
+	for(; i < MAX_OFFERS; i++){
+		if(current_tao->bids[i].client_pid == pid_agent)
+			return 1;
+	}
+	return 0;
+}
+
+/**
  * Initializes the TAO array with the given number of required TAOs
  */
 void init_taos(int number){

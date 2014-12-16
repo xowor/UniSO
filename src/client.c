@@ -2,10 +2,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 #include "resource.h"
 #include "so_log.h"
 #include "messages/introduction.h"
 #include "messages/tao_opening.h"
+#include "messages/tao_info_to_agent.h"
 
 
 int msqid;
@@ -17,28 +20,77 @@ int required_resources_length = 0;
 
 resource_list* req_resources;       /* The list containing all the available resources */
 
-/* create a single agent for each tao call */
-void start_agent(){
-	pid_t pid_agent;
-	pid_agent = fork();
-	if ( pid_agent == -1 ){
-		printf("[main] Error: agent not created.");
+/**
+ *  Creates agent's process.
+ */
+int create_agent_process(){
+	char str_msqid [32];
+    sprintf(str_msqid, "%d", msqid);
+    
+    //char str_client_num [6];
+    //sprintf(str_client_num, "%d", client_num);
+    
+	int agent_pid = fork();
+	
+	if ( agent_pid == -1 ){
+        printf("[main] Error: agent not created.");
         fprintf(stderr, "\t%s\n", strerror(errno));
         exit(EXIT_FAILURE);
-	}else if( pid_agent == 0 ){
-		/*  Agent code */
-		// client comunica all'agente con le info (budget max per quella risorsa, quantità di risorse da acquisire, id shm, id sem, base d'asta)
-		// chiama un metodo dell'agente che resta in attesa del segnale di avvio dell'asta
-		// chiama un metodo nell'agente che inizia a fare le offerte
-		// incrementa il semaforo
-		// fa l'offerta
-		// decrementa il semaforo
-		// aspetta di nuovo il suo turno
-	}else {
-        /* Parent code */
-        // msgrcv CLIENTE DEVE RIMANERE IN ATTESA DI ALTRI MESSAGGI DA PARTE DEL BANDITORE
-        exit(EXIT_SUCCESS);
     }
+    if ( agent_pid == 0 ) {
+        /*  Child code */
+        // per coda di messaggi modificare argv
+        char *envp[] = { NULL };
+        char *argv[] = { "./agent", "-m", str_msqid, NULL };
+        /* Run the client process. */
+        int agent_execve_err = execve("./agent", argv, envp);
+        if (agent_execve_err == -1) {
+            /* Cannot find the client binary in the working directory */
+            fprintf(stderr, "[agent] Error: cannot start agent process (Try running main from ./bin).\n");
+            /* strerror interprets the value of errnum, generating a string with a message that describes the error */
+            fprintf(stderr, "\t%s\n", strerror(errno));
+        }
+    } else {
+        /* Parent code */
+        return EXIT_SUCCESS;
+    }
+
+    perror("fork");
+    exit(EXIT_FAILURE);
+}
+
+/**
+ * Client communicates to agents resource informations.
+ */
+void notify_tao_info(int availability, int cost, int shmid, int semid, int basebid){
+	/* Allocates the simple_message message */
+	tao_info_to_agent* msg = (tao_info_to_agent*) malloc(sizeof(tao_info_to_agent));
+	msg->mtype = TAO_INFO_TO_AGENT_MTYPE;
+	msg->availability = availability;
+	msg->cost = cost;
+	msg->shmid = shmid;
+	msg->semid = semid;
+	msg->basebid = basebid;
+	
+	msgsnd(msqid, msg, sizeof(tao_info_to_agent) - sizeof(long), 0600);
+    free(msg);
+}
+
+/**
+ * Creates a single agent for each tao call 
+ */
+void start_agent(char* resource, int shmid, int semid, int basebid){
+	create_agent_process();
+	
+	/* Communicates to agent*/
+	while(req_resources->list){
+        if(strcmp(req_resources->list->name, resource) == 0)
+			notify_tao_info(req_resources->list->availability, req_resources->list->cost, shmid, semid, basebid);
+		req_resources->list = req_resources->list->next;
+	}
+
+    //// msgrcv CLIENTE DEVE RIMANERE IN ATTESA DI ALTRI MESSAGGI DA PARTE DEL BANDITORE
+
 }
 
 /**
@@ -130,23 +182,13 @@ void send_introduction(){
 	free(intr);
 }
 
-// viene richiamato quando il cliente riceve il messaggio dal banditore che gli comunica
-// dell'esistenza dell'asta di suo interesse
-// richiama start agent
 void listen_auction_start(){
     // [TODO] SEMAFORO PER LA LETTURA
     tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
     if ( msgrcv(msqid, msg, sizeof(tao_opening) - sizeof(long), TAO_OPENING_MTYPE, 0) != -1 ) {
-        // char* msg_txt = msg->msg;
-        // if ( strcmp(msg_txt, AUCTION_READY_MSG) == 0 ){
-            // so_log_i('m', msg->pid);
-            // so_log_s('m', msg_txt);
-            // so_log_s('m', AUCTION_READY_MSG);
-            // char* started_tao;
-            // strcpy(started_tao, msg->content.s);
-            so_log_is('m', pid, "started_tao");
-            // FAI PARTIRE AGENTE, ECC
-        // }
+        so_log_is('m', pid, "started_tao");
+        /* Passes informations included in message queue to agent */
+        start_agent(msg->resource, msg->shmid, msg->semid, msg->base_bid);
     }
 
 	free(msg);
@@ -172,9 +214,6 @@ int main(int argc, char** argv){
     ppid = getppid();
     printf("[client] Started client.\tPid: %d\tPPid: %d\n", pid, ppid);
 
-    // scrittura + lettura da file delle risorse: risorse da acquisire + loro quantità + budget
-    // registrazione al banditore con messaggio che contiene pid + risorse che gli interessano
-    // NB: dimensione del messaggio fissa
     if (argc >= 4 && strcmp(argv[1], "-m") == 0 && strcmp(argv[3], "-c") == 0){
         msqid = atoi(argv[2]);
         client_num = atoi(argv[4]);
@@ -198,10 +237,9 @@ int main(int argc, char** argv){
 
     fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
     fflush(stdout);
-    // attesa della chiamata dal banditore
+
     // se banditore comunica acquisizione di risorsa --> scrivere su file di log : risorsa acquisita; quantità; prezzoComplessivo
-    // fork --> agenti --> agenti exit --> client
     // lo stato di terminazione del figlio è  restituito nell'argomento status della wait --> processo padre viene svegliato
-    // exit()
+
     return 0;
 }

@@ -192,12 +192,13 @@ void start_auction(){
 		/* says to client starting tao */
         notify_tao_opened(current_tao->name, current_tao->shm_id, current_tao->sem_id, current_tao->base_bid);
 
+		canexit = 1;
+		
     	/* timer of 3 seconds before the start of auction */
     	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
     		printf("Error in alarm signal");
         alarm(3);
 	}
-
 
 }
 

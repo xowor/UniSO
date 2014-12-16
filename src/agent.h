@@ -4,5 +4,6 @@
 #include "agent.c"
 
 
+int create_agent_process();
 
 #endif // AGENT_H
