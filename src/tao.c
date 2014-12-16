@@ -8,12 +8,17 @@
 #include "so_log.h"
 #include "config.h"
 
-
-
-// TAO = LISTA DI OFFERTE
-
-// un tao per risorsa / ogni tao contiene max 5 offerte
-
+/**
+ * Start (crates the shared memory area) the TAO with the given name.
+            // inizia l'asta
+            // clienti fanno le offerte
+            // allo scadere banditore chiude asta
+            // banditore legge contenuto tao
+            // banditore assegna risorse secondo offerte migliori = invio di un messaggio ai clienti vincitori
+            // ai clienti viene detratto il prezzo
+            // viene aggiornata la lista delle risorse richieste dal cliente
+            // deallocare memoria condivisa
+ */
 
 /* Client's bid in the tao */
 typedef struct _bid{
@@ -22,8 +27,6 @@ typedef struct _bid{
     int unit_offer;
 } bid;
 
-// area di memoria condivisa
-// typedef struct _tao* taoList;
 /**
  * Contiene i bids = offerte dei clienti
  * Manca taoInformation = clienti interessati a quel tao
@@ -63,8 +66,10 @@ void init_taos(int number){
     taos = (tao**) malloc(sizeof(tao) * number);
     taos_count = 0;
 
-    /* Adds a semaphore for each TAO */
-    tao_access_semid = semget(IPC_PRIVATE, number, S_IRUSR | S_IWUSR);
+    /* Adds a semaphore for each TAO.
+     * First semaphore in the pool is reserved to auctioneer (creation max 3 tao at the same time)
+     */
+    tao_access_semid = semget(IPC_PRIVATE, number, 0666 | IPC_CREAT);
 }
 
 /**
@@ -79,7 +84,7 @@ void create_tao(char name[MAX_RES_NAME_LENGTH]){
     new_tao->interested_clients_count = 0;
     new_tao->base_bid = BASE_BID;
     new_tao->shm_id = -1;
-    new_tao->sem_id = -1;
+    new_tao->sem_id = tao_access_semid;
 
     /* Adds the new TAO to the TAOs array */
     taos[taos_count++] = new_tao;
@@ -107,24 +112,9 @@ void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
 
 
 /**
- * Start (crates the shared memory area) the TAO with the given name.
- */
- /**
- *  definire la durata dell'asta
- *
-
-            // TAO fa partire timer di 3 secondi
-            // inizia l'asta
-            // clienti fanno le offerte
-            // durata dell'asta variabile - allo scadere banditore chiude asta
-            // banditore legge contenuto tao
-            // banditore assegna risorse secondo offerte migliori = invio di un messaggio ai clienti vincitori
-            // ai clienti viene detratto il prezzo
-            // viene aggiornata la lista delle risorse richieste dal cliente
-            // deallocare memoria condivisa
+ * Shared area creation and defines the lifetime.
  */
 void start_tao(tao* current_tao){
-    /* tao creation */
     int shm_id;
     shm_id = shmget(IPC_PRIVATE, sizeof(tao), IPC_CREAT | 0600);
     if(shm_id == -1)
@@ -134,16 +124,7 @@ void start_tao(tao* current_tao){
 
     current_tao->shm_id = shm_id;
 
-    /* semaphore creation */
-    int sem_id;
-    sem_id = (IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
-    if(sem_id == -1)
-		perror("");
-    int ctl = semctl(sem_id, 1, SETVAL, 1);
-
-    current_tao->sem_id = sem_id;
-    /* association of sem and shm to interested client with message */
-    // informare clienti con un messaggio <id shm del tao, id semaforo, prezzo base d'asta>
+    current_tao->lifetime = current_tao->interested_clients_count * 5;
 }
 
 /**

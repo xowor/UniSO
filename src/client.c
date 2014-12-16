@@ -20,7 +20,25 @@ resource_list* req_resources;       /* The list containing all the available res
 /* create a single agent for each tao call */
 void start_agent(){
 	pid_t pid_agent;
-	//pid_agent = fork();
+	pid_agent = fork();
+	if ( pid_agent == -1 ){
+		printf("[main] Error: agent not created.");
+        fprintf(stderr, "\t%s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+	}else if( pid_agent == 0 ){
+		/*  Agent code */
+		// client comunica all'agente con le info (budget max per quella risorsa, quantità di risorse da acquisire, id shm, id sem, base d'asta)
+		// chiama un metodo dell'agente che resta in attesa del segnale di avvio dell'asta
+		// chiama un metodo nell'agente che inizia a fare le offerte
+		// incrementa il semaforo
+		// fa l'offerta
+		// decrementa il semaforo
+		// aspetta di nuovo il suo turno
+	}else {
+        /* Parent code */
+        // msgrcv CLIENTE DEVE RIMANERE IN ATTESA DI ALTRI MESSAGGI DA PARTE DEL BANDITORE
+        exit(EXIT_SUCCESS);
+    }
 }
 
 /**
