@@ -125,7 +125,7 @@ void send_introduction(){
      * required resources.
      */
     msgsnd(msqid, intr, sizeof(introduction) - sizeof(long), 0600);
-    // so_log('r');
+	free(intr);
 }
 
 // viene richiamato quando il cliente riceve il messaggio dal banditore che gli comunica
@@ -146,8 +146,24 @@ void listen_auction_start(){
             // FAI PARTIRE AGENTE, ECC
         // }
     }
+
+	free(msg);
 }
 
+
+/**
+* Collects all the IPC garbage
+*/
+void ipc_gc(){
+
+}
+
+/**
+* Cleans the heap after quitting (heard is a good pratice...)
+*/
+void gc(){
+	free(req_resources);
+}
 
 int main(int argc, char** argv){
     pid = getpid();
@@ -169,6 +185,13 @@ int main(int argc, char** argv){
     load_resources();
     send_introduction();
     listen_auction_start();
+
+
+	fprintf(stdout, "[client][%d][%d] \x1b[31mRemoving all the IPC structures... \x1b[0m \n", client_num, pid);
+	ipc_gc();
+
+	fprintf(stdout, "[client][%d][%d] \x1b[31mCleaning heap... \x1b[0m \n", client_num, pid);
+	gc();
 
 
     fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
