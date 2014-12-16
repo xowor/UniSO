@@ -166,31 +166,31 @@ void listen_introductions(){
 }
 
 
-/* Starts 3 tao at a time */
+/** 
+ * Starts 3 tao at a time.
+ * Use the first semaphore in the pool (position zero).
+ */
 void start_auction(){
-	
-    /* semaphore creation */
-    semid = semget(IPC_PRIVATE, 0, S_IRUSR | S_IWUSR | IPC_CREATE);
-    if(semid == -1)
-		perror("semget");
-		
-    /* semaphore regulation */
-    int ctl = semctl(semid, 3, SETVAL, 1);
+
     int i = 0;
     tao* current_tao;
 	for(; i < avail_resources_count -4; i++){
-
+		
+		/* "pauses" the tao creation until there are 3 tao opened */
+		while(semctl(tao_access_semid, 0, GETVAL, 0) > 2){	}
+		
 		/* gets one tao from the array */
 		current_tao = get_tao(i);
 
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
-
-        /* Increments semaphore, 0 = ignore flag */
-        sem_v(semid, 0);
+        
+        /* Increments semaphore */
+        // DECREMENTARLO ALLA DEALLOCAZIONE DEL TAO!!!!!!!!!!!!!!!!!!!!!!!!!
+        sem_v(tao_access_semid, 0);
 
 		/* says to client starting tao */
-        notify_tao_opened(current_tao->name, current_tao->shm_id, current_tao->sem_id ,current_tao->base_bid);
+        notify_tao_opened(current_tao->name, current_tao->shm_id, current_tao->sem_id, current_tao->base_bid);
 
     	/* timer of 3 seconds before the start of auction */
     	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
