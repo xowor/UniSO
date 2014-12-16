@@ -27,7 +27,8 @@ void start_agent(){
         exit(EXIT_FAILURE);
 	}else if( pid_agent == 0 ){
 		/*  Agent code */
-		// client manda un messaggio all'agente con le info
+		// client comunica all'agente con le info (budget max per quella risorsa, quantità di risorse da acquisire, id shm, id sem, base d'asta)
+		// chiama un metodo dell'agente che resta in attesa del segnale di avvio dell'asta
 		// chiama un metodo nell'agente che inizia a fare le offerte
 		// incrementa il semaforo
 		// fa l'offerta
@@ -35,6 +36,7 @@ void start_agent(){
 		// aspetta di nuovo il suo turno
 	}else {
         /* Parent code */
+        // msgrcv CLIENTE DEVE RIMANERE IN ATTESA DI ALTRI MESSAGGI DA PARTE DEL BANDITORE
         exit(EXIT_SUCCESS);
     }
 }

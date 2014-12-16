@@ -129,18 +129,15 @@ void start_tao(tao* current_tao){
     tao* t;
     t = (tao*) shmat(shm_id, NULL, 0);
 
-    current_tao->shm_id = shm_id;
-
     /* semaphore creation */
     int sem_id;
-    sem_id = (IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
+    sem_id = semget(IPC_PRIVATE, 0, S_IRUSR | S_IWUSR | IPC_CREATE);
     if(sem_id == -1)
 		perror("");
-    int ctl = semctl(sem_id, 1, SETVAL, 1);
+    int ctl = semctl(sem_id, 0, SETVAL, 1);
 
     current_tao->sem_id = sem_id;
-    /* association of sem and shm to interested client with message */
-    // informare clienti con un messaggio <id shm del tao, id semaforo, prezzo base d'asta>
+    current_tao->shm_id = shm_id;
 }
 
 /**

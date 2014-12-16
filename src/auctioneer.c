@@ -38,7 +38,7 @@ resource_list* avail_resources;      /* The list containing all the available re
 int avail_resources_count;           /* The number of all the available resources */
 
 int registered_clients;
-int canexit = 0;
+int canexit = 0;					 /* ?????????? */
 
 /**
  * Reads from file all the available resources.
@@ -109,15 +109,16 @@ void create_taos(){
 
 
 void alarm_handler() {
-    so_log('c');
-	// clienti iniziano a fare le offerte = inizia l'asta
-
+	
+	// viene inviato un segnale ai clienti
+	// gli agenti a turno iniziano ad inviare le offerte
+	// sigalarm per la durata dell'asta + sigint per avvertire i clienti
 	// tao che muore decrementa semaforo
     canexit = 0;
 
 }
 
-
+// alla ricezione del messaggio, il cliente deve solo creare l'agente
 void notify_tao_opened(char* name, int shm_id, int sem_id, int base_bid){
     // [TODO] SEMAFORO PER LA SCRITTURA
     int i = 0;
@@ -167,11 +168,13 @@ void listen_introductions(){
 
 /* Starts 3 tao at a time */
 void start_auction(){
+	
     /* semaphore creation */
-    semid = semget(IPC_PRIVATE, 1, S_IRUSR | S_IWUSR);
+    semid = semget(IPC_PRIVATE, 0, S_IRUSR | S_IWUSR | IPC_CREATE);
     if(semid == -1)
-		perror("");
-    /* semaphore regulation // CONTROLLARE I PARAMETRI */
+		perror("semget");
+		
+    /* semaphore regulation */
     int ctl = semctl(semid, 3, SETVAL, 1);
     int i = 0;
     tao* current_tao;
@@ -184,17 +187,14 @@ void start_auction(){
 		start_tao(current_tao);
 
         /* Increments semaphore, 0 = ignore flag */
-
         sem_v(semid, 0);
 
 		/* says to client starting tao */
         notify_tao_opened(current_tao->name, current_tao->shm_id, current_tao->sem_id ,current_tao->base_bid);
 
     	/* timer of 3 seconds before the start of auction */
-    	if(signal(SIGALRM, alarm_handler) == SIG_ERR){
+    	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
     		printf("Error in alarm signal");
-
-        }
         alarm(3);
 	}
 
