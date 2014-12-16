@@ -1,4 +1,4 @@
-/* Decrements semaphore */
+
 int sem_p (int semid, int semnum) {
     struct sembuf cmd;
     cmd.sem_num = semnum;
@@ -7,7 +7,6 @@ int sem_p (int semid, int semnum) {
     semop(semid, &cmd, 1);
 }
 
-/* Increments semaphore */
 int sem_v (int semid, int semnum) {
     struct sembuf cmd;
     cmd.sem_num = semnum;

@@ -15,7 +15,7 @@ int msqid;
 int client_num;
 int pid;
 int ppid;
-// char* required_resources[MAX_REQUIRE_RESOURCES];
+// char* required_resources[MAX_REQUIRED_RESOURCES];
 int required_resources_length = 0;
 
 resource_list* req_resources;       /* The list containing all the available resources */

@@ -9,16 +9,14 @@
 #include <sys/stat.h>
 #include <sys/ipc.h>
 #include "resource.h"
+#include "config.h"
 #include "tao.h"
-#include "messages/introduction.h"
 #include "semaphore.h"
+#include "messages/introduction.h"
 #include "messages/simple_message.h"
 #include "messages/tao_opening.h"
-#include "config.h"
 
 
-#define MAX_RESOURCES 32            /* The maximum number of available resources */
-#define MAX_OPEN_AUCTIONS 3         /* At the same time, there are at the height 3 tao */
 #define N 20                        /* Size of "an array" */
 
 extern int errno;                   /* Externally declared (by kernel) */
@@ -27,7 +25,7 @@ extern int errno;                   /* Externally declared (by kernel) */
 
 typedef struct _client {
     pid_t client_pid;
-	resource interested_resource[MAX_RESOURCE];
+	resource interested_resource[MAX_REQUIRED_RESOURCES];
 } client;
 
 int msqid = 0;                       /* The id of the message queue */
@@ -40,9 +38,7 @@ int avail_resources_count;           /* The number of all the available resource
 int registered_clients;
 int canexit = 0;					 /* ?????????? */
 
-/**
- * Reads from file all the available resources.
- */
+
 void load_resources(){
     FILE* resources;
     char line[MAX_RES_NAME_LENGTH];
@@ -93,6 +89,8 @@ void load_resources(){
     }
 }
 
+
+
 void create_taos(){
 	/* creates tao's array with empty tao */
     init_taos(avail_resources_count);
@@ -108,8 +106,8 @@ void create_taos(){
 }
 
 
+
 void alarm_handler() {
-	
 	// viene inviato un segnale ai clienti
 	// gli agenti a turno iniziano ad inviare le offerte
 	// sigalarm per la durata dell'asta + sigint per avvertire i clienti
@@ -117,6 +115,8 @@ void alarm_handler() {
     canexit = 0;
 
 }
+
+
 
 // alla ricezione del messaggio, il cliente deve solo creare l'agente
 void notify_tao_opened(char* name, int shm_id, int sem_id, int base_bid){
@@ -143,9 +143,7 @@ void notify_tao_opened(char* name, int shm_id, int sem_id, int base_bid){
 }
 
 
-/**
- * Listen to all clients introduction.
- */
+
 void listen_introductions(){
     // [TODO] SEMAFORO PER LA LETTURA
     introduction* intr = (introduction*) malloc(sizeof(introduction));
@@ -166,25 +164,22 @@ void listen_introductions(){
 }
 
 
-/** 
- * Starts 3 tao at a time.
- * Use the first semaphore in the pool (position zero).
- */
+
 void start_auction(){
 
     int i = 0;
     tao* current_tao;
 	for(; i < avail_resources_count -4; i++){
-		
+
 		/* "pauses" the tao creation until there are 3 tao opened */
 		while(semctl(tao_access_semid, 0, GETVAL, 0) > 2){	}
-		
+
 		/* gets one tao from the array */
 		current_tao = get_tao(i);
 
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
-        
+
         /* Increments semaphore */
         // DECREMENTARLO ALLA DEALLOCAZIONE DEL TAO!!!!!!!!!!!!!!!!!!!!!!!!!
         sem_v(tao_access_semid, 0);
@@ -202,9 +197,8 @@ void start_auction(){
 
 }
 
-/**
- * Collects all the IPC garbage
- */
+
+
 void ipc_gc(){
     int i;
 
@@ -226,12 +220,13 @@ void ipc_gc(){
     }
 }
 
-/**
- * Cleans the heap after quitting (heard is a good pratice...)
- */
+
+
 void gc(){
     free(avail_resources);
 }
+
+
 
 int main(int argc, char** argv){
     printf("[auctioneer] Started auctioneer.\tPid: %d\tPPid: %d\n", getpid(), getppid());

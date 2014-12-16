@@ -19,7 +19,7 @@
             // viene aggiornata la lista delle risorse richieste dal cliente
             // deallocare memoria condivisa
  */
- 
+
 /* Client's bid in the tao */
 typedef struct _bid{
     int client_pid;
@@ -76,10 +76,10 @@ int is_best_bid(int pid_agent, tao* current_tao){
  */
 void init_taos(int number){
     taos = (tao**) malloc(sizeof(tao) * number);
-    taos_count = 1;
+    taos_count = 0;
 
     /* Adds a semaphore for each TAO.
-     * First semaphore in the pool is reserved to auctioneer (creation max 3 tao at the same time) 
+     * First semaphore in the pool is reserved to auctioneer (creation max 3 tao at the same time)
      */
     tao_access_semid = semget(IPC_PRIVATE, number, 0666 | IPC_CREAT);
 }
@@ -92,15 +92,14 @@ void create_tao(char name[MAX_RES_NAME_LENGTH]){
     tao* new_tao = (tao*) malloc(sizeof(tao));
     // new_tao->name = (char*) malloc(sizeof(char) * MAX_RES_NAME_LENGTH);
     new_tao->id = taos_count;
-    taos_count += 1;
     strcpy(new_tao->name, name);
     new_tao->interested_clients_count = 0;
     new_tao->base_bid = BASE_BID;
     new_tao->shm_id = -1;
-    new_tao->sem_id = tao_access_semid;    
+    new_tao->sem_id = tao_access_semid;
 
     /* Adds the new TAO to the TAOs array */
-    taos[taos_count] = new_tao;
+    taos[taos_count++] = new_tao;
 }
 
 
@@ -136,7 +135,7 @@ void start_tao(tao* current_tao){
     t = (tao*) shmat(shm_id, NULL, 0);
 
     current_tao->shm_id = shm_id;
-    
+
     current_tao->lifetime = current_tao->interested_clients_count * 5;
 }
 
