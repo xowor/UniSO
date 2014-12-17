@@ -24,6 +24,12 @@ typedef struct _resource_list {
 } resource_list;
 
 
+resource_list* create_resource_list(){
+    resource_list* list = (resource_list*) malloc(sizeof(resource_list));
+    list->list = 0;
+    list->resources_count = 0;
+    return list;
+}
 
 resource* add_resource(resource_list* list, char name[MAX_RES_NAME_LENGTH], int avail, int cost){
     resource* new_resource = (resource*) malloc(sizeof(resource));

@@ -6,6 +6,7 @@
 #include <sys/msg.h>
 #include <sys/wait.h>
 #include "resource.h"
+#include "so_log.h"
 #include "config.h"
 
 extern int errno;       /* Externally declared (by kernel) */
@@ -13,9 +14,9 @@ extern int errno;       /* Externally declared (by kernel) */
 /**
  * Creates the auctioneer process.
  */
-int create_auctioneer(int msqid){
-    char str_msqid [32];
-    sprintf(str_msqid, "%d", msqid);
+int create_auctioneer(int master_msqid){
+    char str_master_msqid [32];
+    sprintf(str_master_msqid, "%d", master_msqid);
 
     int auctioneer_pid = fork();
     //int status = 0;
@@ -28,7 +29,7 @@ int create_auctioneer(int msqid){
     if ( auctioneer_pid == 0 ) {
         /*  Child code */
         char *envp[] = { NULL };
-        char *argv[] = { "./auctioneer", "-m", str_msqid, NULL };
+        char *argv[] = { "./auctioneer", "-m", str_master_msqid, NULL };
         /* Run the auctioneer process. */
         int auct_execve_err = execve("./auctioneer", argv, envp);
         if (auct_execve_err == -1) {
@@ -49,11 +50,10 @@ int create_auctioneer(int msqid){
 /**
  * Creates a client process.
  */
-int create_client(int msqid, int client_num){
-
-    char str_msqid [32];
+int create_client(int master_msqid, int client_num){
+    char str_master_msqid [32];
     char str_client_num [6];
-    sprintf(str_msqid, "%d", msqid);
+    sprintf(str_master_msqid, "%d", master_msqid);
     sprintf(str_client_num, "%d", client_num);
 
     int client_pid = fork();
@@ -66,7 +66,7 @@ int create_client(int msqid, int client_num){
     if ( client_pid == 0 ) {
         /*  Child code */
         char *envp[] = { NULL };
-        char *argv[] = { "./client", "-m", str_msqid, "-c", str_client_num, NULL };
+        char *argv[] = { "./client", "-m", str_master_msqid, "-c", str_client_num, NULL };
         /* Run the client process. */
         int clnt_execve_err = execve("./client", argv, envp);
         if (clnt_execve_err == -1) {
@@ -99,16 +99,18 @@ int main(int argc, char** argv) {
     //
     // printf("%d", key);
 
-    /* Get the message queue id, with the 0666 permissions. */
-    int msqid = msgget(IPC_PRIVATE, 0666 | IPC_CREAT);
+    /* Get the message queue id, with the 0600 permissions. */
+    int master_msqid = msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
+    // so_log_i('g', msgget(IPC_PRIVATE, 0600 | IPC_CREAT));
+    // so_log_i('g', msgget(IPC_PRIVATE, 0600 | IPC_CREAT));
     int i = 0;
-    int auctnr_exit = create_auctioneer(msqid);
+    int auctnr_exit = create_auctioneer(master_msqid);
 
     /* Checks the auctioneer creation was successful. */
     if (auctnr_exit == 0){
 
         for (i = 0; i < MAX_CLIENTS; i++){
-            int clnt_exit = create_client(msqid, i);
+            int clnt_exit = create_client(master_msqid, i);
             /* If the client creation fails, will not try to create more clients */     /* Perchè non prova a crearne altri?? */
             if (clnt_exit != 0)
                 exit(EXIT_FAILURE);

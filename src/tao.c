@@ -92,7 +92,10 @@ void create_tao(char name[MAX_RES_NAME_LENGTH]){
 
 
 tao* get_tao(int i){
-    return taos[i];
+    if (i < taos_count)
+        return taos[i];
+    else
+        return 0;
 }
 
 

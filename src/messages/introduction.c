@@ -7,6 +7,7 @@
 typedef struct _introduction {
     long int mtype;
     pid_t pid;
+    int msqid;
     char resources[MAX_REQUIRED_RESOURCES][MAX_RES_NAME_LENGTH];
     int resources_length;
 } introduction;

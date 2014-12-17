@@ -27,8 +27,15 @@ void send_introduction();
 
 
 /**
- * Listen to the auction start message. The function stops when has received an
- * auction opening message.
+ * Listen to the auction opening message. The function stops until has received
+ * an auction opening message.
+ */
+void listen_auction_creation();
+
+
+/**
+ * Listen to the auction starting message. The function stops until has received
+ * an auction starting message.
  */
 void listen_auction_start();
 

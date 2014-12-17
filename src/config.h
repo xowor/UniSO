@@ -12,4 +12,5 @@
 
 /* Messages */
 #define MAX_SIMPLE_MESS_LENGTH 512  /* The maximum length of the simple_message message text */
-#define AUCTION_READY_MSG "AUCTION_READY" /* DELETE */
+#define AUCTION_START_MSG "AUCTION_READY" /* Default message for the auction start */
+#define MSG_QUEUE_MSG "YOUR_MSG_QUEUE"    /* Default message for the message retunring a message queue id */
