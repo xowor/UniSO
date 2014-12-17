@@ -2,11 +2,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 #include "resource.h"
 #include "so_log.h"
 #include "messages/introduction.h"
 #include "messages/tao_opening.h"
 #include "messages/simple_message.h"
+#include "messages/tao_info_to_agent.h"
 
 
 int master_msqid;
@@ -16,31 +19,83 @@ int pid;
 int ppid;
 // char* required_resources[MAX_REQUIRED_RESOURCES];
 int required_resources_length = 0;
+int budget;
 
 resource_list* req_resources;       /* The list containing all the available resources */
 
-/* create a single agent for each tao call */
-void start_agent(){
-	pid_t pid_agent;
-	pid_agent = fork();
-	if ( pid_agent == -1 ){
-		printf("[main] Error: agent not created.");
+/**
+ *  Creates agent's process.
+ */
+int create_agent_process(){
+	char str_msqid [32];
+    sprintf(str_msqid, "%d", msqid);
+
+    //char str_client_num [6];
+    //sprintf(str_client_num, "%d", client_num);
+
+	int agent_pid = fork();
+
+	if ( agent_pid == -1 ){
+        printf("[main] Error: agent not created.");
         fprintf(stderr, "\t%s\n", strerror(errno));
         exit(EXIT_FAILURE);
-	}else if( pid_agent == 0 ){
-		/*  Agent code */
-		// client comunica all'agente con le info (budget max per quella risorsa, quantità di risorse da acquisire, id shm, id sem, base d'asta)
-		// chiama un metodo dell'agente che resta in attesa del segnale di avvio dell'asta
-		// chiama un metodo nell'agente che inizia a fare le offerte
-		// incrementa il semaforo
-		// fa l'offerta
-		// decrementa il semaforo
-		// aspetta di nuovo il suo turno
-	}else {
-        /* Parent code */
-        // msgrcv CLIENTE DEVE RIMANERE IN ATTESA DI ALTRI MESSAGGI DA PARTE DEL BANDITORE
-        exit(EXIT_SUCCESS);
     }
+    if ( agent_pid == 0 ) {
+        /*  Child code */
+        // per coda di messaggi modificare argv
+        char *envp[] = { NULL };
+        char *argv[] = { "./agent", "-m", str_msqid, NULL };
+        /* Run the client process. */
+        int agent_execve_err = execve("./agent", argv, envp);
+        if (agent_execve_err == -1) {
+            /* Cannot find the client binary in the working directory */
+            fprintf(stderr, "[agent] Error: cannot start agent process (Try running main from ./bin).\n");
+            /* strerror interprets the value of errnum, generating a string with a message that describes the error */
+            fprintf(stderr, "\t%s\n", strerror(errno));
+        }
+    } else {
+        /* Parent code */
+        return EXIT_SUCCESS;
+    }
+
+    perror("fork");
+    exit(EXIT_FAILURE);
+}
+
+/**
+ * Client communicates to agents resource informations.
+ */
+void notify_tao_info(int availability, int cost, int shmid, int semid, int basebid, char res[MAX_RES_NAME_LENGTH], int budget){
+	/* Allocates the simple_message message */
+	tao_info_to_agent* msg = (tao_info_to_agent*) malloc(sizeof(tao_info_to_agent));
+	msg->mtype = TAO_INFO_TO_AGENT_MTYPE;
+	strcpy(msg->res, res);
+	msg->availability = availability;
+	msg->cost = cost;
+	msg->shmid = shmid;
+	msg->semid = semid;
+	msg->basebid = basebid;
+	msg->budget = budget;
+
+	msgsnd(msqid, msg, sizeof(tao_info_to_agent) - sizeof(long), 0600);
+    free(msg);
+}
+
+/**
+ * Creates a single agent for each tao call
+ */
+void start_agent(char* resource, int shmid, int semid, int basebid){
+	create_agent_process();
+
+	/* Communicates to agent*/
+	while(req_resources->list){
+        if(strcmp(req_resources->list->name, resource) == 0)
+			notify_tao_info(req_resources->list->availability, req_resources->list->cost, shmid, semid, basebid, req_resources->list->name, budget);
+		req_resources->list = req_resources->list->next;
+	}
+
+    //// msgrcv CLIENTE DEVE RIMANERE IN ATTESA DI ALTRI MESSAGGI DA PARTE DEL BANDITORE
+
 }
 
 void listen_msqid(){
@@ -73,7 +128,7 @@ void load_resources(){
     char* name;
     char* tmp;
     char* token;
-    int avail = 0, cost = 0, i = 0, resourcesNumber = 0;
+    int avail = 0, cost = 0, i = 0, resourcesNumber = 0, number_line = 0;
     char filename[1024];
     req_resources = create_resource_list();
     /* Reads the resource list according to the client number. */
@@ -81,37 +136,43 @@ void load_resources(){
     resources = fopen(filename, "r");
     if( resources != NULL ){
         /* Reads each line from file */
-        while( fgets(line, 64, resources) != NULL ){
-            token = strtok(line, ";");
-            i = 0;
-            name = (char*) malloc(64);
-            while( token ){
-                /* In each line there are 4 tokens: name, available, cost and \n */
-                switch(i%4){
-                    case 0:
-						strcat(token, "\0");
-						strcpy(name, token);
-						break;
-                    case 1:
-						tmp = token;
-						avail = atoi(tmp);
-						break;
-                    case 2:
-						tmp = token;
-						cost = atoi(tmp);
-						break;
-                }
-                i++;
-                token = strtok(NULL, ";");
-            }
-            //printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
 
-            // resourcesNumber++;
-            // required_resources[required_resources_length++] = name;
+        	while( fgets(line, 64, resources) != NULL ){
+				token = strtok(line, ";");
+				if(number_line == 0){
+					budget = atoi(token);
+					number_line++;
+				}else{
+					i = 0;
+					name = (char*) malloc(64);
+					while( token ){
+						/* In each line there are 4 tokens: name, available, cost and \n */
+						switch(i%4){
+							case 0:
+								strcat(token, "\0");
+								strcpy(name, token);
+								break;
+							case 1:
+								tmp = token;
+								avail = atoi(tmp);
+								break;
+							case 2:
+								tmp = token;
+								cost = atoi(tmp);
+								break;
+						}
+						i++;
+						token = strtok(NULL, ";");
+					}
+				//printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
 
-            /* Adds the read resources inside the required resources list */
-            add_resource(req_resources, name, avail, cost);
-        }
+				// resourcesNumber++;
+				// required_resources[required_resources_length++] = name;
+
+				/* Adds the read resources inside the required resources list */
+				add_resource(req_resources, name, avail, cost);
+			}
+		}
     }else{
         fprintf(stderr, "[client][%d][%d] Error: Unable to open resource's file. %s\n", client_num, pid, strerror(errno));
     }
@@ -138,9 +199,11 @@ void send_introduction(){
 
     /* For each resource required adds its name in the introduction message. */
     resource* res = req_resources->list;
+		// so_log_p('m', req_resources->list);
     int i = 0;
     do {
         strcpy(intr->resources[i], res->name);
+		// so_log_p('r', intr->resources[i]);
         intr->resources_length++;
         i++;
         res = res->next;
@@ -181,6 +244,7 @@ void listen_auction_creation(){
 	for (; i < req_resources->resources_count; i++){
 	    tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
 	    if ( msgrcv(msqid, msg, sizeof(tao_opening) - sizeof(long), TAO_OPENING_MTYPE, 0) != -1 ) {
+        	start_agent(msg->resource, msg->shmid, msg->semid, msg->base_bid);
             // so_log_is('m', pid, "created_tao");
 			// so_log_is('m', pid, msg->resource);
 	    }
@@ -208,9 +272,6 @@ int main(int argc, char** argv){
     ppid = getppid();
     printf("[client] Started client.\tPid: %d\tPPid: %d\n", pid, ppid);
 
-    // scrittura + lettura da file delle risorse: risorse da acquisire + loro quantità + budget
-    // registrazione al banditore con messaggio che contiene pid + risorse che gli interessano
-    // NB: dimensione del messaggio fissa
     if (argc >= 4 && strcmp(argv[1], "-m") == 0 && strcmp(argv[3], "-c") == 0){
         master_msqid = atoi(argv[2]);
         client_num = atoi(argv[4]);
@@ -236,10 +297,9 @@ int main(int argc, char** argv){
 
     fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
     fflush(stdout);
-    // attesa della chiamata dal banditore
+
     // se banditore comunica acquisizione di risorsa --> scrivere su file di log : risorsa acquisita; quantità; prezzoComplessivo
-    // fork --> agenti --> agenti exit --> client
     // lo stato di terminazione del figlio è  restituito nell'argomento status della wait --> processo padre viene svegliato
-    // exit()
+
     return 0;
 }

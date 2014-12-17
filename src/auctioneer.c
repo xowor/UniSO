@@ -238,18 +238,19 @@ void start_auction_system(){
 
         /* Increments semaphore */
         // DECREMENTARLO ALLA DEALLOCAZIONE DEL TAO!!!!!!!!!!!!!!!!!!!!!!!!!
-        sem_v(tao_access_semid, 0);
+        // sem_v(tao_access_semid, 0);
 
 		/* says to client starting tao */
         notify_tao_creation(current_tao);
         notify_tao_start(current_tao);
+
+		canexit = 1;
 
     	/* timer of 3 seconds before the start of auction */
     	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
     		printf("Error in alarm signal");
         alarm(3);
 	}
-
 
 }
 
