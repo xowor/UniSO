@@ -17,6 +17,7 @@ int pid;
 int ppid;
 // char* required_resources[MAX_REQUIRED_RESOURCES];
 int required_resources_length = 0;
+int budget;
 
 resource_list* req_resources;       /* The list containing all the available resources */
 
@@ -62,15 +63,17 @@ int create_agent_process(){
 /**
  * Client communicates to agents resource informations.
  */
-void notify_tao_info(int availability, int cost, int shmid, int semid, int basebid){
+void notify_tao_info(int availability, int cost, int shmid, int semid, int basebid, char res[MAX_RES_NAME_LENGTH], int budget){
 	/* Allocates the simple_message message */
 	tao_info_to_agent* msg = (tao_info_to_agent*) malloc(sizeof(tao_info_to_agent));
 	msg->mtype = TAO_INFO_TO_AGENT_MTYPE;
+	strcpy(msg->res, res);
 	msg->availability = availability;
 	msg->cost = cost;
 	msg->shmid = shmid;
 	msg->semid = semid;
 	msg->basebid = basebid;
+	msg->budget = budget;
 	
 	msgsnd(msqid, msg, sizeof(tao_info_to_agent) - sizeof(long), 0600);
     free(msg);
@@ -85,7 +88,7 @@ void start_agent(char* resource, int shmid, int semid, int basebid){
 	/* Communicates to agent*/
 	while(req_resources->list){
         if(strcmp(req_resources->list->name, resource) == 0)
-			notify_tao_info(req_resources->list->availability, req_resources->list->cost, shmid, semid, basebid);
+			notify_tao_info(req_resources->list->availability, req_resources->list->cost, shmid, semid, basebid, req_resources->list->name, budget);
 		req_resources->list = req_resources->list->next;
 	}
 
@@ -102,7 +105,7 @@ void load_resources(){
     char* name;
     char* tmp;
     char* token;
-    int avail = 0, cost = 0, i = 0, resourcesNumber = 0;
+    int avail = 0, cost = 0, i = 0, resourcesNumber = 0, number_line = 0;
     char filename[1024];
     req_resources = (resource_list*) malloc(sizeof(resource_list));
     /* Reads the resource list according to the client number. */
@@ -110,37 +113,42 @@ void load_resources(){
     resources = fopen(filename, "r");
     if( resources != NULL ){
         /* Reads each line from file */
-        while( fgets(line, 64, resources) != NULL ){
-            token = strtok(line, ";");
-            i = 0;
-            name = (char*) malloc(64);
-            while( token ){
-                /* In each line there are 4 tokens: name, available, cost and \n */
-                switch(i%4){
-                    case 0:
-						strcat(token, "\0");
-						strcpy(name, token);
-						break;
-                    case 1:
-						tmp = token;
-						avail = atoi(tmp);
-						break;
-                    case 2:
-						tmp = token;
-						cost = atoi(tmp);
-						break;
-                }
-                i++;
-                token = strtok(NULL, ";");
-            }
-            //printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
+        token = strtok(line, ";");
+        if(number_line == 0){
+			budget = (int)token;
+			number_line++;
+		}else{
+			while( fgets(line, 64, resources) != NULL ){
+				i = 0;
+				name = (char*) malloc(64);
+				while( token ){
+					/* In each line there are 4 tokens: name, available, cost and \n */
+					switch(i%4){
+						case 0:
+							strcat(token, "\0");
+							strcpy(name, token);
+							break;
+						case 1:
+							tmp = token;
+							avail = atoi(tmp);
+							break;
+						case 2:
+							tmp = token;
+							cost = atoi(tmp);
+							break;
+					}
+					i++;
+					token = strtok(NULL, ";");
+				}
+				//printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
 
-            // resourcesNumber++;
-            // required_resources[required_resources_length++] = name;
+				// resourcesNumber++;
+				// required_resources[required_resources_length++] = name;
 
-            /* Adds the read resources inside the required resources list */
-            add_resource(req_resources, name, avail, cost);
-        }
+				/* Adds the read resources inside the required resources list */
+				add_resource(req_resources, name, avail, cost);
+			}
+		}
     }else{
         fprintf(stderr, "[client][%d][%d] Error: Unable to open resource's file. %s\n", client_num, pid, strerror(errno));
     }
