@@ -4,6 +4,7 @@
 #include <string.h>
 #include "tao.c"
 #include "config.h"
+#include "semaphore.h"
 #include "messages/tao_info_to_agent.h"
 
 int msqid;
@@ -24,8 +25,7 @@ pid_t pid;
 	 * Precondizione: l'agente si può permettere (come budget) la unit_offer
 	 * Fa l'offerta
  
-    // chiama un metodo dell'agente che resta in attesa del segnale di avvio dell'asta
-	// chiama un metodo nell'agente che inizia a fare le offerte
+    // attesa del segnale di avvio dell'asta
 	// incrementa il semaforo
 	// fa l'offerta
 	// decrementa il semaforo
@@ -56,6 +56,7 @@ void listen_tao_info(){
  * Makes a bid and checks the possibility.
  */
 void make_action(){
+	sem_v(pid, current_tao->id);
 	if(is_best_bid(getpid(), current_tao) == 0){
 		if(current_bid < budget){
 			if(increments_bid() == 1){
@@ -73,6 +74,7 @@ void make_action(){
 			}
 		}
 	}else{} // do anything, the bid is between the best
+	sem_p(pid, current_tao->id);
 }
 
 /**
@@ -107,7 +109,9 @@ int main(int argc, char** argv){
     
     current_tao = get_tao_from_resource(res);
     
-    make_action();
+    while(1){
+		make_action();
+	}
 
 }
 

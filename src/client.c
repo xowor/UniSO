@@ -82,7 +82,7 @@ void notify_tao_info(int availability, int cost, int shmid, int semid, int baseb
 /**
  * Creates a single agent for each tao call 
  */
-void start_agent(char* resource, int shmid, int semid, int basebid){
+void create_agent(char* resource, int shmid, int semid, int basebid){
 	create_agent_process();
 	
 	/* Communicates to agent*/
@@ -196,7 +196,7 @@ void listen_auction_start(){
     if ( msgrcv(msqid, msg, sizeof(tao_opening) - sizeof(long), TAO_OPENING_MTYPE, 0) != -1 ) {
         so_log_is('m', pid, "started_tao");
         /* Passes informations included in message queue to agent */
-        start_agent(msg->resource, msg->shmid, msg->semid, msg->base_bid);
+        create_agent(msg->resource, msg->shmid, msg->semid, msg->base_bid);
     }
 
 	free(msg);

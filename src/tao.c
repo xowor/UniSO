@@ -105,7 +105,7 @@ void create_tao(char name[MAX_RES_NAME_LENGTH]){
     taos[taos_count++] = new_tao;
 }
 
-
+	
 tao* get_tao(int i){
     return taos[i];
 }

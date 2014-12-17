@@ -108,10 +108,12 @@ void create_taos(){
 
 
 void alarm_handler() {
-	// viene inviato un segnale ai clienti
-	// gli agenti a turno iniziano ad inviare le offerte
-	// sigalarm per la durata dell'asta + sigint per avvertire i clienti
-	// tao che muore decrementa semaforo
+	// messaggio di avvio asta ai clienti
+	// timer lifetime
+	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
+		printf("[Auctioneer] [%d] Error in alarm signal (timer lifetime).\n", getpid());
+	// recuperare la durata di questo tao
+	//alarm();
     canexit = 0;
 
 }
@@ -191,7 +193,7 @@ void start_auction(){
 		
     	/* timer of 3 seconds before the start of auction */
     	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
-    		printf("Error in alarm signal");
+    		printf("[Auctioneer] [%d] Error in alarm signal.\n", getpid());
         alarm(3);
 	}
 
