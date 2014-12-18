@@ -28,13 +28,21 @@ typedef struct _resource_list resource_list;
 resource_list* create_resource_list();
 
 /**
-* Creates a node and adds it at the head of the list.
-* @param list The resource list pointer
-* @param name Resource's name
-* @param avail Resource's availability
-* @param cost Resource's cost
-* @return node of resourcesList
-*/
+ * Creates a node and adds it at the head of the list.
+ * @param list The resource list pointer
+ * @param name Resource's name
+ * @param avail Resource's availability
+ * @param cost Resource's cost
+ * @return node of resourcesList
+ */
 resource* add_resource(resource_list* list, char name[MAX_RES_NAME_LENGTH], int avail, int cost);
+
+/**
+ * Loads the resources from the given file, and appends them to the given
+ * resource list.
+ * @param filename The resources file name;
+ * @param list The resources list;
+ */
+void load_resources(char filename[256], resource_list* list);
 
 #endif // RESOURCE_H

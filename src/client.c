@@ -118,7 +118,7 @@ void listen_msqid(){
 /**
  * Loads the resources required by the client from file.
  */
-void load_resources(){
+void load_client_resources(){
     FILE* resources;
     char line[64];
     char* name;
@@ -276,9 +276,9 @@ int main(int argc, char** argv){
 
 	listen_msqid();
 	
-    load_resources();
-    
-    send_introduction();
+    load_client_resources();
+
+	send_introduction();
     
 	listen_auction_creation();
 	listen_auction_start();

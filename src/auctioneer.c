@@ -62,55 +62,71 @@ void distribute_msqs(){
     }
 }
 
-void load_resources(){
-    FILE* resources;
-    char line[MAX_RES_NAME_LENGTH];
-    char* name;
-    char* tmp;
-    char* token;
-    int avail = 0, cost = 0, i = 0, resourcesNumber = 0;
-    // avail_resources->resources_count = 0;
 
+void load_auct_resources() {
     avail_resources = create_resource_list();
-
-    resources = fopen("../resource.txt", "r");
-    if( resources != NULL ){
-        /* Reads each line from file */
-        while( fgets(line, MAX_RES_NAME_LENGTH + 32, resources) != NULL  && line ){
-            token = strtok(line, ";");
-            i = 0;
-            name = (char*) malloc(MAX_RES_NAME_LENGTH);
-            while( token ){
-                /* In each line there are 4 tokens: name, available, cost and \n */
-                switch(i%4){
-                    case 0:
-                        strcat(token, "\0");
-                        strcpy(name, token);
-                        break;
-                    case 1:
-                        tmp = token;
-                        avail = atoi(tmp);
-                        break;
-                    case 2:
-                        tmp = token;
-                        cost = atoi(tmp);
-                        break;
-                }
-                i++;
-                token = strtok(NULL, ";");
-            }
-            printf("[auctioneer] Resource available: %s %d %d \n", name, avail, cost);
-            // avail_resources->resources_count++;
-
-			add_resource(avail_resources, name, avail, cost);
-            fflush(stdout);
-            free(name);
-        }
-    } else {
-        fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
-        fclose(resources);
-    }
+    load_resources("../resource.txt", avail_resources);
+    // avail_resources = create_resource_list();
+    // FILE* resources;
+    // resources = fopen("../resource.txt", "r");
+    // if( resources != NULL ){
+    //     char line[64];
+    //     while (fgets(line, 64, resources)){
+    //         get_resource(line);
+    //     }
+    // }
 }
+
+
+// void load_auct_resources(){
+//     FILE* resources;
+//     char line[MAX_RES_NAME_LENGTH];
+//     char* name;
+//     char* tmp;
+//     char* token;
+//     int avail = 0, cost = 0, i = 0, resourcesNumber = 0;
+//     // avail_resources->resources_count = 0;
+//
+//     avail_resources = create_resource_list();
+//
+//     resources = fopen("../resource.txt", "r");
+//     if( resources != NULL ){
+//         /* Reads each line from file */
+//         while( fgets(line, MAX_RES_NAME_LENGTH + 32, resources) != NULL  && line ){
+//             token = strtok(line, ";");
+//             i = 0;
+//             name = (char*) malloc(MAX_RES_NAME_LENGTH);
+//             while( token ){
+//                 /* In each line there are 4 tokens: name, available, cost and \n */
+//                 switch(i%4){
+//                     case 0:
+//                         strcat(token, "\0");
+//                         strcpy(name, token);
+//                         break;
+//                     case 1:
+//                         tmp = token;
+//                         avail = atoi(tmp);
+//                         break;
+//                     case 2:
+//                         tmp = token;
+//                         cost = atoi(tmp);
+//                         break;
+//                 }
+//                 i++;
+//                 token = strtok(NULL, ";");
+//             }
+//             printf("[auctioneer] Resource available: %s %d %d \n", name, avail, cost);
+//             // avail_resources->resources_count++;
+//
+// 			add_resource(avail_resources, name, avail, cost);
+//             fflush(stdout);
+//             free(name);
+//         }
+//     } else {
+//         fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
+//         fclose(resources);
+//     }
+// }
 
 void create_taos(){
 	/* creates tao's array with empty tao */
@@ -295,7 +311,7 @@ int main(int argc, char** argv){
     distribute_msqs();
 
 	/* Read resources from file */
-    load_resources();
+    load_auct_resources();
 
     /* Create only the structure of all taos, without the client's list and relative bids */
     create_taos();
