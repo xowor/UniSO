@@ -77,7 +77,7 @@ int is_best_bid(int pid_agent, tao* current_tao){
 /**
  * Initializes the TAO array with the given number of required TAOs
  */
-void init_taos(int number){
+void init_taos_array(int number){
     taos = (tao**) malloc(sizeof(tao) * number);
     taos_count = 0;
 
@@ -85,6 +85,11 @@ void init_taos(int number){
      * First semaphore in the pool is reserved to auctioneer (creation max 3 tao at the same time)
      */
     tao_access_semid = semget(IPC_PRIVATE, number, 0666 | IPC_CREAT);
+    
+    int i = 1;
+    for(; i < number; i++)
+		semctl(tao_access_semid, i, SETVAL, 0);
+	semctl(tao_access_semid, 0, SETVAL, 3);
 }
 
 /**
@@ -142,7 +147,7 @@ void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
 /**
  * Shared area creation and defines the lifetime.
  */
-void start_tao(tao* current_tao){
+void init_tao(tao* current_tao){
 	
     int shm_id = shmget(IPC_PRIVATE, sizeof(tao), 0600 | IPC_CREAT);
     if(shm_id == -1){
