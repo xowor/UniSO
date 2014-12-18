@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
 
         for (i = 0; i < MAX_CLIENTS; i++){
             int clnt_exit = create_client(master_msqid, i);
-            /* If the client creation fails, will not try to create more clients */     
+            /* If the client creation fails, will not try to create more clients */
             if (clnt_exit != 0)
                 exit(EXIT_FAILURE);
         }

@@ -15,3 +15,5 @@
 #define MAX_SIMPLE_MESS_LENGTH 512  	  /* The maximum length of the simple_message message text */
 #define AUCTION_START_MSG "AUCTION_READY" /* Default message for the auction start */
 #define MSG_QUEUE_MSG "YOUR_MSG_QUEUE"    /* Default message for the message retunring a message queue id */
+#define TAO_PROCESS_END_MSG "TAO_PROCESS_END_MSG" /* Default message for the auction start */
+#define TAO_PROCESS_END_THREESEC "TAO_PROCESS_END_THREESEC" /* Default message for the auction start */

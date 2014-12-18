@@ -51,7 +51,7 @@ CCADMIN=CCadmin
 
 
 # build
-build: resource tao main auctioneer agent client
+build: resource tao main auctioneer agent client tao_process
 
 log: src/so_log.c
 	gcc -c src/so_log.c -o bin/so_log -g
@@ -73,6 +73,10 @@ tao: src/tao.c
 
 main: src/main.c
 	gcc src/main.c -o bin/main -g
+
+
+tao_process: src/tao_process.c
+	gcc src/tao_process.c -o bin/tao_process -g
 
 .build-pre:
 # Add your pre 'build' code here...

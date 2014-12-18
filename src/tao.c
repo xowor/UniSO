@@ -8,6 +8,7 @@
 #include "so_log.h"
 #include "config.h"
 
+int tao_counter;
 /**
  * Start (crates the shared memory area) the TAO with the given name.
             // inizia l'asta
@@ -76,20 +77,11 @@ int is_best_bid(int pid_agent, tao* current_tao){
 
 /**
  * Initializes the TAO array with the given number of required TAOs
+ * @param number Number of tao to be created.
  */
 void init_taos_array(int number){
     taos = (tao**) malloc(sizeof(tao) * number);
     taos_count = 0;
-
-    /* Adds a semaphore for each TAO.
-     * First semaphore in the pool is reserved to auctioneer (creation max 3 tao at the same time)
-     */
-    tao_access_semid = semget(IPC_PRIVATE, number, 0666 | IPC_CREAT);
-
-    int i = 1;
-    for(; i < number; i++)
-		semctl(tao_access_semid, i, SETVAL, 0);
-	semctl(tao_access_semid, 0, SETVAL, 3);
 }
 
 /**
@@ -148,7 +140,7 @@ void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
  * Shared area creation and defines the lifetime.
  */
 void start_tao(tao* current_tao){
-
+    semctl(tao_access_semid, current_tao->id + 1, SETVAL, 1);
 }
 
 
@@ -164,6 +156,8 @@ void init_tao(tao* current_tao){
 
     current_tao->shm_id = shm_id;
     current_tao->lifetime = current_tao->interested_clients_count * 5;
+
+    semctl(tao_access_semid, current_tao->id + 1, SETVAL, 0);
 }
 
 /**

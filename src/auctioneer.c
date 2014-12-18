@@ -144,22 +144,6 @@ void create_taos(){
 	}
 }
 
-
-
-void alarm_handler() {
-	// timer lifetime
-	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
-		printf("[Auctioneer] [%d] Error in alarm signal (timer lifetime).\n", getpid());
-	// recuperare la durata di questo tao
-	//alarm(lifetime del tao);
-
-    // start_tao(current_tao);
-	// messaggio di avvio asta ai clienti
-    // notify_tao_start(current_tao);
-
-    canexit = 0;
-}
-
 // alla ricezione del messaggio, il cliente deve solo creare l'agente
 void notify_tao_start(tao* created_tao){
     // [TODO] SEMAFORO PER LA SCRITTURA
@@ -238,33 +222,77 @@ void listen_introductions(){
     free(intr);
 }
 
+
+void create_tao_process(int lifetime, int tao_processes_msqid){
+    char str_lifetime [32];
+    char str_tao_processes_msqid[32];
+    sprintf(str_lifetime, "%d", lifetime);
+    sprintf(str_tao_processes_msqid, "%d", tao_processes_msqid);
+
+    int tao_process_pid = fork();
+
+    if ( tao_process_pid == -1 ){
+        printf("[auctioneer] Error: Tao process not created.\n");
+        fprintf(stderr, "\t%s\n", strerror(errno));
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+    if ( tao_process_pid == 0 ) {
+        /*  Child code */
+        char *envp[] = { NULL };
+        // so_log_s('y', str_lifetime);
+        // so_log_i('y', lifetime);
+        char *argv[] = { "./tao_process", "-t", str_lifetime, "-m", str_tao_processes_msqid, NULL };
+        /* Run the auctioneer process. */
+        int auct_execve_err = execve("./tao_process", argv, envp);
+        if (auct_execve_err == -1) {
+            /* Cannot find the tao_process binary in the working directory */
+            fprintf(stderr, "[Tao process] Error: cannot start tao_process process (Try running main from ./bin).\n");
+            /* strerror nterprets the value of errnum, generating a string with a message that describes the error */
+            fprintf(stderr, "\t%s\n", strerror(errno));
+        }
+    }
+}
+
+
 void start_auction_system(){
-    int i = 0;
+    int tao_processes_msqid = msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
     tao* current_tao;
-	for(; i < avail_resources->resources_count; i++){
-		/* "pauses" the tao creation until there are 3 tao opened */
-		// GIUSTO while(semctl(tao_access_semid, 0, GETVAL, 0) > 2){	}
+    int tao_counter = 0;
+    int i = 0;
 
-		/* gets one tao from the array */
-		current_tao = get_tao(i);
+    for(; i < ((avail_resources->resources_count*2) + 3); i++){
+        if (tao_counter > 2) {
+            simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+            if ( msgrcv(tao_processes_msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
 
-		/* Associates each tao to an shm */
-		init_tao(current_tao);
+                if (strcmp(msg->msg, TAO_PROCESS_END_MSG) == 0 ){
+                        so_log_i('b', tao_counter);
+                        so_log_i('b', avail_resources->resources_count);
+                    if (tao_counter < avail_resources->resources_count){
+                        current_tao = get_tao(i);
+                        init_tao(current_tao);
+                        tao_counter++;
+                        create_tao_process(current_tao->lifetime, tao_processes_msqid);
+                        // notify_tao_start(current_tao);
+                    }
+                } else if (strcmp(msg->msg, TAO_PROCESS_END_THREESEC) == 0 ){
+                    so_log('c');
+                }
 
-        /* Increments semaphore */
-        // DECREMENTARLO ALLA DEALLOCAZIONE DEL TAO!!!!!!!!!!!!!!!!!!!!!!!!!
-        sem_v(tao_access_semid, 0);
 
-		/* Tells to client starting tao */
+            }
+            free(msg);
+        } else {
+            current_tao = get_tao(i);
+            init_tao(current_tao);
+            create_tao_process(current_tao->lifetime, tao_processes_msqid);
+            tao_counter++;
+            // notify_tao_start(current_tao);
+        }
+    }
 
-		canexit = 1;
-
-    	/* timer of 3 seconds before the start of auction */
-    	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
-    		printf("[Auctioneer] [%d] Error in alarm signal.\n", getpid());
-        alarm(3);
-	}
-
+    canexit == 1;
 }
 
 
