@@ -44,3 +44,36 @@ resource* add_resource(resource_list* list, char name[MAX_RES_NAME_LENGTH], int 
     //printf("[[add_resource]] resource_list* list : %p , char name[MAX_RES_NAME_LENGTH] : %s , int avail %d , int cost %d \n", list, name, avail, cost);
     return new_resource;
 }
+
+void get_resource(char* line, resource_list* list) {
+    char* tok;
+    int i;
+    char* name = (char*) malloc(MAX_RES_NAME_LENGTH);
+    int avail = 0;
+    int cost = 0;
+    tok = strtok(line, ";");
+    for (i = 0; i < 3; i++){
+        if (i == 0){
+            strcat(tok, "\0");
+            strcpy(name, tok);
+        } else if (i == 1) {
+            avail = atoi(tok);
+        } else if (i == 2) {
+            cost = atoi(tok);
+        }
+        tok = strtok(NULL, ";\n");
+    }
+    add_resource(list, name, avail, cost);
+    // printf("Resource available: %s %d %d \n", name, avail, cost);
+}
+
+void load_resources(char filename[256], resource_list* list) {
+    FILE* resources;
+    resources = fopen(filename, "r");
+    if( resources != NULL ){
+        char line[64];
+        while (fgets(line, 64, resources)){
+            get_resource(line, list);
+        }
+    }
+}
