@@ -99,17 +99,6 @@ void listen_msqid(){
 	simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
 	if ( msgrcv(master_msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
 		msqid = msg->content.i;
-		// so_log_i('b', msqid);
-		// char* msg_txt = msg->msg;
-		// if ( strcmp(msg_txt, AUCTION_START_MSG) == 0 ){
-		// so_log_i('m', msg->pid);
-		// so_log_s('m', msg_txt);
-		// so_log_s('m', AUCTION_START_MSG);
-		// char* started_tao;
-		// strcpy(started_tao, msg->content.s);
-		// so_log_is('m', pid, "created_tao");
-		// FAI PARTIRE AGENTE, ECC
-		// }
 	}
 
 	free(msg);
@@ -234,12 +223,13 @@ void listen_auction_start(){
 // richiama start agent
 void listen_auction_creation(){
     // [TODO] SEMAFORO PER LA LETTURA
+    
 	int i = 0;
 	for (; i < req_resources->resources_count; i++){
+		
 	    tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
 	    if ( msgrcv(msqid, msg, sizeof(tao_opening) - sizeof(long), TAO_OPENING_MTYPE, 0) != -1 ) {
         	create_agent(msg->resource, msg->shmid, msg->semid, msg->base_bid);
-			//so_log_is('m', pid, msg->resource);
 	    }
 		free(msg);
 	}

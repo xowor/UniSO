@@ -92,7 +92,7 @@ int increments_bid(){
 int main(int argc, char** argv){
 	pid = getpid();
 
-	printf("[agent] Started agent.\tPid: %d\tPPid: %d\n", pid, getppid());
+	//printf("[agent] Started agent.\tPid: %d\tPPid: %d\n", pid, getppid());
 
 	if (argc >= 2 && strcmp(argv[1], "-m") == 0 ){
         msqid = atoi(argv[2]);

@@ -132,7 +132,7 @@ void load_auct_resources() {
 
 void create_taos(){
 	/* creates tao's array with empty tao */
-    init_taos(avail_resources->resources_count);
+    init_taos_array(avail_resources->resources_count);
 
 	int i = 0;
 	resource* tmp_resource = avail_resources->list;
@@ -249,7 +249,7 @@ void start_auction_system(){
 		current_tao = get_tao(i);
 
 		/* Associates each tao to an shm */
-		start_tao(current_tao);
+		init_tao(current_tao);
 
         /* Increments semaphore */
         // DECREMENTARLO ALLA DEALLOCAZIONE DEL TAO!!!!!!!!!!!!!!!!!!!!!!!!!
