@@ -103,11 +103,14 @@ int main(int argc, char** argv){
         return -1;
     }
     
+    // associazione al tao shmget
     listen_tao_info();
     
     current_bid = basebid;
     
     current_tao = get_tao_from_resource(res);
+    
+    // listen tao start
     
     while(1){
 		make_action();

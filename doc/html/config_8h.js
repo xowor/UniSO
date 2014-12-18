@@ -1,6 +1,6 @@
 var config_8h =
 [
-    [ "AUCTION_READY_MSG", "config_8h.html#aef6014990a7545c26d0051bc3a93965d", null ],
+    [ "AUCTION_START_MSG", "config_8h.html#aef6014990a7545c26d0051bc3a93965d", null ],
     [ "BASE_BID", "config_8h.html#a67c364741a6ea8b1bbdb01405e2a3cbb", null ],
     [ "MAX_CLIENTS", "config_8h.html#a0a8f91f93d75a07f0ae45077db45b3eb", null ],
     [ "MAX_OFFERS", "config_8h.html#a8128e7888cf5d05b6bd6811fee358e59", null ],

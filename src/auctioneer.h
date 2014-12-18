@@ -19,10 +19,18 @@ void create_taos();
 
 
 /**
- * Sends a message to each client, telling them the given TAO was create
+ * Sends a message to each client, telling them the given TAO was created.
  *
  */
-void notify_tao_opened(char* name, int shm_id, int sem_id, int base_bid);
+void notify_tao_creation(tao* created_tao);
+
+
+/**
+* Sends a message to each client, telling them the given TAO was created.
+*
+*/
+void notify_tao_opened(tao* opened_tao);
+
 
 
 /**
@@ -35,7 +43,7 @@ void listen_introductions();
 /**
  * Starts the auction system.
  */
-void start_auction();
+void start_auction_system();
 
 
 /**

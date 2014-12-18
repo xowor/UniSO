@@ -51,16 +51,16 @@ CCADMIN=CCadmin
 
 
 # build
-build:  resource tao main auctioneer client agent
+build: resource tao main auctioneer agent client
 
-agent: src/agent.c
-	gcc -c src/agent.c -o bin/agent -g
-	
 log: src/so_log.c
 	gcc -c src/so_log.c -o bin/so_log -g
 
 auctioneer: src/auctioneer.c
 	gcc src/auctioneer.c -o bin/auctioneer -g -fno-stack-protector
+
+agent: src/agent.c
+	gcc src/agent.c -o bin/agent -g
 
 client: src/client.c
 	gcc src/client.c -o bin/client -g

@@ -107,7 +107,10 @@ void create_tao(char name[MAX_RES_NAME_LENGTH]){
 
 	
 tao* get_tao(int i){
-    return taos[i];
+    if (i < taos_count)
+        return taos[i];
+    else
+        return 0;
 }
 
 tao* get_tao_from_resource(char name[MAX_RES_NAME_LENGTH]){
@@ -140,15 +143,17 @@ void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
  * Shared area creation and defines the lifetime.
  */
 void start_tao(tao* current_tao){
-    int shm_id;
-    shm_id = shmget(IPC_PRIVATE, sizeof(tao), IPC_CREAT | 0600);
-    if(shm_id == -1)
+	
+    int shm_id = shmget(IPC_PRIVATE, sizeof(tao), 0600 | IPC_CREAT);
+    if(shm_id == -1){
 		perror("shmget");
+		exit(EXIT_FAILURE);
+	}
+	
     tao* t;
     t = (tao*) shmat(shm_id, NULL, 0);
 
-    current_tao->shm_id = shm_id;
-
+    current_tao->shm_id = shm_id;	
     current_tao->lifetime = current_tao->interested_clients_count * 5;
 }
 

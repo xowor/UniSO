@@ -28,16 +28,39 @@ typedef struct _client {
 	resource interested_resource[MAX_REQUIRED_RESOURCES];
 } client;
 
-int msqid = 0;                       /* The id of the message queue */
+int master_msqid = 0;                /* The id of the message queue */
+int pid_msqid[MAX_CLIENTS][2];
+// int msqsid[MAX_CLIENTS];             /* The message queues for each client */
 int semid;                           /* The id of the the TAOs creation semaphore */
 int opened_auctions = 0;             /* The number of opened auctions */
 
 resource_list* avail_resources;      /* The list containing all the available resources */
-int avail_resources_count;           /* The number of all the available resources */
+// int avail_resources->resources_count;           /* The number of all the available resources */
 
 int registered_clients;
-int canexit = 0;					 /* ?????????? */
+int canexit = 0;					 /* ????? tmp ????? */
 
+
+void distribute_msqs(){
+    int i = 0;
+    for (; i < MAX_CLIENTS; i++){
+        int msqid = msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
+        simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+        msg->mtype = SIMPLE_MESSAGE_MTYPE;
+        msg_content content;
+        msg->content = content;
+
+        /* Initializes PID */
+        msg->pid = getpid();
+        strcpy(msg->msg, MSG_QUEUE_MSG);
+        msg->content.i = msqid;
+
+        msgsnd(master_msqid, msg, sizeof(simple_message) - sizeof(long), 0600);
+        free(msg);
+
+        pid_msqid[i][1] = msqid;
+    }
+}
 
 void load_resources(){
     FILE* resources;
@@ -46,9 +69,9 @@ void load_resources(){
     char* tmp;
     char* token;
     int avail = 0, cost = 0, i = 0, resourcesNumber = 0;
-    avail_resources_count = 0;
+    // avail_resources->resources_count = 0;
 
-    avail_resources = (resource_list*) malloc(sizeof(resource_list));
+    avail_resources = create_resource_list();
 
     resources = fopen("../resource.txt", "r");
     if( resources != NULL ){
@@ -77,7 +100,7 @@ void load_resources(){
                 token = strtok(NULL, ";");
             }
             printf("[auctioneer] Resource available: %s %d %d \n", name, avail, cost);
-            avail_resources_count++;
+            // avail_resources->resources_count++;
 
 			add_resource(avail_resources, name, avail, cost);
             fflush(stdout);
@@ -89,11 +112,9 @@ void load_resources(){
     }
 }
 
-
-
 void create_taos(){
 	/* creates tao's array with empty tao */
-    init_taos(avail_resources_count);
+    init_taos(avail_resources->resources_count);
 
 	int i = 0;
 	resource* tmp_resource = avail_resources->list;
@@ -109,76 +130,104 @@ void create_taos(){
 
 void alarm_handler() {
 	// messaggio di avvio asta ai clienti
+    //notify_tao_start(current_tao);
+
 	// timer lifetime
 	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
 		printf("[Auctioneer] [%d] Error in alarm signal (timer lifetime).\n", getpid());
 	// recuperare la durata di questo tao
-	//alarm();
+	//alarm(lifetime del tao);
     canexit = 0;
-
 }
 
-
-
 // alla ricezione del messaggio, il cliente deve solo creare l'agente
-void notify_tao_opened(char* name, int shm_id, int sem_id, int base_bid){
+void notify_tao_start(tao* created_tao){
     // [TODO] SEMAFORO PER LA SCRITTURA
+    /* For each client interested in the TAO */
     int i = 0;
-    for (; i < registered_clients; i++){
+    for (; i < created_tao->interested_clients_count; i++){
+        int client_pid = created_tao->interested_clients[i];
+
         /* Allocates the simple_message message */
-        tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
-        msg->mtype = TAO_OPENING_MTYPE;
-        strcpy(msg->resource, name);
-        msg->shmid = shm_id;
-        msg->semid = sem_id;
-        msg->base_bid = base_bid;
+        simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+        msg->mtype = SIMPLE_MESSAGE_MTYPE;
+        msg_content content;
+        msg->content = content;
 
-        // strcpy(msg->content.s, tao_res);
+        /* Initializes PID */
+        msg->pid = getpid();
+        strcpy(msg->msg, AUCTION_START_MSG);
+        strcpy(msg->content.s, created_tao->name);
 
-        /**
-        * Sends a message to the auctioneer containing the client pid and the
-        * required resources.
-        */
-        msgsnd(msqid, msg, sizeof(tao_opening) - sizeof(long), 0600);
+        /* Gets the message queue id of the client */
+        int j = 0;
+        for (; j < MAX_CLIENTS; j++){
+            if (pid_msqid[j][0] == client_pid){
+                msgsnd(pid_msqid[j][1], msg, sizeof(simple_message) - sizeof(long), 0600);
+            }
+        }
         free(msg);
     }
 }
 
+// alla ricezione del messaggio, il cliente deve solo creare l'agente
+void notify_tao_creation(tao* created_tao){
+    // [TODO] SEMAFORO PER LA SCRITTURA
+    /* For each client interested in the TAO */
+    int i = 0;
+    for (; i < created_tao->interested_clients_count; i++){
+        int client_pid = created_tao->interested_clients[i];
 
+        /* Allocates the simple_message message */
+        tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
+        msg->mtype = TAO_OPENING_MTYPE;
+        strcpy(msg->resource, created_tao->name);
+        msg->shmid = created_tao->shm_id;
+        msg->semid = created_tao->sem_id;
+        msg->base_bid = created_tao->base_bid;
+
+        /* Gets the message queue id of the client */
+        int j = 0;
+        for (; j < MAX_CLIENTS; j++){
+            if (pid_msqid[j][0] == client_pid){
+                msgsnd(pid_msqid[j][1], msg, sizeof(tao_opening) - sizeof(long), 0600);
+            }
+        }
+        free(msg);
+    }
+}
 
 void listen_introductions(){
     // [TODO] SEMAFORO PER LA LETTURA
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     registered_clients = 0;
 
-    while ( (registered_clients < MAX_CLIENTS) && (msgrcv(msqid, intr, sizeof(introduction) - sizeof(long), INTRODUCTION_MTYPE, 0) != -1) ){
-        registered_clients++;
-        printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
-        int i = 0;
-        /* associates the pid's client to related tao, where there is the resource interested to client */
-        for (; i < intr->resources_length; i++){
-            sign_to_tao(intr->pid, intr->resources[i]);
-            //printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", intr->pid, intr->resources[i]);
+    int i = 0;
+    for (; i < MAX_CLIENTS; i++) {
+        if ( msgrcv(pid_msqid[i][1], intr, sizeof(introduction) - sizeof(long), INTRODUCTION_MTYPE, 0) != -1 ){
+            registered_clients++;
+            //printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
+            int j = 0;
+            /* associates the pid's client to related tao, where there is the resource interested to client */
+            for (; j < intr->resources_length; j++){
+                sign_to_tao(intr->pid, intr->resources[j]);
+            }
+            pid_msqid[i][0] = intr->pid;
         }
     }
-
     free(intr);
 }
 
-
-
-void start_auction(){
-
+void start_auction_system(){
     int i = 0;
     tao* current_tao;
-	for(; i < avail_resources_count -4; i++){
-
+	for(; i < avail_resources->resources_count; i++){
 		/* "pauses" the tao creation until there are 3 tao opened */
-		while(semctl(tao_access_semid, 0, GETVAL, 0) > 2){	}
+		// GIUSTO while(semctl(tao_access_semid, 0, GETVAL, 0) > 2){	}
 
 		/* gets one tao from the array */
 		current_tao = get_tao(i);
-
+		
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
 
@@ -187,10 +236,10 @@ void start_auction(){
         sem_v(tao_access_semid, 0);
 
 		/* says to client starting tao */
-        notify_tao_opened(current_tao->name, current_tao->shm_id, current_tao->sem_id, current_tao->base_bid);
-
+        notify_tao_creation(current_tao);
+        
 		canexit = 1;
-		
+
     	/* timer of 3 seconds before the start of auction */
     	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
     		printf("[Auctioneer] [%d] Error in alarm signal.\n", getpid());
@@ -205,7 +254,7 @@ void ipc_gc(){
     int i;
 
     /* Removes the queue message */
-    msgctl(msqid, IPC_RMID,0);
+    msgctl(master_msqid, IPC_RMID,0);
 
 	/* Removes the TAOS creation semaphor */
 	// if(semctl(sem_id, 0, GETVAL, 0) == 0) {
@@ -222,8 +271,6 @@ void ipc_gc(){
     }
 }
 
-
-
 void gc(){
     free(avail_resources);
 }
@@ -237,22 +284,26 @@ int main(int argc, char** argv){
      * Loads the message queue id from the passed argument.
      */
     if (argc >= 2 && strcmp(argv[1], "-m") == 0){
-        msqid = atoi(argv[2]);
-        fprintf(stdout, "[auctioneer] Using message queue %d\n", msqid);
+        master_msqid = atoi(argv[2]);
+        //fprintf(stdout, "[auctioneer] Using message queue %d\n", master_msqid);
     } else {
-        fprintf(stderr, "[auctioneer] Error: msqid (-m) argument not valid.\n");
+        fprintf(stderr, "[auctioneer] Error: master_msqid (-m) argument not valid.\n");
         return -1;
     }
+
+    /* Sends each client his own message queue */
+    distribute_msqs();
 
 	/* Read resources from file */
     load_resources();
 
     /* Create only the structure of all taos, without the client's list and relative bids */
     create_taos();
+
     listen_introductions();
 
     /* Start max 3 tao at a time */
-    start_auction();
+    start_auction_system();
 
     while (canexit == 1) {}
 

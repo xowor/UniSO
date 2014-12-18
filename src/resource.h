@@ -21,7 +21,11 @@ typedef struct _resource resource;
  */
 typedef struct _resource_list resource_list;
 
-
+/**
+ * Creates a resource list.
+ * @return a resource_list.
+ */
+resource_list* create_resource_list();
 
 /**
 * Creates a node and adds it at the head of the list.

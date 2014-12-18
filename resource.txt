@@ -7,4 +7,4 @@ cache;8;150;
 ethernet;100;88;
 wifi;100;70;
 bluetooth;10;40;
-optical;60;90;
+optical;60;90
