@@ -38,6 +38,8 @@ resource_list* avail_resources;      /* The list containing all the available re
 // int avail_resources->resources_count;           /* The number of all the available resources */
 
 int registered_clients;
+
+
 int canexit = 0;					 /* ????? tmp ????? */
 
 
@@ -145,14 +147,16 @@ void create_taos(){
 
 
 void alarm_handler() {
-	// messaggio di avvio asta ai clienti
-    //notify_tao_start(current_tao);
-
 	// timer lifetime
 	if(signal(SIGALRM, alarm_handler) == SIG_ERR)
 		printf("[Auctioneer] [%d] Error in alarm signal (timer lifetime).\n", getpid());
 	// recuperare la durata di questo tao
 	//alarm(lifetime del tao);
+
+    // start_tao(current_tao);
+	// messaggio di avvio asta ai clienti
+    // notify_tao_start(current_tao);
+
     canexit = 0;
 }
 
@@ -243,7 +247,7 @@ void start_auction_system(){
 
 		/* gets one tao from the array */
 		current_tao = get_tao(i);
-		
+
 		/* Associates each tao to an shm */
 		start_tao(current_tao);
 
@@ -251,9 +255,8 @@ void start_auction_system(){
         // DECREMENTARLO ALLA DEALLOCAZIONE DEL TAO!!!!!!!!!!!!!!!!!!!!!!!!!
         sem_v(tao_access_semid, 0);
 
-		/* says to client starting tao */
-        notify_tao_creation(current_tao);
-        
+		/* Tells to client starting tao */
+
 		canexit = 1;
 
     	/* timer of 3 seconds before the start of auction */

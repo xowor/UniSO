@@ -29,6 +29,15 @@ void init_taos(int number);
 */
 void create_tao(char name[MAX_RES_NAME_LENGTH]);
 
+/**
+ * Gets the tao with the i index.
+ */
+tao* get_tao(int i);
+
+/**
+ * Gets the tao with the given name.
+ */
+tao* get_tao_by_name(char name[MAX_RES_NAME_LENGTH]);
 
 /**
 * Registers the the client with the given pid to the given TAO (identified by

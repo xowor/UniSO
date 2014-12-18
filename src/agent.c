@@ -24,15 +24,15 @@ pid_t pid;
 	 * Precondizione: l'agente ha già aumentato la unit_offer rispetto alla offerta precedente
 	 * Precondizione: l'agente si può permettere (come budget) la unit_offer
 	 * Fa l'offerta
- 
+
     // attesa del segnale di avvio dell'asta
 	// incrementa il semaforo
 	// fa l'offerta
 	// decrementa il semaforo
 	// aspetta di nuovo il suo turno*/
-	
+
 /**
- * Listen to message from client about tao informations. 
+ * Listen to message from client about tao informations.
  * The function stops when has received a message.
  */
 void listen_tao_info(){
@@ -40,7 +40,7 @@ void listen_tao_info(){
     tao_info_to_agent* msg = (tao_info_to_agent*) malloc(sizeof(tao_info_to_agent));
     if ( msgrcv(msqid, msg, sizeof(tao_info_to_agent) - sizeof(long), TAO_INFO_TO_AGENT_MTYPE, 0) != -1 ) {
         //so_log_is('m', getpid(), "started_agent");
-        
+
         aval = msg->availability;
         unit_cost = msg->cost;
         shmid = msg->shmid;
@@ -91,7 +91,7 @@ int increments_bid(){
 
 int main(int argc, char** argv){
 	pid = getpid();
-	
+
 	printf("[agent] Started agent.\tPid: %d\tPPid: %d\n", pid, getppid());
 
 	if (argc >= 2 && strcmp(argv[1], "-m") == 0 ){
@@ -102,19 +102,18 @@ int main(int argc, char** argv){
         fprintf(stderr, "[agent][%d] Error: msqid (-m) argument not valid.\n", pid);
         return -1;
     }
-    
+
     // associazione al tao shmget
     listen_tao_info();
-    
+
     current_bid = basebid;
-    
-    current_tao = get_tao_from_resource(res);
-    
+
+    current_tao = get_tao_by_name(res);
+
     // listen tao start
-    
+
     while(1){
 		make_action();
 	}
 
 }
-
