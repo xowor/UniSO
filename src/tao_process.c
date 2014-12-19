@@ -23,7 +23,7 @@ int lifetime = 0;
 int lifetime_counter;
 
 void alarm_handler() {
-    if (lifetime_counter){
+    if (lifetime_counter == 1){
         canexit = 1;
         simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
         msg->mtype = SIMPLE_MESSAGE_MTYPE;
@@ -92,6 +92,7 @@ int main(int argc, char** argv) {
         printf("[Tao process] [%d] Error in alarm signal.\n", getpid());
     lifetime_counter = 0;
     canexit = 0;
+    // così non aspetta 3 secondi ogni volta che viene invocato??
     alarm(3);
     while(1){};
 }
