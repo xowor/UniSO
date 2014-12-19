@@ -271,10 +271,9 @@ void start_auction_system(){
     int i = 0;
     
 
-		so_log_i('r', avail_resources->resources_count);
-    //for(; i < ((avail_resources->resources_count*2) + 3); i++){	
+	//so_log_i('r', avail_resources->resources_count);	
     while(tao_counter < avail_resources->resources_count){		
-		so_log_i('r', tao_counter);
+		//so_log_i('r', tao_counter);
 
         if (tao_counter > 2) {
             simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
@@ -286,7 +285,7 @@ void start_auction_system(){
                         current_tao = get_tao(i);
                         init_tao(current_tao);
                         // per comunicare al cliente di creare il tao -> sarebbe da spostare dentro tao_process
-						notify_tao_creation(current_tao);
+						//notify_tao_creation(current_tao);
                         tao_counter++;
                         create_tao_process(current_tao->lifetime, tao_processes_msqid);
                     }
@@ -301,7 +300,7 @@ void start_auction_system(){
             current_tao = get_tao(i);
             init_tao(current_tao);
             // per comunicare al cliente di creare il tao -> sarebbe da spostare dentro tao_process
-            notify_tao_creation(current_tao);
+            //notify_tao_creation(current_tao);
             create_tao_process(current_tao->lifetime, tao_processes_msqid);
             tao_counter++;
         }
