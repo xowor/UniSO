@@ -29,6 +29,21 @@ resource_list* req_resources;       /* The list containing all the available res
 void listen_tao_end(){
 	//kill agent
 	// deallocare coda di messaggi
+	// [TODO] SEMAFORO PER LA LETTURA
+	int i = 0;
+	for (; i < req_resources->resources_count; i++){
+		simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+		if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
+			resource* res = req_resources->list;
+			while(res){
+				if(strcmp(res->name, msg->content.s) == 0){
+					kill(res->agent_pid);
+				}
+				res = res->next;
+			}
+		}
+		free(msg);
+	}
 }
 /**
  *  Creates agent's process.

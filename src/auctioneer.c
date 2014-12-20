@@ -176,6 +176,36 @@ void notify_tao_start(tao* created_tao){
     }
 }
 
+
+void notify_tao_end(tao* created_tao){
+    // [TODO] SEMAFORO PER LA SCRITTURA
+    /* For each client interested in the TAO */
+    int i = 0;
+    for (; i < created_tao->interested_clients_count; i++){
+        int client_pid = created_tao->interested_clients[i];
+
+        /* Allocates the simple_message message */
+        simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+        msg->mtype = SIMPLE_MESSAGE_MTYPE;
+        msg_content content;
+        msg->content = content;
+
+        /* Initializes PID */
+        msg->pid = getpid();
+        strcpy(msg->msg, AUCTION_END_MSG);
+        strcpy(msg->content.s, created_tao->name);
+
+        /* Gets the message queue id of the client */
+        int j = 0;
+        for (; j < MAX_CLIENTS; j++){
+            if (pid_msqid[j][0] == client_pid){
+                msgsnd(pid_msqid[j][1], msg, sizeof(simple_message) - sizeof(long), 0600);
+            }
+        }
+        free(msg);
+    }
+}
+
 // alla ricezione del messaggio, il cliente deve solo creare l'agente
 void notify_tao_creation(tao* created_tao){
     // [TODO] SEMAFORO PER LA SCRITTURA
