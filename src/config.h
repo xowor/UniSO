@@ -1,7 +1,7 @@
 
 /* Auction dynamics */
 #define MAX_OPEN_AUCTIONS 3         /* At the same time, there are at the height 3 tao */
-#define MAX_CLIENTS 1               /* The maximum number of clients to spawn */
+#define MAX_CLIENTS 2              /* The maximum number of clients to spawn */
 #define BASE_BID 42                 /* The base bid "price" */
 #define MAX_OFFERS 5                /* Maximum bids from agents in a single tao */
 #define BID_INCREMENT 5				/* How much increases every time */

@@ -60,20 +60,7 @@ tao** taos;
 int taos_count;
 int tao_access_semid;
 
-/**
- *  Check if agent in the argument is between the most bids.
- *  @param pid_agent   Agent's pid who wants to make a bid
- *  @param current_tao Tao where he needs to check the bids.
- *  @return 1 if his bid is between best bid, 0 otherwise.
- */
-int is_best_bid(int pid_agent, tao* current_tao){
-	int i = 0;
-	for(; i < MAX_OFFERS; i++){
-		if(current_tao->bids[i].client_pid == pid_agent)
-			return 1;
-	}
-	return 0;
-}
+
 
 /**
  * Initializes the TAO array with the given number of required TAOs
@@ -120,11 +107,17 @@ tao* get_tao_by_name(char name[MAX_RES_NAME_LENGTH]){
 	return tmp;
 }
 
+tao* get_tao_by_id(int id){
+    int i = 0;
+    tao* tmp = 0;
+    for(; i < taos_count; i++){
+        if(get_tao(i)->id == id)
+            return get_tao(i);
+        }
+        return tmp;
+}
 
-/**
- * Registers the the client with the given pid to the given TAO (identified by
- * its name)
- */
+
 void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
     int i = 0;
     for (; i < taos_count; i++){
@@ -158,81 +151,4 @@ void init_tao(tao* current_tao){
     current_tao->lifetime = current_tao->interested_clients_count * 5;
 
     semctl(tao_access_semid, current_tao->id + 1, SETVAL, 0);
-}
-
-/**
- * Adds bid from the agent.
- * @param pid Agent's pid who wants make this bid
- * @param quantity How much elements the agent wants
- * @param unit_offer How the agent offer for each element
- * @param auction_tao Tao connected to resource
- * @return 1 if the operation end well, 0 otherwise
- * Algoritmo:
- *   * controlla l'offerta minima nel tao
-     * l'agente ha già un'offerta nel tao?
-     * 	se si --> controlla se l'offerta che vuole fare sia maggiore del minimo
-     * 		  se si --> la sovrascrive quella già presente
-     * 		  se no --> return
-     * 	se no --> controlla se l'offerta che vuole fare sia maggiore del minimo
-     * 		  se si --> scrive una nuova offerta a suo nome
-     * 			ci sono entry vuote?
-     * 				se si --> aggiunge la propria offerta nello spazio vuoto
-     * 				se no --> sovrascrive l'offerta di prezzo minore
-     * 		  se no --> return
- */
-int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
-    // controlla l'offerta minima nel tao
-    int i = 0, index_min_bid = 0;
-    int min_bid = auction_tao->bids[0].unit_offer;
-    int pid_min_bid = auction_tao->bids[0].client_pid;
-
-    for(; i < MAX_OFFERS; i++){
-      if(auction_tao->bids[i].unit_offer < min_bid){
-			min_bid = auction_tao->bids[i].unit_offer;
-			index_min_bid = i;
-			pid_min_bid = auction_tao->bids[i].client_pid;
-      }
-    }
-    // nuovo bid
-    bid* new_bid = (bid*) malloc(sizeof(bid));
-    new_bid->client_pid = pid;
-    new_bid->quantity = quantity;
-    new_bid->unit_offer = unit_offer;
-
-    // cerca entry vuota
-    int empty_index = -1;
-    for(i = 0; i < MAX_OFFERS; i++){
-      if(auction_tao->bids[i].client_pid < 0){
-	empty_index = i;
-      }
-    }
-
-    // l'agente ha già un'offerta nel tao?
-    int has_bid = 0, own_bid = NULL;
-		for(i = 0; i < MAX_OFFERS; i++){
-		  if(auction_tao->bids[i].client_pid == pid){
-			has_bid = 1;
-			own_bid = i;
-      }
-    }
-
-    // controlla che l'offerta che vuole fare sia maggiore del minimo
-    if(unit_offer > min_bid){
-		// ha già un'offerta nel tao --> sostituisce la "propria entry"
-		if(has_bid){
-			replace_bids(own_bid, new_bid, auction_tao);
-			// non ha offerte nel tao
-		}else{
-			// aggiunge la propria offerta nello spazio vuoto
-			if(empty_index >= 0){
-				replace_bids(empty_index, new_bid, auction_tao);
-			// sovrascrive l'offerta di prezzo minore
-			}else{
-				replace_bids(index_min_bid, new_bid, auction_tao);
-			}
-		}
-	}else{
-		return -2;
-	}
-    return -1;
 }

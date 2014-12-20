@@ -17,7 +17,7 @@ int msqid;
 int client_num;
 int pid;
 int ppid;
-int pid_msqid[MAX_CLIENTS][2];
+int pid_msqid[MAX_REQUIRED_RESOURCES][2];
 int pid_msqid_length = 0;
 // char* required_resources[MAX_REQUIRED_RESOURCES];
 int required_resources_length = 0;
@@ -25,18 +25,23 @@ int budget;
 
 resource_list* req_resources;       /* The list containing all the available resources */
 
+
+void listen_tao_end(){
+	//kill agent
+	// deallocare coda di messaggi
+}
 /**
  *  Creates agent's process.
  */
 int create_agent_process(){
 	int agent_processes_msqid = msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
 	char str_msqid [32];
-    sprintf(str_msqid, "%d", msqid);
+    sprintf(str_msqid, "%d", agent_processes_msqid);
 
 	int agent_pid = fork();
 	if ( agent_pid == -1 ){
         printf("[main] Error: agent not created.");
-        fprintf(stderr, "\t%s\n", strerror(errno)); 
+        fprintf(stderr, "\t%s\n", strerror(errno));
         perror("fork");
         exit(EXIT_FAILURE);
     } else if ( agent_pid == 0 ) {
@@ -53,21 +58,21 @@ int create_agent_process(){
             /* strerror interprets the value of errnum, generating a string with a message that describes the error */
             fprintf(stderr, "\t%s\n", strerror(errno));
         }
-        
+
+    } else {
+        /* Parent code */
         pid_msqid[pid_msqid_length][0] = agent_pid;
         pid_msqid[pid_msqid_length][1] = agent_processes_msqid;
         pid_msqid_length++;
-    } else {
-        /* Parent code */
         return agent_pid;
-    }   
+    }
     exit(EXIT_FAILURE);
 }
 
 /**
  * Client communicates to agents resource informations.
  */
-void notify_tao_info(int availability, int cost, int shmid, int semid, int basebid, char res[MAX_RES_NAME_LENGTH], int budget){
+void notify_tao_info(int pid, int availability, int cost, int shmid, int semid, int basebid, char res[MAX_RES_NAME_LENGTH], int budget){
 	/* Allocates the simple_message message */
 	tao_info_to_agent* msg = (tao_info_to_agent*) malloc(sizeof(tao_info_to_agent));
 	msg->mtype = TAO_INFO_TO_AGENT_MTYPE;
@@ -79,23 +84,30 @@ void notify_tao_info(int availability, int cost, int shmid, int semid, int baseb
 	msg->basebid = basebid;
 	msg->budget = budget;
 
-	msgsnd(msqid, msg, sizeof(tao_info_to_agent) - sizeof(long), 0600);
+	int j = 0;
+	for (; j < pid_msqid_length; j++){
+		if (pid_msqid[j][0] == pid){
+			msgsnd(pid_msqid[j][1], msg, sizeof(tao_info_to_agent) - sizeof(long), 0600);
+		}
+	}
     free(msg);
 }
 
 /**
  * Creates a single agent for each tao call
  */
-void create_agent(char* resource, int shmid, int semid, int basebid){
+void create_agent(char* resource_name, int shmid, int semid, int basebid){
 	int pid = create_agent_process();
 
+	resource* res;
+	res = req_resources->list;
 	/* Communicates to agent*/
-	while(req_resources->list){
-        if(strcmp(req_resources->list->name, resource) == 0){
-			notify_tao_info(req_resources->list->availability, req_resources->list->cost, shmid, semid, basebid, req_resources->list->name, budget);
-			req_resources->list->agent_pid = pid;
+	while(res){
+        if(strcmp(res->name, resource_name) == 0){
+			notify_tao_info(pid, res->availability, res->cost, shmid, semid, basebid, res->name, budget);
+			res->agent_pid = pid;
 		}
-		req_resources->list = req_resources->list->next;
+		res = res->next;
 	}
 
     //// msgrcv CLIENTE DEVE RIMANERE IN ATTESA DI ALTRI MESSAGGI DA PARTE DEL BANDITORE
@@ -227,6 +239,7 @@ void notify_agent_start(int agent_pid){
         for (; j < pid_msqid_length; j++){
             if (pid_msqid[j][0] == agent_pid){
                 msgsnd(pid_msqid[j][1], msg, sizeof(simple_message) - sizeof(long), 0600);
+
             }
         }
         free(msg);
@@ -238,18 +251,14 @@ void listen_auction_start(){
 	for (; i < req_resources->resources_count; i++){
 		simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
 		if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
-			while(req_resources->list){
-				if(strcmp(req_resources->list->name, msg->content.s) == 0){
 
-					notify_agent_start(req_resources->list->agent_pid);
-					// so_log_i('g', req_resources->list->agent_pid);
+			resource* res = req_resources->list;
+			while(res){
+				if(strcmp(res->name, msg->content.s) == 0){
+					notify_agent_start(res->agent_pid);
 				}
-				req_resources->list = req_resources->list->next;
+				res = res->next;
 			}
-			// inviare un messaggio all'agente dicendogli di iniziare
-			
-			// so_log_is('m', pid, "started_tao");
-			// so_log_is('m', pid, msg->content.s);
 		}
 		free(msg);
 	}
@@ -260,13 +269,12 @@ void listen_auction_start(){
 // dell'esistenza dell'asta di suo interesse
 void listen_auction_creation(){
     // [TODO] SEMAFORO PER LA LETTURA
-    
+
 	int i = 0;
 	for (; i < req_resources->resources_count; i++){
-		
+
 	    tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
 	    if ( msgrcv(msqid, msg, sizeof(tao_opening) - sizeof(long), TAO_OPENING_MTYPE, 0) != -1 ) {
-so_log('g');
         	create_agent(msg->resource, msg->shmid, msg->semid, msg->base_bid);
 	    }
 		free(msg);
@@ -303,11 +311,11 @@ int main(int argc, char** argv){
     }
 
 	listen_msqid();
-	
+
     load_client_resources();
 
 	send_introduction();
-    
+
 	listen_auction_creation();
 	listen_auction_start();
 

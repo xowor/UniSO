@@ -95,13 +95,13 @@ void load_auct_resources() {
 //
 //     resources = fopen("../resource.txt", "r");
 //     if( resources != NULL ){
-//         // Reads each line from file 
+//         // Reads each line from file
 //         while( fgets(line, MAX_RES_NAME_LENGTH + 32, resources) != NULL  && line ){
 //             token = strtok(line, ";");
 //             i = 0;
 //             name = (char*) malloc(MAX_RES_NAME_LENGTH);
 //             while( token ){
-//                 // In each line there are 4 tokens: name, available, cost and \n 
+//                 // In each line there are 4 tokens: name, available, cost and \n
 //                 switch(i%4){
 //                     case 0:
 //                         strcat(token, "\0");
@@ -197,7 +197,6 @@ void notify_tao_creation(tao* created_tao){
         for (; j < MAX_CLIENTS; j++){
             if (pid_msqid[j][0] == client_pid){
                 msgsnd(pid_msqid[j][1], msg, sizeof(tao_opening) - sizeof(long), 0600);
-                so_log('y');
             }
         }
         free(msg);
@@ -266,26 +265,30 @@ aspetta tre secondi
 notifica end tre secondi
 tao processo lifetime
 notifica end lifetime
- */ 
+ */
 void start_auction_system(){
     int tao_processes_msqid = msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
     tao* current_tao;
     int tao_counter = 0;
     int i = 0;
-    
 
-	//so_log_i('r', avail_resources->resources_count);	
-    while(tao_counter < avail_resources->resources_count){		
+
+	//so_log_i('r', avail_resources->resources_count);
+    while(tao_counter < avail_resources->resources_count){
+        // SISTEMARE SEMAFORI
 		//so_log_i('r', tao_counter);
 
         if (tao_counter > 2) {
             simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
-            if ( msgrcv(tao_processes_msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {			
+            if ( msgrcv(tao_processes_msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
 
                 if ( strcmp(msg->msg, TAO_PROCESS_END_MSG) == 0 ){
-					/* If there are other resources tao to be created*/                     
+                    //notify_tao_end(current_tao);
+                    // assegna le risorse e annuncia il vincitore
+                    // deallocazione tao + semafori
+					/* If there are other resources tao to be created*/
                     if (tao_counter < avail_resources->resources_count){
-                        current_tao = get_tao(i);
+                        current_tao = get_tao(tao_counter);
                         init_tao(current_tao);
                         // per comunicare al cliente di creare il tao -> sarebbe da spostare dentro tao_process
 						notify_tao_creation(current_tao);
@@ -295,13 +298,12 @@ void start_auction_system(){
                 } else if ( strcmp(msg->msg, TAO_PROCESS_END_THREESEC) == 0 ){
 					current_tao = get_tao(msg->content.i);
 					notify_tao_start(current_tao);
-                    so_log('c');
                 }
 
             }
             free(msg);
-        } else {																														
-            current_tao = get_tao(i);
+        } else {
+            current_tao = get_tao(tao_counter);
             init_tao(current_tao);
             // per comunicare al cliente di creare il tao -> sarebbe da spostare dentro tao_process
             notify_tao_creation(current_tao);
