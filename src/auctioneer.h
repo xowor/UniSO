@@ -56,6 +56,8 @@ void ipc_gc();
  */
 void gc();
 
+void create_tao_process(int id_tao, int lifetime, int tao_processes_msqid);
+
 int main(int argc, char** argv);
 
 #endif // AUCTIONEER_H

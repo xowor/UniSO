@@ -197,6 +197,7 @@ void notify_tao_creation(tao* created_tao){
         for (; j < MAX_CLIENTS; j++){
             if (pid_msqid[j][0] == client_pid){
                 msgsnd(pid_msqid[j][1], msg, sizeof(tao_opening) - sizeof(long), 0600);
+                so_log('y');
             }
         }
         free(msg);
@@ -225,11 +226,13 @@ void listen_introductions(){
 }
 
 
-void create_tao_process(int lifetime, int tao_processes_msqid){
+void create_tao_process(int id_tao, int lifetime, int tao_processes_msqid){
     char str_lifetime [32];
     char str_tao_processes_msqid[32];
+    char str_id_tao[32];
     sprintf(str_lifetime, "%d", lifetime);
     sprintf(str_tao_processes_msqid, "%d", tao_processes_msqid);
+    sprintf(str_id_tao, "%d", id_tao);
 
     int tao_process_pid = fork();
 
@@ -244,7 +247,7 @@ void create_tao_process(int lifetime, int tao_processes_msqid){
         char *envp[] = { NULL };
         // so_log_s('y', str_lifetime);
         // so_log_i('y', lifetime);
-        char *argv[] = { "./tao_process", "-t", str_lifetime, "-m", str_tao_processes_msqid, NULL };
+        char *argv[] = { "./tao_process", "-t", str_lifetime, "-m", str_tao_processes_msqid, "-i",  str_id_tao, NULL };
         /* Run the auctioneer process. */
         int auct_execve_err = execve("./tao_process", argv, envp);
         if (auct_execve_err == -1) {
@@ -285,12 +288,13 @@ void start_auction_system(){
                         current_tao = get_tao(i);
                         init_tao(current_tao);
                         // per comunicare al cliente di creare il tao -> sarebbe da spostare dentro tao_process
-						//notify_tao_creation(current_tao);
+						notify_tao_creation(current_tao);
                         tao_counter++;
-                        create_tao_process(current_tao->lifetime, tao_processes_msqid);
+                        create_tao_process(current_tao->id, current_tao->lifetime, tao_processes_msqid);
                     }
                 } else if ( strcmp(msg->msg, TAO_PROCESS_END_THREESEC) == 0 ){
-					//notify_tao_start();
+					current_tao = get_tao(msg->content.i);
+					notify_tao_start(current_tao);
                     so_log('c');
                 }
 
@@ -300,8 +304,8 @@ void start_auction_system(){
             current_tao = get_tao(i);
             init_tao(current_tao);
             // per comunicare al cliente di creare il tao -> sarebbe da spostare dentro tao_process
-            //notify_tao_creation(current_tao);
-            create_tao_process(current_tao->lifetime, tao_processes_msqid);
+            notify_tao_creation(current_tao);
+            create_tao_process(current_tao->id, current_tao->lifetime, tao_processes_msqid);
             tao_counter++;
         }
     }

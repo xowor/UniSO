@@ -6,6 +6,7 @@
 #include "config.h"
 #include "semaphore.h"
 #include "messages/tao_info_to_agent.h"
+#include "messages/simple_message.h"
 
 int msqid;
 int aval;
@@ -92,7 +93,7 @@ int increments_bid(){
 int main(int argc, char** argv){
 	pid = getpid();
 
-	//printf("[agent] Started agent.\tPid: %d\tPPid: %d\n", pid, getppid());
+	printf("[agent] Started agent.\tPid: %d\tPPid: %d\n", pid, getppid());
 
 	if (argc >= 2 && strcmp(argv[1], "-m") == 0 ){
         msqid = atoi(argv[2]);
@@ -111,9 +112,23 @@ int main(int argc, char** argv){
     current_tao = get_tao_by_name(res);
 
     // listen tao start
+    
+    //void listen_auction_start(){
+	// [TODO] SEMAFORO PER LA LETTURA
+	int i = 0;
 
-    while(1){
-		make_action();
+	simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+	if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
+		so_log_s('y', "agent: TAO started");
+		while(1){
+			make_action();
+		}
 	}
+	free(msg);
+
+	//if(msgrcv(pid_msqid[i][1], intr, sizeof(introduction) - sizeof(long), INTRODUCTION_MTYPE, 0) != -1 ){
+
+	//}
 
 }
+

@@ -15,6 +15,7 @@ typedef struct _resource {
     char name[MAX_REQUIRED_RESOURCES];
     int availability;
     int cost;
+    int agent_pid;
     struct _resource* next;
 } resource;
 

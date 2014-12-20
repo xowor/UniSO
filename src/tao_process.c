@@ -21,6 +21,7 @@ int tao_processes_msqid = 0;
 
 int lifetime = 0;
 int lifetime_counter;
+int id_tao;
 
 void alarm_handler() {
     if (lifetime_counter == 1){
@@ -37,7 +38,7 @@ void alarm_handler() {
         msgsnd(tao_processes_msqid, msg, sizeof(simple_message) - sizeof(long), 0600);
 
         free(msg);
-        fprintf(stdout, "[Tao process] [%d] \x1b[31mQuitting... \x1b[0m \n", getpid());
+        //fprintf(stdout, "[Tao process] [%d] \x1b[31mQuitting... \x1b[0m \n", getpid());
         _exit(EXIT_SUCCESS);
     } else {
         // timer lifetime
@@ -55,6 +56,7 @@ void alarm_handler() {
         simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
         msg->mtype = SIMPLE_MESSAGE_MTYPE;
         msg_content content;
+        content.i = id_tao;
         msg->content = content;
 
         /* Initializes PID */
@@ -80,11 +82,12 @@ int main(int argc, char** argv) {
     /**
     * Loads the process lifetime.
     */
-    if (argc >= 4 && strcmp(argv[1], "-t")  == 0 && strcmp(argv[3], "-m") == 0){
+    if (argc >= 4 && strcmp(argv[1], "-t")  == 0 && strcmp(argv[3], "-m") == 0 && strcmp(argv[5], "-i") == 0){
         lifetime = atoi(argv[2]);
         tao_processes_msqid = atoi(argv[4]);
+        id_tao = atoi(argv[6]);
     } else {
-        fprintf(stderr, "[Tao process] Error: lifetime (-t) argument not valid.\n");
+        fprintf(stderr, "[Tao process] Error: lifetime (-t), id coda (-m) o id tao (-i) argument not valid.\n");
         return -1;
     }
     /* timer of 3 seconds before the start of auction */
