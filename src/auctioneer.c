@@ -324,7 +324,6 @@ void start_auction_system(){
                     if (tao_counter < avail_resources->resources_count){
                         current_tao = get_tao(tao_counter);
                         init_tao(current_tao);
-                        // per comunicare al cliente di creare il tao -> sarebbe da spostare dentro tao_process
 						notify_tao_creation(current_tao);
                         tao_counter++;
                         create_tao_process(current_tao->id, current_tao->lifetime, tao_processes_msqid);
@@ -340,7 +339,6 @@ void start_auction_system(){
         } else {
             current_tao = get_tao(tao_counter);
             init_tao(current_tao);
-            // per comunicare al cliente di creare il tao -> sarebbe da spostare dentro tao_process
             notify_tao_creation(current_tao);
             create_tao_process(current_tao->id, current_tao->lifetime, tao_processes_msqid);
             tao_counter++;

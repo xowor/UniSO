@@ -10,6 +10,18 @@
 void start_agent();
 
 
+/**
+ * When the auction ends, client kills relative agent and removes the
+ * message queue.
+ */
+void listen_auction_end();
+
+
+/**
+ *  Creates agent's process.
+ */
+int create_agent_process();
+
 
 /**
  * Loads the resources required by the client from file.

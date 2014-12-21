@@ -27,7 +27,7 @@ resource_list* req_resources;       /* The list containing all the available res
 
 
 void listen_auction_end(){
-	//V kill agent
+	// kill agent
 	// deallocare coda di messaggi
 	// [TODO] SEMAFORO PER LA LETTURA
 	int i = 0;
@@ -45,6 +45,7 @@ void listen_auction_end(){
 		free(msg);
 	}
 }
+
 /**
  *  Creates agent's process.
  */
