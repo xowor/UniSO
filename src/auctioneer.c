@@ -300,7 +300,7 @@ void start_auction_system(){
     int tao_processes_msqid = msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
     tao* current_tao;
     int tao_counter = 0;
-    int i = 0;
+    int i = 1;
 
     int terminated_taos = 0;
 
@@ -308,7 +308,6 @@ void start_auction_system(){
     while(terminated_taos < avail_resources->resources_count){
         // SISTEMARE SEMAFORI
 		//so_log_i('r', tao_counter);
-
         if (tao_counter > 2) {
             simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
             if ( msgrcv(tao_processes_msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
@@ -317,6 +316,7 @@ void start_auction_system(){
                     current_tao = get_tao_by_id(msg->content.i);
                     notify_tao_end(current_tao);
                     terminated_taos++;
+                    so_log_i('r', terminated_taos);
                     printf("[auctioneer] Ended auction for resource %s (tao id: %d)\n", current_tao->name, current_tao->id);
                     // assegna le risorse e annuncia il vincitore
                     // deallocazione tao + semafori
@@ -331,6 +331,7 @@ void start_auction_system(){
                 } else if ( strcmp(msg->msg, TAO_PROCESS_END_THREESEC) == 0 ){
 					current_tao = get_tao(msg->content.i);
 					notify_tao_start(current_tao);
+                    so_log_i('m', i++);
                     printf("[auctioneer] Started auction for resource %s (tao id: %d)\n", current_tao->name, current_tao->id);
                 }
 

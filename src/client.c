@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <signal.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include "resource.h"
@@ -25,10 +26,16 @@ int budget;
 
 resource_list* req_resources;       /* The list containing all the available resources */
 
+int get_agent_msqid(int agent_pid) {
+	int j = 0;
+	for (; j < pid_msqid_length; j++){
+		if (pid_msqid[j][0] == agent_pid){
+			return pid_msqid[j][1];
+		}
+	}
+}
 
 void listen_auction_end(){
-	// kill agent
-	// deallocare coda di messaggi
 	// [TODO] SEMAFORO PER LA LETTURA
 	int i = 0;
 	for (; i < req_resources->resources_count; i++){
@@ -37,7 +44,11 @@ void listen_auction_end(){
 			resource* res = req_resources->list;
 			while(res){
 				if(strcmp(res->name, msg->content.s) == 0){
-					kill(res->agent_pid);
+					signal(SIGCHLD, SIG_IGN);
+					kill(res->agent_pid, 0);
+					/* Removes the queue message */
+					int agent_msqid = get_agent_msqid(res->agent_pid);
+					msgctl(agent_msqid, IPC_RMID,0);
 				}
 				res = res->next;
 			}
@@ -251,13 +262,8 @@ void notify_agent_start(int agent_pid){
         //strcpy(msg->content.s, created_tao->name);
 
         /* Gets the message queue id of the client */
-        int j = 0;
-        for (; j < pid_msqid_length; j++){
-            if (pid_msqid[j][0] == agent_pid){
-                msgsnd(pid_msqid[j][1], msg, sizeof(simple_message) - sizeof(long), 0600);
-
-            }
-        }
+		int agent_msqid = get_agent_msqid(agent_pid);
+		msgsnd(agent_msqid, msg, sizeof(simple_message) - sizeof(long), 0600);
         free(msg);
 }
 
