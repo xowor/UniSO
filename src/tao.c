@@ -133,22 +133,35 @@ void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
  * Shared area creation and defines the lifetime.
  */
 void start_tao(tao* current_tao){
-    semctl(tao_access_semid, current_tao->id + 1, SETVAL, 1);
+    /* Put the tao into the shm */
+    tao* shm;
+    /* Attach to shm */
+    if (!(shm = (tao*) shmat(current_tao->shm_id, NULL, 0))) {
+        perror("shmat");
+        exit(1);
+    }
+
+    shm = current_tao;
+
+    /* Enable access to the TAO shm */
+    semctl(tao_access_semid, current_tao->id, SETVAL, 1);
 }
 
 
 void init_tao(tao* current_tao){
-    int shm_id = shmget(IPC_PRIVATE, sizeof(tao), 0600 | IPC_CREAT);
+    int shm_id = shmget(IPC_PRIVATE, sizeof(tao) , 0600 | IPC_CREAT);
     if(shm_id == -1){
 		perror("shmget");
 		exit(EXIT_FAILURE);
 	}
 
-    tao* t;
-    t = (tao*) shmat(shm_id, NULL, 0);
+    // tao* t;
+    // t = (tao*) shmat(shm_id, NULL, 0);
 
     current_tao->shm_id = shm_id;
-    current_tao->lifetime = current_tao->interested_clients_count * 5;
+    /* The auction must be at least one second long */ 
+    current_tao->lifetime = (current_tao->interested_clients_count * AUCTION_LIFETIME_MULTIPLIER) + 1;
 
-    semctl(tao_access_semid, current_tao->id + 1, SETVAL, 0);
+    /* Disable access to the TAO shm */
+    semctl(tao_access_semid, current_tao->id, SETVAL, 0);
 }

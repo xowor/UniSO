@@ -5,6 +5,7 @@
 #define BASE_BID 42                 /* The base bid "price" */
 #define MAX_OFFERS 5                /* Maximum bids from agents in a single tao */
 #define BID_INCREMENT 5				/* How much increases every time */
+#define AUCTION_LIFETIME_MULTIPLIER 2   /* TAO lifetime = |partecipants| * AUCTION_LIFETIME_MULTIPLIER */
 
 /* Resources */
 #define MAX_REQUIRED_RESOURCES 32   /* The maximum number of available resources */

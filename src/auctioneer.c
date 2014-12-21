@@ -302,9 +302,10 @@ void start_auction_system(){
     int tao_counter = 0;
     int i = 0;
 
+    int terminated_taos = 0;
 
 	//so_log_i('r', avail_resources->resources_count);
-    while(tao_counter < avail_resources->resources_count){
+    while(terminated_taos < avail_resources->resources_count){
         // SISTEMARE SEMAFORI
 		//so_log_i('r', tao_counter);
 
@@ -313,7 +314,10 @@ void start_auction_system(){
             if ( msgrcv(tao_processes_msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
 
                 if ( strcmp(msg->msg, TAO_PROCESS_END_MSG) == 0 ){
-                    //notify_tao_end(current_tao);
+                    current_tao = get_tao_by_id(msg->content.i);
+                    notify_tao_end(current_tao);
+                    terminated_taos++;
+                    printf("[auctioneer] Ended auction for resource %s (tao id: %d)\n", current_tao->name, current_tao->id);
                     // assegna le risorse e annuncia il vincitore
                     // deallocazione tao + semafori
 					/* If there are other resources tao to be created*/
@@ -328,6 +332,7 @@ void start_auction_system(){
                 } else if ( strcmp(msg->msg, TAO_PROCESS_END_THREESEC) == 0 ){
 					current_tao = get_tao(msg->content.i);
 					notify_tao_start(current_tao);
+                    printf("[auctioneer] Started auction for resource %s (tao id: %d)\n", current_tao->name, current_tao->id);
                 }
 
             }

@@ -12,12 +12,12 @@ int msqid;
 int aval;
 int unit_cost;
 int shm_id;
-int semid;
+int sem_id;
 int basebid;
 char* res;
 int budget;
 int current_bid;				/* bid that starts like base_bid and grows at most like budget */
-int id_tao;
+int tao_id;
 pid_t pid;
 tao* working_tao;
 
@@ -107,8 +107,8 @@ int make_bid(int pid, int quantity, int unit_offer, tao* auction_tao){
 int is_best_bid(){
     int i = 0;
 
-    so_log_i('c', getpid());
-    so_log_p('b', working_tao);
+    // so_log_i('c', getpid());
+    // so_log_p('b', working_tao);
     for(; i < MAX_OFFERS; i++){
         if(working_tao->bids[i].client_pid == getpid()){
             return 1;
@@ -120,26 +120,26 @@ int is_best_bid(){
 /**
  * Makes a bid and checks the possibility.
  */
-void make_action(int id_tao){
-    so_log('r');
-    working_tao = (tao*) shmat(shm_id, NULL, 0);
+void make_action(int tao_id){
+    // so_log('r');
 
-	// sem_p(pid, current_tao->id);
+	sem_p(sem_id, tao_id);
+    working_tao = (tao*) shmat(shm_id, NULL, 0);
 	if(is_best_bid() == 0){
-        so_log_i('m', pid);
+        // so_log_i('m', pid);
 		if(current_bid < budget){
 			if(increments_bid() == 1){
-                so_log('m');
+                // so_log('m');
 				int val = make_bid(pid, aval, current_bid, working_tao);
 				if(val == 1){
 					printf("[agent] [%d] The agent has mad a bit in the amount of %d for %s.\n", pid, current_bid, res);
 				}else if(val == -2){
-					make_action(id_tao);
+					make_action(tao_id);
 				}else{
-					printf("[agent] [%d] An error occurred in make_bid or there is already a bid.\n", pid);
+					// printf("[agent] [%d] An error occurred in make_bid or there is already a bid.\n", pid);
 				}
 			}else{
-				printf("[agent] [%d] The agent hasn't enough funds.\n", pid);
+				// printf("[agent] [%d] The agent hasn't enough funds.\n", pid);
 			}
 		}else{
             printf("[agent][%d] budget < current_bid.\n", pid);
@@ -147,7 +147,7 @@ void make_action(int id_tao){
 	}else{
         printf("[agent][%d] the bid is between the best.\n", pid);
     }
-	// sem_v(pid, current_tao->id);
+	sem_v(sem_id, tao_id);
 }
 
     /* da qui richiamo i metodi che fanno le offerte
@@ -169,10 +169,10 @@ void make_action(int id_tao){
 void listen_tao_start(){
     simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
     if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
-        id_tao = msg->content.i;
+        tao_id = msg->content.i;
         // [TODO] SEMAFORO PER LA LETTURA
 		while(1){
-			make_action(id_tao);
+			make_action(tao_id);
 		}
     }
     free(msg);
@@ -191,7 +191,7 @@ void listen_tao_info(){
         aval = msg->availability;
         unit_cost = msg->cost;
         shm_id = msg->shmid;
-        semid = msg->semid;
+        sem_id = msg->semid;
         basebid = msg->basebid;
         budget = msg->budget;
         strcpy(res, msg->res);
@@ -218,7 +218,7 @@ int main(int argc, char** argv){
 	pid = getpid();
     res = (char*) malloc(sizeof(char) * MAX_RES_NAME_LENGTH);
 
-	printf("[agent] Started agent.\tPid: %d\tPPid: %d\n", pid, getppid());
+	// printf("[agent] Started agent.\tPid: %d\tPPid: %d\n", pid, getppid());
 
 	if (argc >= 2 && strcmp(argv[1], "-m") == 0 ){
 

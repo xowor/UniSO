@@ -26,8 +26,8 @@ int budget;
 resource_list* req_resources;       /* The list containing all the available resources */
 
 
-void listen_tao_end(){
-	//kill agent
+void listen_auction_end(){
+	//V kill agent
 	// deallocare coda di messaggi
 	// [TODO] SEMAFORO PER LA LETTURA
 	int i = 0;
@@ -333,6 +333,7 @@ int main(int argc, char** argv){
 
 	listen_auction_creation();
 	listen_auction_start();
+	listen_auction_end();
 
 	// detacharsi dall'area condivisa
 
