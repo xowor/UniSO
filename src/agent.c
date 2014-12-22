@@ -116,15 +116,14 @@ int make_bid( int quantity, int unit_bid, tao* auction_tao){
 }
 
 void print_auction_status(tao* working_tao){
-    // char status[5][25];
-    printf("[agent] [%-10s]  [\x1b[33m%4d€\x1b[0m]   ", working_tao->name, best_bid());
+    printf("[\x1b[34mAuction\x1b[0m] %-16s || %20s || \x1b[33m%4d€\x1b[0m || ", working_tao->name, "New bid", best_bid());
 
     int i = 0;
     for (; i < 5; i++){
         if (working_tao->bids[i].client_pid == getppid()){
-            printf("[ \x1b[32m%-5d\x1b[0m | \x1b[33m%4d€\x1b[0m ]    ", working_tao->bids[i].client_pid, working_tao->bids[i].unit_bid);
+            printf("     \x1b[32m%-5d\x1b[0m : \x1b[33m%4d€\x1b[0m     ||", working_tao->bids[i].client_pid, working_tao->bids[i].unit_bid);
         } else {
-            printf("[ %-5d | \x1b[33m%4d€\x1b[0m ]    ", working_tao->bids[i].client_pid, working_tao->bids[i].unit_bid);
+            printf("     %-5d : \x1b[33m%4d€\x1b[0m     ||", working_tao->bids[i].client_pid, working_tao->bids[i].unit_bid);
         }
     }
 

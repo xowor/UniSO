@@ -277,8 +277,8 @@ void listen_auction_status(){
 	for (; i < req_resources->resources_count * 4; i++){
 		auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
 		if ( msgrcv(msqid, msg, sizeof(auction_status) - sizeof(long), AUCTION_STATUS_MTYPE, 0) != -1 ) {
-			// so_log_i('g', i);
 			// so_log_i('m', msg->type);
+			// so_log_i('g', i);
 			if (msg->type == AUCTION_CREATED) {
 				create_agent(msg->resource, msg->shm_id, msg->sem_id, msg->base_bid);
 			} else if (msg->type == AUCTION_STARTED) {
@@ -303,7 +303,7 @@ void listen_auction_status(){
 				}
 			} else if (msg->type == AUCTION_RESULT){
 				if (msg->quantity > 0){
-					printf("[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
+					// printf("[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
 				}
 			} else {
 

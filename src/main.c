@@ -10,6 +10,8 @@
 #include "config.h"
 
 extern int errno;       /* Externally declared (by kernel) */
+int auct_pid = 0;
+int status = 0;
 
 /**
  * Creates the auctioneer process.
@@ -39,6 +41,7 @@ int create_auctioneer(int master_msqid){
         }
     } else {
         /* Parent code */
+        auct_pid = auctioneer_pid;
         return EXIT_SUCCESS;        /* Success */
     }
 
@@ -99,15 +102,14 @@ int main(int argc, char** argv) {
 
     /* Checks the auctioneer creation was successful. */
     if (auctnr_exit == 0){
-
         for (i = 0; i < MAX_CLIENTS; i++){
             int clnt_exit = create_client(master_msqid, i);
             /* If the client creation fails, will not try to create more clients */
             if (clnt_exit != 0)
                 exit(EXIT_FAILURE);
         }
-
-        sleep(1);
+        waitpid(-1, &status, WUNTRACED);
+        printf("\n\n\n");
         exit(EXIT_SUCCESS);
     }
     exit(EXIT_FAILURE);
