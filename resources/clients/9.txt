@@ -1,0 +1,8 @@
+1600;
+memory;20;10;
+hdd;10;10;
+vga;5;5;
+cache;6;20;
+ethernet;4;5;
+wifi;8;4;
+optical;10;6;

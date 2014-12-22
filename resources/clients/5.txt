@@ -1,0 +1,7 @@
+1000;
+hdd;20;10;
+vga;10;75;
+cache;1;50;
+ethernet;15;22;
+wifi;20;13;
+bluetooth;10;6;

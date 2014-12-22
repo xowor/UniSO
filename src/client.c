@@ -3,6 +3,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <math.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include "resource.h"
@@ -11,6 +12,8 @@
 #include "messages/tao_opening.h"
 #include "messages/simple_message.h"
 #include "messages/tao_info_to_agent.h"
+#include "messages/auction_result.h"
+#include "messages/auction_status.h"
 
 
 int master_msqid;
@@ -21,7 +24,6 @@ int ppid;
 int pid_msqid[MAX_REQUIRED_RESOURCES][2];
 int pid_msqid_length = 0;
 // char* required_resources[MAX_REQUIRED_RESOURCES];
-int required_resources_length = 0;
 int budget;
 
 resource_list* req_resources;       /* The list containing all the available resources */
@@ -35,27 +37,27 @@ int get_agent_msqid(int agent_pid) {
 	}
 }
 
-void listen_auction_end(){
-	// [TODO] SEMAFORO PER LA LETTURA
-	int i = 0;
-	for (; i < req_resources->resources_count; i++){
-		simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
-		if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
-			resource* res = req_resources->list;
-			while(res){
-				if(strcmp(res->name, msg->content.s) == 0){
-					signal(SIGCHLD, SIG_IGN);
-					kill(res->agent_pid, 0);
-					/* Removes the queue message */
-					int agent_msqid = get_agent_msqid(res->agent_pid);
-					msgctl(agent_msqid, IPC_RMID,0);
-				}
-				res = res->next;
-			}
-		}
-		free(msg);
-	}
-}
+// void listen_auction_end(){
+// 	// [TODO] SEMAFORO PER LA LETTURA
+// 	int i = 0;
+// 	for (; i < req_resources->resources_count; i++){
+// 		simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+// 		if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
+// 			resource* res = req_resources->list;
+// 			while(res){
+// 				if(strcmp(res->name, msg->content.s) == 0){
+// 					signal(SIGCHLD, SIG_IGN);
+// 					kill(res->agent_pid, 0);
+// 					/* Removes the queue message */
+// 					int agent_msqid = get_agent_msqid(res->agent_pid);
+// 					msgctl(agent_msqid, IPC_RMID,0);
+// 				}
+// 				res = res->next;
+// 			}
+// 		}
+// 		free(msg);
+// 	}
+// }
 
 /**
  *  Creates agent's process.
@@ -96,6 +98,8 @@ int create_agent_process(){
     exit(EXIT_FAILURE);
 }
 
+
+
 /**
  * Client communicates to agents resource informations.
  */
@@ -109,7 +113,7 @@ void notify_tao_info(int pid, int availability, int cost, int shmid, int semid, 
 	msg->shmid = shmid;
 	msg->semid = semid;
 	msg->basebid = basebid;
-	msg->budget = budget;
+	msg->budget = budget / req_resources->resources_count;
 
 	int j = 0;
 	for (; j < pid_msqid_length; j++){
@@ -267,41 +271,100 @@ void notify_agent_start(int agent_pid){
         free(msg);
 }
 
-void listen_auction_start(){
+void listen_auction_status(){
 	// [TODO] SEMAFORO PER LA LETTURA
 	int i = 0;
-	for (; i < req_resources->resources_count; i++){
-		simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
-		if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
-
-			resource* res = req_resources->list;
-			while(res){
-				if(strcmp(res->name, msg->content.s) == 0){
-					notify_agent_start(res->agent_pid);
+	for (; i < req_resources->resources_count * 4; i++){
+		auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
+		if ( msgrcv(msqid, msg, sizeof(auction_status) - sizeof(long), AUCTION_STATUS_MTYPE, 0) != -1 ) {
+			// so_log_i('g', i);
+			// so_log_i('m', msg->type);
+			if (msg->type == AUCTION_CREATED) {
+				create_agent(msg->resource, msg->shm_id, msg->sem_id, msg->base_bid);
+			} else if (msg->type == AUCTION_STARTED) {
+				resource* res = req_resources->list;
+				while(res){
+					if(strcmp(res->name, msg->resource) == 0){
+						notify_agent_start(res->agent_pid);
+					}
+					res = res->next;
 				}
-				res = res->next;
+			} else if (msg->type == AUCTION_ENDED) {
+				resource* res = req_resources->list;
+				while(res){
+					if(strcmp(res->name, msg->resource) == 0){
+						signal(SIGCHLD, SIG_IGN);
+						kill(res->agent_pid, 0);
+						/* Removes the queue message */
+						int agent_msqid = get_agent_msqid(res->agent_pid);
+						msgctl(agent_msqid, IPC_RMID,0);
+					}
+					res = res->next;
+				}
+			} else if (msg->type == AUCTION_RESULT){
+				if (msg->quantity > 0){
+					printf("[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
+				}
+			} else {
+
 			}
 		}
 		free(msg);
 	}
 }
 
+// void listen_auction_start(){
+// 	// [TODO] SEMAFORO PER LA LETTURA
+// 	int i = 0;
+// 	for (; i < req_resources->resources_count; i++){
+// 		simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+// 		if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
+//
+// 			resource* res = req_resources->list;
+// 			while(res){
+// 				if(strcmp(res->name, msg->content.s) == 0){
+// 					notify_agent_start(res->agent_pid);
+// 				}
+// 				res = res->next;
+// 			}
+// 		}
+// 		free(msg);
+// 	}
+// }
 
-// viene richiamato quando il cliente riceve il messaggio dal banditore che gli comunica
-// dell'esistenza dell'asta di suo interesse
-void listen_auction_creation(){
-    // [TODO] SEMAFORO PER LA LETTURA
 
-	int i = 0;
-	for (; i < req_resources->resources_count; i++){
+// void listen_auction_result(){
+// 	// [TODO] SEMAFORO PER LA LETTURA
+// 	int i = 0;
+// 	for (; i < req_resources->resources_count; i++){
+// 		auction_result* msg = (auction_result*) malloc(sizeof(auction_result));
+// 		if ( msgrcv(msqid, msg, sizeof(auction_result) - sizeof(long), AUCTION_RESULT_MTYPE, 0) != -1 ) {
+// 			// sottrarre al budget
+// 			// so_log('c');
+// 		}
+// 		free(msg);
+// 	}
+// }
 
-	    tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
-	    if ( msgrcv(msqid, msg, sizeof(tao_opening) - sizeof(long), TAO_OPENING_MTYPE, 0) != -1 ) {
-        	create_agent(msg->resource, msg->shmid, msg->semid, msg->base_bid);
-	    }
-		free(msg);
-	}
-}
+
+// // viene richiamato quando il cliente riceve il messaggio dal banditore che gli comunica
+// // dell'esistenza dell'asta di suo interesse
+// void listen_auction_creation(){
+//     // [TODO] SEMAFORO PER LA LETTURA
+//
+// 	int i = 0;
+// 	for (; i < req_resources->resources_count; i++){
+//
+// 	    tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
+// 			so_log('y');
+// 	    if ( msgrcv(msqid, msg, sizeof(tao_opening) - sizeof(long), TAO_OPENING_MTYPE, 0) != -1 ) {
+// 			so_log('m');
+//         	create_agent(msg->resource, msg->shmid, msg->semid, msg->base_bid);
+// 	    }
+// 		free(msg);
+// 	}
+// 	// so_log_
+// }
 
 
 /**
@@ -338,9 +401,11 @@ int main(int argc, char** argv){
 
 	send_introduction();
 
-	listen_auction_creation();
-	listen_auction_start();
-	listen_auction_end();
+	listen_auction_status();
+	// listen_auction_creation();
+	// listen_auction_start();
+	// listen_auction_end();
+	// listen_auction_result();
 
 	// detacharsi dall'area condivisa
 

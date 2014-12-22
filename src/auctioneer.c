@@ -15,6 +15,8 @@
 #include "messages/introduction.h"
 #include "messages/simple_message.h"
 #include "messages/tao_opening.h"
+#include "messages/auction_result.h"
+#include "messages/auction_status.h"
 
 
 #define N 20                        /* Size of "an array" */
@@ -75,7 +77,7 @@ void load_auct_resources() {
     // if( resources != NULL ){
     //     char line[64];
     //     while (fgets(line, 64, resources)){
-    //         get_resource(line);
+    //         get_resource_from_line(line);
     //     }
     // }
     * */
@@ -141,9 +143,40 @@ void create_taos(){
 
 	/* adds name's resource and common informations to each tao */
 	while(tmp_resource){
-        create_tao(tmp_resource->name);
+        create_tao(tmp_resource->name, tmp_resource->cost);
 		tmp_resource = tmp_resource->next;
 	}
+}
+
+
+// alla ricezione del messaggio, il cliente deve solo creare l'agente
+void notify_tao_creation(tao* created_tao){
+    // [TODO] SEMAFORO PER LA SCRITTURA
+    /* For each client interested in the TAO */
+    int i = 0;
+    for (; i < created_tao->interested_clients_count; i++){
+        int client_pid = created_tao->interested_clients[i];
+
+        /* Allocates the simple_message message */
+        auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
+        msg->mtype = AUCTION_STATUS_MTYPE;
+        msg->type = AUCTION_CREATED;
+        strcpy(msg->resource, created_tao->name);
+
+        msg->shm_id = created_tao->shm_id;
+        msg->sem_id = created_tao->sem_id;
+        msg->base_bid = created_tao->base_bid;
+
+        /* Gets the message queue id of the client */
+        int j = 0;
+        for (; j < MAX_CLIENTS; j++){
+            if (pid_msqid[j][0] == client_pid){
+                // so_log('r');
+                msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
+            }
+        }
+        free(msg);
+    }
 }
 
 
@@ -155,21 +188,18 @@ void notify_tao_start(tao* created_tao){
         int client_pid = created_tao->interested_clients[i];
 
         /* Allocates the simple_message message */
-        simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
-        msg->mtype = SIMPLE_MESSAGE_MTYPE;
-        msg_content content;
-        msg->content = content;
+        auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
+        msg->mtype = AUCTION_STATUS_MTYPE;
+        msg->type = AUCTION_STARTED;
 
-        /* Initializes PID */
-        msg->pid = getpid();
-        strcpy(msg->msg, AUCTION_START_MSG);
-        strcpy(msg->content.s, created_tao->name);
+        strcpy(msg->resource, created_tao->name);
 
         /* Gets the message queue id of the client */
         int j = 0;
         for (; j < MAX_CLIENTS; j++){
             if (pid_msqid[j][0] == client_pid){
-                msgsnd(pid_msqid[j][1], msg, sizeof(simple_message) - sizeof(long), 0600);
+                msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
+                    // so_log('m');
             }
         }
         free(msg);
@@ -185,51 +215,129 @@ void notify_tao_end(tao* created_tao){
         int client_pid = created_tao->interested_clients[i];
 
         /* Allocates the simple_message message */
-        simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
-        msg->mtype = SIMPLE_MESSAGE_MTYPE;
-        msg_content content;
-        msg->content = content;
+        auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
+        msg->mtype = AUCTION_STATUS_MTYPE;
+        msg->type = AUCTION_ENDED;
 
-        /* Initializes PID */
-        msg->pid = getpid();
-        strcpy(msg->msg, AUCTION_END_MSG);
-        strcpy(msg->content.s, created_tao->name);
+        strcpy(msg->resource, created_tao->name);
 
         /* Gets the message queue id of the client */
         int j = 0;
         for (; j < MAX_CLIENTS; j++){
             if (pid_msqid[j][0] == client_pid){
-                msgsnd(pid_msqid[j][1], msg, sizeof(simple_message) - sizeof(long), 0600);
+                msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
             }
         }
         free(msg);
     }
 }
 
-// alla ricezione del messaggio, il cliente deve solo creare l'agente
-void notify_tao_creation(tao* created_tao){
-    // [TODO] SEMAFORO PER LA SCRITTURA
-    /* For each client interested in the TAO */
+
+notify_auction_result(int client_pid, char* name, int quantity, int unit_bid){
+    /* Allocates the simple_message message */
+    auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
+    msg->mtype = AUCTION_STATUS_MTYPE;
+    msg->type = AUCTION_RESULT;
+    strcpy(msg->resource, name);
+
+    msg->quantity = quantity;
+    msg->unit_bid = unit_bid;
+
+    /* Gets the message queue id of the client */
+    int j = 0;
+    for (; j < MAX_CLIENTS; j++){
+        if (pid_msqid[j][0] == client_pid){
+            msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
+        }
+    }
+    free(msg);
+}
+
+int get_max_bid(tao* current_tao){
+    int max_bid = 0;
+    int max_index = 0;
     int i = 0;
-    for (; i < created_tao->interested_clients_count; i++){
-        int client_pid = created_tao->interested_clients[i];
+    for(; i < MAX_BIDS; i++){
+        if(current_tao->bids[i].unit_bid > max_bid){
+            max_bid = current_tao->bids[i].unit_bid;
+            max_index = i;
+        }
+    }
+    return max_index;
+}
 
-        /* Allocates the simple_message message */
-        tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
-        msg->mtype = TAO_OPENING_MTYPE;
-        strcpy(msg->resource, created_tao->name);
-        msg->shmid = created_tao->shm_id;
-        msg->semid = created_tao->sem_id;
-        msg->base_bid = created_tao->base_bid;
+void assign_resources(tao* current_tao){
+    // get_max_bid che ritorna il bid massimo, gli si passa current_tao->bids[]
+    // per quel bid invia il messaggio di vincita/perdita
+    // annulla i campi di quel bid
 
-        /* Gets the message queue id of the client */
-        int j = 0;
-        for (; j < MAX_CLIENTS; j++){
-            if (pid_msqid[j][0] == client_pid){
-                msgsnd(pid_msqid[j][1], msg, sizeof(tao_opening) - sizeof(long), 0600);
+
+
+    int k = 0;
+
+    int i = 0;
+    for(; i < MAX_BIDS; i++){
+        int max_bid_n = get_max_bid(current_tao);
+        bid max_bid = current_tao->bids[max_bid_n];
+        resource* res = get_resource(current_tao->name, avail_resources);
+        // so_log_i('r', res->availability);
+        // if( res->availability != 0 ){
+        if(max_bid.quantity < res->availability){
+            res->availability = res->availability - max_bid.quantity;
+            // so_log_i('g', current_tao->bids[max_bid_n].client_pid);
+            notify_auction_result(max_bid.client_pid, current_tao->name, max_bid.quantity, max_bid.unit_bid);
+        }else{
+            // so_log_i('m', current_tao->bids[max_bid_n].client_pid);
+            notify_auction_result(max_bid.client_pid, current_tao->name, res->availability, max_bid.unit_bid);
+        }
+        current_tao->bids[max_bid_n].unit_bid = 0;
+    }
+        // }else{
+        //     so_log_s('r', current_tao->name);
+        //     notify_auction_result(current_tao->bids[i].client_pid, current_tao->name, 0, 0);
+        // }
+        // int max_bid = 0;
+        // int max_bid_pid = 0;
+        // int j = 0;
+        // for (; j < MAX_BIDS; j++){
+        //     resource* res = get_resource(current_tao->name, avail_resources);
+        //     if( res->availability != 0 ){
+        //         if (max_bid < current_tao->bids[j].unit_bid){
+        //             max_bid = current_tao->bids[j].unit_bid;
+        //             if(current_tao->bids[j].quantity < res->availability){
+        //                 res->availability = res->availability - current_tao->bids[j].quantity;
+        //                 so_log_s('g', current_tao->name);
+        //                 notify_auction_result(current_tao->bids[j].client_pid, current_tao->name, current_tao->bids[j].quantity, current_tao->bids[j].unit_bid);
+        //             }else{
+        //                 so_log_s('g', current_tao->name);
+        //                 notify_auction_result(current_tao->bids[j].client_pid, current_tao->name, res->availability, current_tao->bids[j].unit_bid);
+        //             }
+        //             max_bid = 0;
+        //         }
+        //     }else{
+        //         // i = MAX_BIDS;
+        //         so_log_s('r', current_tao->name);
+        //         notify_auction_result(current_tao->bids[i].client_pid, current_tao->name, 0, 0);
+        //     }
+        // }
+        // notificare i perdenti
+
+
+    for (; k < current_tao->interested_clients_count; k++){
+        int client_pid = current_tao->interested_clients[k];
+        int i = 0;
+        int found_in_bids = 0;
+        for(; i < MAX_BIDS; i++){
+            // so_log_i('y', client_pid);
+            // so_log_i('y', current_tao->bids[i].client_pid);
+            if (current_tao->bids[i].client_pid == client_pid){
+                found_in_bids = 1;
             }
         }
-        free(msg);
+        if (!found_in_bids){
+            // so_log('r');
+            notify_auction_result(current_tao->bids[i].client_pid, current_tao->name, 0, 0);
+        }
     }
 }
 
@@ -314,10 +422,13 @@ void start_auction_system(){
 
                 if ( strcmp(msg->msg, TAO_PROCESS_END_MSG) == 0 ){
                     current_tao = get_tao_by_id(msg->content.i);
+                    // so_log_i('b', current_tao->dummy);
                     notify_tao_end(current_tao);
-                    terminated_taos++;
-                    so_log_i('r', terminated_taos);
+                    assign_resources(current_tao);
                     printf("[auctioneer] Ended auction for resource %s (tao id: %d)\n", current_tao->name, current_tao->id);
+                    shmctl(current_tao->shm_id, IPC_RMID, 0);
+                    // so_log_i('r', terminated_taos);
+                    terminated_taos++;
                     // assegna le risorse e annuncia il vincitore
                     // deallocazione tao + semafori
 					/* If there are other resources tao to be created*/
@@ -330,8 +441,9 @@ void start_auction_system(){
                     }
                 } else if ( strcmp(msg->msg, TAO_PROCESS_END_THREESEC) == 0 ){
 					current_tao = get_tao(msg->content.i);
+                    start_tao(current_tao);
 					notify_tao_start(current_tao);
-                    so_log_i('m', i++);
+                    // so_log_i('m', i++);
                     printf("[auctioneer] Started auction for resource %s (tao id: %d)\n", current_tao->name, current_tao->id);
                 }
 
@@ -347,6 +459,9 @@ void start_auction_system(){
     }
 
     canexit == 1;
+
+
+
 }
 
 

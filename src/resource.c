@@ -47,7 +47,20 @@ resource* add_resource(resource_list* list, char name[MAX_RES_NAME_LENGTH], int 
     return new_resource;
 }
 
-void get_resource(char* line, resource_list* list) {
+resource* get_resource(char* name, resource_list* list){
+
+    resource* tmp_resource = list->list;
+
+    /* adds name's resource and common informations to each tao */
+    while(tmp_resource){
+        if(strcmp(tmp_resource->name, name) == 0){
+            return tmp_resource;
+        }
+        tmp_resource = tmp_resource->next;
+    }
+}
+
+void get_resource_from_line(char* line, resource_list* list) {
     char* tok;
     int i;
     char* name = (char*) malloc(MAX_RES_NAME_LENGTH);
@@ -75,7 +88,7 @@ void load_resources(char filename[256], resource_list* list) {
     if( resources != NULL ){
         char line[64];
         while (fgets(line, 64, resources)){
-            get_resource(line, list);
+            get_resource_from_line(line, list);
         }
     }
 }

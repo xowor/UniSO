@@ -1,0 +1,7 @@
+1300;
+cpu;10;5;
+memory;30;50;
+hdd;15;20;
+ssd;12;30;
+wifi;15;10;
+bluetooth;12;5;

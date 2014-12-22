@@ -5,7 +5,7 @@ var searchData=
   ['main_2eh',['main.h',['../main_8h.html',1,'']]],
   ['make_5fbid',['make_bid',['../tao_8c.html#ab24ba74aaeeff96a66b72b00c6dfcb6a',1,'make_bid(int pid, int quantity, int unit_offer, tao *auction_tao):&#160;tao.c'],['../tao_8h.html#ab24ba74aaeeff96a66b72b00c6dfcb6a',1,'make_bid(int pid, int quantity, int unit_offer, tao *auction_tao):&#160;tao.c']]],
   ['max_5fclients',['MAX_CLIENTS',['../config_8h.html#a0a8f91f93d75a07f0ae45077db45b3eb',1,'config.h']]],
-  ['max_5foffers',['MAX_OFFERS',['../config_8h.html#a8128e7888cf5d05b6bd6811fee358e59',1,'config.h']]],
+  ['max_5foffers',['MAX_BIDS',['../config_8h.html#a8128e7888cf5d05b6bd6811fee358e59',1,'config.h']]],
   ['max_5fopen_5fauctions',['MAX_OPEN_AUCTIONS',['../config_8h.html#a4b912c4f50c4046c8728cb3ed843ed1b',1,'config.h']]],
   ['max_5frequired_5fresources',['MAX_REQUIRED_RESOURCES',['../config_8h.html#ac91a1136ceadea84c7e339eddd81bd3b',1,'config.h']]],
   ['max_5frequired_5fresourcess',['MAX_REQUIRED_RESOURCES',['../config_8h.html#a6002c47cc8fbcb5a6f15658796b2717d',1,'config.h']]],

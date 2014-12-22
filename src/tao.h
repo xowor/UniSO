@@ -13,10 +13,6 @@ typedef struct _bid bid;
 */
 typedef struct _tao tao;
 
-/**
-* Support function to make_bid.
-*/
-void replace_bids(int n, bid* new_bid, tao* auction_tao);
 
 /**
 * Initializes the TAO array with the given number of required TAOs
@@ -27,7 +23,7 @@ void init_taos(int number);
 * Initializes the TAO with basic informations.
 * Name is the resource's name.
 */
-void create_tao(char name[MAX_RES_NAME_LENGTH]);
+void create_tao(char name[MAX_RES_NAME_LENGTH], int cost);
 
 /**
  * Gets the tao with the i index.

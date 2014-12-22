@@ -25,7 +25,7 @@ int tao_counter;
 typedef struct _bid{
     int client_pid;
     int quantity;
-    int unit_offer;
+    int unit_bid;       /* last bid made from this agent_pid */
 } bid;
 
 /**
@@ -37,23 +37,13 @@ typedef struct _tao{
     char name[MAX_RES_NAME_LENGTH];
     pid_t interested_clients[MAX_CLIENTS];
     int interested_clients_count;
-    bid bids[MAX_OFFERS];
+    bid bids[MAX_BIDS];
     int base_bid; /* base d'asta */
     int shm_id;
     int sem_id;
     int lifetime;
+    int dummy;
 } tao;
-
-/**
- * Support function to make_bid.
- */
-void replace_bids(int n, bid* new_bid, tao* auction_tao){
-  bid tmp;
-  tmp = auction_tao->bids[n];
-  tmp.client_pid = new_bid->client_pid;
-  tmp.quantity = new_bid->quantity;
-  tmp.unit_offer = new_bid->unit_offer;
-}
 
 
 tao** taos;
@@ -75,14 +65,26 @@ void init_taos_array(int number){
  * Initializes the TAO with basic informations.
  * Name is the resource's name.
  */
-void create_tao(char name[MAX_RES_NAME_LENGTH]){
-    tao* new_tao = (tao*) malloc(sizeof(tao));
+void create_tao(char name[MAX_RES_NAME_LENGTH], int cost){
+    int shm_id = shmget(IPC_PRIVATE, sizeof(tao), 0600 | IPC_CREAT);
+    if(shm_id == -1){
+        perror("shmget");
+        exit(EXIT_FAILURE);
+    }
+
+    tao* new_tao;
+    /* Attach to shm */
+    if (!(new_tao = (tao*) shmat(shm_id, NULL, 0))) {
+        perror("shmat");
+        exit(1);
+    }
+    // tao* new_tao = (tao*) malloc(sizeof(tao));
     // new_tao->name = (char*) malloc(sizeof(char) * MAX_RES_NAME_LENGTH);
     new_tao->id = taos_count;
     strcpy(new_tao->name, name);
     new_tao->interested_clients_count = 0;
-    new_tao->base_bid = BASE_BID;
-    new_tao->shm_id = -1;
+    new_tao->base_bid = cost;
+    new_tao->shm_id = shm_id;
     new_tao->sem_id = tao_access_semid;
 
     /* Adds the new TAO to the TAOs array */
@@ -113,8 +115,8 @@ tao* get_tao_by_id(int id){
     for(; i < taos_count; i++){
         if(get_tao(i)->id == id)
             return get_tao(i);
-        }
-        return tmp;
+    }
+    return tmp;
 }
 
 
@@ -125,7 +127,7 @@ void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
             taos[i]->interested_clients[taos[i]->interested_clients_count++] = pid;
         }
     }
-    printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", pid, name);
+    // printf("[auctioneer] Client with pid %d requested partecipation for resource %s\n", pid, name);
 }
 
 
@@ -134,14 +136,19 @@ void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
  */
 void start_tao(tao* current_tao){
     /* Put the tao into the shm */
-    tao* shm;
-    /* Attach to shm */
-    if (!(shm = (tao*) shmat(current_tao->shm_id, NULL, 0))) {
-        perror("shmat");
-        exit(1);
-    }
+    // tao* shm;
+    // /* Attach to shm */
+    // if (!(shm = (tao*) shmat(current_tao->shm_id, NULL, 0))) {
+    //     perror("shmat");
+    //     exit(1);
+    // }
 
-    shm = current_tao;
+    // memcpy(shm, current_tao, sizeof(current_tao));
+    // memcpy(shm->name, current_tao->name, /*sizeof(current_tao)*/MAX_RES_NAME_LENGTH);
+    //
+    // so_log_i('c', shm->lifetime);
+    // so_log_i('c', current_tao->lifetime);
+    // shm = current_tao;
 
     /* Enable access to the TAO shm */
     semctl(tao_access_semid, current_tao->id, SETVAL, 1);
@@ -149,17 +156,17 @@ void start_tao(tao* current_tao){
 
 
 void init_tao(tao* current_tao){
-    int shm_id = shmget(IPC_PRIVATE, sizeof(tao) , 0600 | IPC_CREAT);
-    if(shm_id == -1){
-		perror("shmget");
-		exit(EXIT_FAILURE);
-	}
+    // int shm_id = shmget(IPC_PRIVATE, sizeof(tao), 0600 | IPC_CREAT);
+    // if(shm_id == -1){
+	// 	perror("shmget");
+	// 	exit(EXIT_FAILURE);
+	// }
 
     // tao* t;
     // t = (tao*) shmat(shm_id, NULL, 0);
 
-    current_tao->shm_id = shm_id;
-    /* The auction must be at least one second long */ 
+    // current_tao->shm_id = shm_id;
+    /* The auction must be at least one second long */
     current_tao->lifetime = (current_tao->interested_clients_count * AUCTION_LIFETIME_MULTIPLIER) + 1;
 
     /* Disable access to the TAO shm */
