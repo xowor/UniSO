@@ -6,11 +6,10 @@
 typedef struct _tao_info_to_agent {
     long int mtype;
     char res[MAX_RES_NAME_LENGTH];
-	int availability; 
+	int availability;
 	int cost;
 	int shmid;
 	int semid;
 	int basebid;
 	int budget;
 } tao_info_to_agent;
- 

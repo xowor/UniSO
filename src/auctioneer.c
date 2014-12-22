@@ -146,6 +146,7 @@ void create_taos(){
         create_tao(tmp_resource->name, tmp_resource->cost);
 		tmp_resource = tmp_resource->next;
 	}
+    so_log_i('c', get_tao(0)->sem_id);
 }
 
 
@@ -478,7 +479,7 @@ void ipc_gc(){
 
     /* Removes all the TAOS access semaphor */
     for (i = 1; i <= taos_count; i++){              /* Sem. 0 is the TAO creation one */
-        semctl(tao_access_semid, i, IPC_RMID, 0);
+        semctl(sem_id, i, IPC_RMID, 0);
     }
 
     /* Removes all the TAOS shared memory  */
@@ -517,6 +518,7 @@ int main(int argc, char** argv){
     create_taos();
 
     listen_introductions();
+
 
     /* Start max 3 tao at a time */
     start_auction_system();
