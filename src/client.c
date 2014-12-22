@@ -272,6 +272,14 @@ void notify_agent_start(int agent_pid){
 }
 
 void listen_auction_status(){
+	FILE *file;
+	char fname[256];
+	sprintf(fname, "../results/%d.txt", client_num);
+	file = fopen(fname, "w");
+	fprintf(file, " ");
+	fclose(file);
+
+
 	// [TODO] SEMAFORO PER LA LETTURA
 	int i = 0;
 	for (; i < req_resources->resources_count * 4; i++){
@@ -303,6 +311,12 @@ void listen_auction_status(){
 				}
 			} else if (msg->type == AUCTION_RESULT){
 				if (msg->quantity > 0){
+					FILE *file;
+					char fname[256];
+					sprintf(fname, "../results/%d.txt", client_num);
+					file = fopen(fname, "a");
+					fprintf(file, "[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
+					fclose(file);
 					// printf("[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
 				}
 			} else {
