@@ -218,6 +218,7 @@ void assign_resources(tao* current_tao){
     // get_max_bid che ritorna il bid massimo, gli si passa current_tao->bids[]
     // per quel bid invia il messaggio di vincita/perdita
     // annulla i campi di quel bid
+    printf("[\x1b[34mAuction\x1b[0m] %-16s || %20s ||          ", current_tao->name, "Assign resources");
 
     int k = 0;
     int i = 0;
@@ -229,58 +230,27 @@ void assign_resources(tao* current_tao){
         // if( res->availability != 0 ){
         if(max_bid.quantity < res->availability){
             res->availability = res->availability - max_bid.quantity;
-            // so_log_i('g', current_tao->bids[max_bid_n].client_pid);
+            printf("     %-5d : %4d      ||", max_bid.client_pid, max_bid.quantity);
             notify_auction_result(max_bid.client_pid, current_tao->name, max_bid.quantity, max_bid.unit_bid);
         }else{
-            // so_log_i('m', current_tao->bids[max_bid_n].client_pid);
+            printf("     %-5d : %4d      ||", max_bid.client_pid, res->availability);
             notify_auction_result(max_bid.client_pid, current_tao->name, res->availability, max_bid.unit_bid);
         }
         current_tao->bids[max_bid_n].unit_bid = 0;
     }
-        // }else{
-        //     so_log_s('r', current_tao->name);
-        //     notify_auction_result(current_tao->bids[i].client_pid, current_tao->name, 0, 0);
-        // }
-        // int max_bid = 0;
-        // int max_bid_pid = 0;
-        // int j = 0;
-        // for (; j < MAX_BIDS; j++){
-        //     resource* res = get_resource(current_tao->name, avail_resources);
-        //     if( res->availability != 0 ){
-        //         if (max_bid < current_tao->bids[j].unit_bid){
-        //             max_bid = current_tao->bids[j].unit_bid;
-        //             if(current_tao->bids[j].quantity < res->availability){
-        //                 res->availability = res->availability - current_tao->bids[j].quantity;
-        //                 so_log_s('g', current_tao->name);
-        //                 notify_auction_result(current_tao->bids[j].client_pid, current_tao->name, current_tao->bids[j].quantity, current_tao->bids[j].unit_bid);
-        //             }else{
-        //                 so_log_s('g', current_tao->name);
-        //                 notify_auction_result(current_tao->bids[j].client_pid, current_tao->name, res->availability, current_tao->bids[j].unit_bid);
-        //             }
-        //             max_bid = 0;
-        //         }
-        //     }else{
-        //         // i = MAX_BIDS;
-        //         so_log_s('r', current_tao->name);
-        //         notify_auction_result(current_tao->bids[i].client_pid, current_tao->name, 0, 0);
-        //     }
-        // }
-        // notificare i perdenti
 
+    printf("\n");
 
     for (; k < current_tao->interested_clients_count; k++){
         int client_pid = current_tao->interested_clients[k];
         int i = 0;
         int found_in_bids = 0;
         for(; i < MAX_BIDS; i++){
-            // so_log_i('y', client_pid);
-            // so_log_i('y', current_tao->bids[i].client_pid);
             if (current_tao->bids[i].client_pid == client_pid){
                 found_in_bids = 1;
             }
         }
         if (!found_in_bids){
-            // so_log('r');
             notify_auction_result(current_tao->bids[i].client_pid, current_tao->name, 0, 0);
         }
     }
@@ -370,7 +340,7 @@ void start_auction_system(){
                     // so_log_i('b', current_tao->dummy);
                     notify_tao_end(current_tao);
                     assign_resources(current_tao);
-                    printf("[auctioneer] Ended auction for resource %s (tao id: %d)\n", current_tao->name, current_tao->id);
+                    printf("[\x1b[34mAuction\x1b[0m] %-16s || Ended auction (tao id: %d)\n", current_tao->name, current_tao->id);
                     shmctl(current_tao->shm_id, IPC_RMID, 0);
                     // so_log_i('r', terminated_taos);
                     terminated_taos++;
@@ -389,7 +359,7 @@ void start_auction_system(){
                     start_tao(current_tao);
 					notify_tao_start(current_tao);
                     // so_log_i('m', i++);
-                    printf("[auctioneer] Started auction for resource %s (tao id: %d)\n", current_tao->name, current_tao->id);
+                    printf("[\x1b[34mAuction\x1b[0m] %-16s || Started auction (tao id: %d)\n", current_tao->name, current_tao->id);
                 }
 
             }
@@ -423,7 +393,7 @@ void ipc_gc(){
 
     /* Removes all the TAOS access semaphor */
     for (i = 1; i <= taos_count; i++){              /* Sem. 0 is the TAO creation one */
-        semctl(tao_access_semid, i, IPC_RMID, 0);
+        semctl(sem_id, i, IPC_RMID, 0);
     }
 
     /* Removes all the TAOS shared memory  */
@@ -514,6 +484,7 @@ int main(int argc, char** argv){
     create_taos();
 
     listen_introductions();
+
 
     /* Start max 3 tao at a time */
     start_auction_system();

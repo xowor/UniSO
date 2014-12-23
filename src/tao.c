@@ -45,10 +45,9 @@ typedef struct _tao{
     int dummy;
 } tao;
 
-
+int sem_id = 0;
 tao** taos;
 int taos_count;
-int tao_access_semid;
 
 
 
@@ -59,6 +58,8 @@ int tao_access_semid;
 void init_taos_array(int number){
     taos = (tao**) malloc(sizeof(tao) * number);
     taos_count = 0;
+
+    sem_id = semget(IPC_PRIVATE, number, S_IRUSR | S_IWUSR);
 }
 
 /**
@@ -78,6 +79,7 @@ void create_tao(char name[MAX_RES_NAME_LENGTH], int cost){
         perror("shmat");
         exit(1);
     }
+
     // tao* new_tao = (tao*) malloc(sizeof(tao));
     // new_tao->name = (char*) malloc(sizeof(char) * MAX_RES_NAME_LENGTH);
     new_tao->id = taos_count;
@@ -85,7 +87,7 @@ void create_tao(char name[MAX_RES_NAME_LENGTH], int cost){
     new_tao->interested_clients_count = 0;
     new_tao->base_bid = cost;
     new_tao->shm_id = shm_id;
-    new_tao->sem_id = tao_access_semid;
+    new_tao->sem_id = sem_id;
 
     /* Adds the new TAO to the TAOs array */
     taos[taos_count++] = new_tao;
@@ -151,7 +153,7 @@ void start_tao(tao* current_tao){
     // shm = current_tao;
 
     /* Enable access to the TAO shm */
-    semctl(tao_access_semid, current_tao->id, SETVAL, 1);
+    semctl(sem_id, current_tao->id, SETVAL, 1);
 }
 
 
@@ -170,5 +172,5 @@ void init_tao(tao* current_tao){
     current_tao->lifetime = (current_tao->interested_clients_count * AUCTION_LIFETIME_MULTIPLIER) + 1;
 
     /* Disable access to the TAO shm */
-    semctl(tao_access_semid, current_tao->id, SETVAL, 0);
+    semctl(sem_id, current_tao->id, SETVAL, 0);
 }

@@ -16,7 +16,7 @@ int sem_id;
 int basebid;
 char* res;
 int budget;
-int current_bid;				/* bid that starts like base_bid and grows at most like budget */
+int current_bid = 0;				/* bid that starts like base_bid and grows at most like budget */
 int tao_id;
 pid_t pid;
 tao* working_tao;
@@ -30,11 +30,11 @@ void replace_bids(int n, bid* new_bid, tao* auction_tao){
     auction_tao->bids[n].unit_bid     = new_bid->unit_bid;
 }
 
+
 /**
 * Adds bid from the agent.
-* @param pid Agent's pid who wants make this bid
-* @param quantity How much elements the agent wants
-* @param unit_offer How the agent offer for each element
+* @param quantity How many elements the agent requires
+* @param unit_offer How much the agent offer for each element
 * @param auction_tao Tao connected to resource
 * @return 1 if the operation end well, 0 otherwise
 * Algoritmo:
@@ -52,11 +52,13 @@ void replace_bids(int n, bid* new_bid, tao* auction_tao){
 */
 int make_bid( int quantity, int unit_bid, tao* auction_tao){
     // controlla l'offerta minima nel tao
-    int i = 0, index_min_bid = 0;
+    int i = 0;
 
-    int min_bid     = auction_tao->bids[0].unit_bid;
-    int pid_min_bid = auction_tao->bids[0].client_pid;
+    int min_bid     = 0;
+    int index_min_bid = 0;
+    int pid_min_bid = 0;
 
+    /* Finds the min bid */
     for(; i < MAX_BIDS; i++){
         if(auction_tao->bids[i].unit_bid < min_bid){
             min_bid         = auction_tao->bids[i].unit_bid;
@@ -71,19 +73,12 @@ int make_bid( int quantity, int unit_bid, tao* auction_tao){
     new_bid->quantity   = quantity;
     new_bid->unit_bid   = unit_bid;
 
-    // cerca entry vuota
-    int empty_index = -1;
-    for(i = 0; i < MAX_BIDS; i++){
-        if(auction_tao->bids[i].client_pid == 0){
-            empty_index = i;
-        }
-    }
 
     // l'agente ha già un'offerta nel tao?
     int has_bid = 0, own_bid = NULL;
     for(i = 0; i < MAX_BIDS; i++){
-        if(auction_tao->bids[i].client_pid == pid){
-            so_log('b');
+        if( auction_tao->bids[i].client_pid == getppid() ){
+            // so_log('b');
             has_bid = 1;
             own_bid = i;
         }
@@ -94,16 +89,24 @@ int make_bid( int quantity, int unit_bid, tao* auction_tao){
         // ha già un'offerta nel tao --> sostituisce la "propria entry"
         if(has_bid){
             replace_bids(own_bid, new_bid, auction_tao);
+            return 0;
             // non ha offerte nel tao
         }else{
             // aggiunge la propria offerta nello spazio vuoto
+            // cerca entry vuota
+            int empty_index = -1;
+            for(i = 0; i < MAX_BIDS; i++){
+                if(auction_tao->bids[i].client_pid == 0){
+                    empty_index = i;
+                }
+            }
             if(empty_index >= 0){
                 replace_bids(empty_index, new_bid, auction_tao);
-                return 1;
-                // sovrascrive l'offerta di prezzo minore
+                return 0;
             }else{
+                // sovrascrive l'offerta di prezzo minore
                 replace_bids(index_min_bid, new_bid, auction_tao);
-                return 1;
+                return 0;
             }
         }
     }else{
@@ -113,19 +116,18 @@ int make_bid( int quantity, int unit_bid, tao* auction_tao){
 }
 
 void print_auction_status(tao* working_tao){
-    printf("[agent] [%-10s]  [\x1b[33m%4d€\x1b[0m]  [ %-5d | \x1b[33m%4d€\x1b[0m ]  [ %-5d | \x1b[33m%4d€\x1b[0m ]  [ %-5d | \x1b[33m%4d€\x1b[0m ]  [ %-5d | \x1b[33m%4d€\x1b[0m ]  [ %-5d | \x1b[33m%4d€\x1b[0m ].\n",
-    working_tao->name,
-    best_bid(),
-    working_tao->bids[0].client_pid,
-    working_tao->bids[0].unit_bid,
-    working_tao->bids[1].client_pid,
-    working_tao->bids[1].unit_bid,
-    working_tao->bids[2].client_pid,
-    working_tao->bids[2].unit_bid,
-    working_tao->bids[3].client_pid,
-    working_tao->bids[3].unit_bid,
-    working_tao->bids[4].client_pid,
-    working_tao->bids[4].unit_bid);
+    printf("[\x1b[34mAuction\x1b[0m] %-16s || %20s || \x1b[33m%4d€\x1b[0m || ", working_tao->name, "New bid", best_bid());
+
+    int i = 0;
+    for (; i < 5; i++){
+        if (working_tao->bids[i].client_pid == getppid()){
+            printf("     \x1b[32m%-5d\x1b[0m : \x1b[33m%4d€\x1b[0m     ||", working_tao->bids[i].client_pid, working_tao->bids[i].unit_bid);
+        } else {
+            printf("     %-5d : \x1b[33m%4d€\x1b[0m     ||", working_tao->bids[i].client_pid, working_tao->bids[i].unit_bid);
+        }
+    }
+
+    printf("\n");
 
     fflush(stdout);
 }
@@ -147,6 +149,17 @@ int is_among_the_best_bids(){
 }
 
 
+int worst_bid(){
+    int min_bid = working_tao->bids[0].unit_bid;
+    int i = 0;
+    for(; i < MAX_BIDS; i++){
+        if(working_tao->bids[i].unit_bid < min_bid){
+            min_bid = working_tao->bids[i].unit_bid;
+        }
+    }
+    return min_bid;
+}
+
 
 int best_bid(){
     int max_bid = 0;
@@ -164,29 +177,34 @@ int best_bid(){
  * Makes a bid and checks the possibility.
  */
 int make_action(int tao_id){
-	sem_p(sem_id, tao_id);
-    working_tao = (tao*) shmat(shm_id, NULL, 0);
-    working_tao->dummy = 42;
+	sem_p(working_tao->sem_id, working_tao->id);
+    // working_tao->dummy = 42;
     // so_log_p('y', working_tao);
     // so_log_p('y', working_tao->bids);
     // so_log('m');
     // if(is_among_the_best_bids() == 0){
-	// if(best_bid() <= current_bid){
+    /* Tries to make a bid if   */
+	if(worst_bid() >= current_bid){
+
         // so_log('r');
 		// if(current_bid < budget){
-			if(increments_bid() == 1){
+
+            /* If the bid can be increased (isn't greater than budget) */
+			if(increments_bid() == 0){
 				int val = make_bid(aval, current_bid, working_tao);
 
-				if(val == 1){
+				if(val == 0){
                     print_auction_status(working_tao);
 					// printf("[agent] [%d] The agent has made bid in the amount of %d for %s.\n", pid, current_bid, res);
 				}else if(val == -2){
+                    /* Make a new increased bid */
 					make_action(tao_id);
 				}else{      // -1
 					// printf("[agent] [%d] There is already a bid or an error occurred in make_bid.\n", pid);
                     return -1;
 				}
 			}else{
+                /* The increased bid would be greater than budget */
 				// printf("[agent][%d][%d][%d][%s] The agent hasn't enough funds.\n", pid, current_bid, budget, working_tao->name);
                 return -1;
 			}
@@ -194,10 +212,11 @@ int make_action(int tao_id){
         //     // printf("[agent][%d] budget < current_bid.\n", pid);
         //     return -1;
         // }
-	// }else{
-    //     // printf("[agent][%d] the bid is between the best.\n", pid);
-    // }
-	sem_v(sem_id, tao_id);
+	}else{
+        // so_log_i('r', current_bid);
+        // printf("[agent][%d] the bid is between the best.\n", pid);
+    }
+	sem_v(working_tao->sem_id, working_tao->id);
     return 0;
 }
 
@@ -224,6 +243,7 @@ void listen_tao_start(){
         // printf("[agent] Started making bids for resource %s.\tPid: %d\tPPid: %d\n", res, pid, getppid());
         fflush(stdout);
         // [TODO] SEMAFORO PER LA LETTURA
+        current_bid = 0;
 		while(make_action(tao_id) == 0){}
     }
     free(msg);
@@ -247,6 +267,8 @@ void listen_tao_info(){
         current_bid = basebid;
         budget = msg->budget;
         strcpy(res, msg->res);
+
+        working_tao = (tao*) shmat(shm_id, NULL, 0);
     }
 	free(msg);
 
@@ -259,11 +281,12 @@ void listen_tao_info(){
  * @return 1 if it has done the sum, 0 otherwise.
  * */
 int increments_bid(){
-	if((current_bid + BID_INCREMENT) > budget)
-		return 0;
-	else
-		current_bid = current_bid + BID_INCREMENT;
-	return 1;
+	if((best_bid() + BID_INCREMENT) > budget){
+		return -1;
+    }
+
+	current_bid = best_bid() + BID_INCREMENT;
+	return 0;
 }
 
 

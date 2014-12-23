@@ -272,13 +272,21 @@ void notify_agent_start(int agent_pid){
 }
 
 void listen_auction_status(){
+	FILE *file;
+	char fname[256];
+	sprintf(fname, "../results/%d.txt", client_num);
+	file = fopen(fname, "w");
+	fprintf(file, " ");
+	fclose(file);
+
+
 	// [TODO] SEMAFORO PER LA LETTURA
 	int i = 0;
 	for (; i < req_resources->resources_count * 4; i++){
 		auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
 		if ( msgrcv(msqid, msg, sizeof(auction_status) - sizeof(long), AUCTION_STATUS_MTYPE, 0) != -1 ) {
-			// so_log_i('g', i);
 			// so_log_i('m', msg->type);
+			// so_log_i('g', i);
 			if (msg->type == AUCTION_CREATED) {
 				create_agent(msg->resource, msg->shm_id, msg->sem_id, msg->base_bid);
 			} else if (msg->type == AUCTION_STARTED) {
@@ -290,6 +298,17 @@ void listen_auction_status(){
 					res = res->next;
 				}
 			} else if (msg->type == AUCTION_ENDED || msg->type == AUCTION_RESULT) {
+				// parte che era nell'if vuoto
+				if (msg->quantity > 0){
+					FILE *file;
+					char fname[256];
+					sprintf(fname, "../results/%d.txt", client_num);
+					file = fopen(fname, "a");
+					fprintf(file, "[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
+					fclose(file);
+					// printf("[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
+				}
+				// fino a qui
 				resource* res = req_resources->list;
 				while(res){
 					if(strcmp(res->name, msg->resource) == 0){
@@ -301,10 +320,7 @@ void listen_auction_status(){
 					}
 					res = res->next;
 				}
-			} else if (){
-				if (msg->quantity > 0){
-					printf("[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
-				}
+			// } else if (){
 			} else {
 
 			}
