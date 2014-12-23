@@ -115,20 +115,14 @@ void create_taos(){
 }
 
 
-int listen_client_status(client_pid){
+int listen_client_status(int client_msqid){
   client_status* msg = (client_status*) malloc(sizeof(client_status));
   int j = 0;
-  for (; j < MAX_CLIENTS; j++){
-    if (pid_msqid[j][0] == client_pid){
-      if(is_registered(client_pid) == 1){
-        msgsnd(pid_msqid[j][1], msg, sizeof(client_status) - sizeof(long), 0600);
-        if ( msgrcv(pid_msqid[j][1], msg, sizeof(client_status) - sizeof(long), AUCTION_STATUS_MTYPE, 0) != -1 ) {
-          return 0;
-        }
-        return -1;
-      }
-    }
+  if ( msgrcv(client_msqid, msg, sizeof(client_status) - sizeof(long), CLIENT_STATUS_MTYPE, 0) != -1 ) {
+    return 0;
   }
+  return -1;
+
 }
 
 void notify_tao_creation(tao* created_tao){
@@ -155,7 +149,7 @@ void notify_tao_creation(tao* created_tao){
               if (pid_msqid[j][0] == client_pid){
                   // so_log('r');
                   msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
-                  listen_client_status(client_pid);
+                  listen_client_status(pid_msqid[j][1]);
               }
           }
           free(msg);
@@ -183,8 +177,8 @@ void notify_tao_start(tao* created_tao){
           for (; j < MAX_CLIENTS; j++){
               if (pid_msqid[j][0] == client_pid){
                   msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
-                  listen_client_status(client_pid);
-                      // so_log('m');
+                      so_log('r');
+                  listen_client_status(pid_msqid[j][1]);
               }
           }
           free(msg);
@@ -212,7 +206,7 @@ void notify_tao_end(tao* created_tao){
           for (; j < MAX_CLIENTS; j++){
               if (pid_msqid[j][0] == client_pid){
                   msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
-                  listen_client_status(client_pid);
+                  listen_client_status(pid_msqid[j][1]);
               }
           }
           free(msg);
@@ -236,7 +230,7 @@ void notify_auction_result(int client_pid, char* name, int quantity, int unit_bi
         if (pid_msqid[j][0] == client_pid){
           if(is_registered(client_pid) == 1){
             msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
-            listen_client_status(client_pid);
+            listen_client_status(pid_msqid[j][1]);
           }
         }
     }

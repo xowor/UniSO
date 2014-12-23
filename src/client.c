@@ -280,7 +280,6 @@ void notify_agent_start(int agent_pid){
 }
 
 void notify_client_status(){
-	so_log('m');
 	client_status* msg = (client_status*) malloc(sizeof(client_status));
 	msg->mtype = CLIENT_STATUS_MTYPE;
 	msg->type = CLIENT_OK;
@@ -327,6 +326,7 @@ void listen_auction_status(){
 					res = res->next;
 				}
 				notify_client_status();
+				so_log('m');
 			} else if (msg->type == AUCTION_ENDED) {
 				resource* res = req_resources->list;
 				while(res){
