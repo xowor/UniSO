@@ -23,12 +23,14 @@
 
 extern int errno;                   /* Externally declared (by kernel) */
 
-// mai in sleep
-
 typedef struct _client {
-    pid_t client_pid;
+  pid_t client_pid;
 	resource interested_resource[MAX_REQUIRED_RESOURCES];
 } client;
+
+int client_list[MAX_CLIENTS];
+
+int registered_clients;
 
 int master_msqid = 0;                /* The id of the message queue */
 int pid_msqid[MAX_CLIENTS][2];
@@ -39,10 +41,10 @@ int opened_auctions = 0;             /* The number of opened auctions */
 resource_list* avail_resources;      /* The list containing all the available resources */
 // int avail_resources->resources_count;           /* The number of all the available resources */
 
-int registered_clients;
 
 
 int canexit = 0;					 /* ????? tmp ????? */
+
 
 
 void distribute_msqs(){
@@ -66,7 +68,6 @@ void distribute_msqs(){
     }
 }
 
-
 void load_auct_resources() {
     avail_resources = create_resource_list();
     load_resources("../resource.txt", avail_resources);
@@ -83,57 +84,7 @@ void load_auct_resources() {
     * */
 }
 
-/*
-// void load_auct_resources(){
-//     FILE* resources;
-//     char line[MAX_RES_NAME_LENGTH];
-//     char* name;
-//     char* tmp;
-//     char* token;
-//     int avail = 0, cost = 0, i = 0, resourcesNumber = 0;
-//     // avail_resources->resources_count = 0;
-//
-//     avail_resources = create_resource_list();
-//
-//     resources = fopen("../resource.txt", "r");
-//     if( resources != NULL ){
-//         // Reads each line from file
-//         while( fgets(line, MAX_RES_NAME_LENGTH + 32, resources) != NULL  && line ){
-//             token = strtok(line, ";");
-//             i = 0;
-//             name = (char*) malloc(MAX_RES_NAME_LENGTH);
-//             while( token ){
-//                 // In each line there are 4 tokens: name, available, cost and \n
-//                 switch(i%4){
-//                     case 0:
-//                         strcat(token, "\0");
-//                         strcpy(name, token);
-//                         break;
-//                     case 1:
-//                         tmp = token;
-//                         avail = atoi(tmp);
-//                         break;
-//                     case 2:
-//                         tmp = token;
-//                         cost = atoi(tmp);
-//                         break;
-//                 }
-//                 i++;
-//                 token = strtok(NULL, ";");
-//             }
-//             printf("[auctioneer] Resource available: %s %d %d \n", name, avail, cost);
-//             // avail_resources->resources_count++;
-//
-// 			add_resource(avail_resources, name, avail, cost);
-//             fflush(stdout);
-//             free(name);
-//         }
-//     } else {
-//         fprintf(stderr, "[auctioneer] Error: Unable to open resource's file. %s\n", strerror(errno));
-//         fclose(resources);
-//     }
-// }
-*/
+
 void create_taos(){
 	/* creates tao's array with empty tao */
     init_taos_array(avail_resources->resources_count);
@@ -149,7 +100,7 @@ void create_taos(){
 }
 
 
-// alla ricezione del messaggio, il cliente deve solo creare l'agente
+
 void notify_tao_creation(tao* created_tao){
     // [TODO] SEMAFORO PER LA SCRITTURA
     /* For each client interested in the TAO */
@@ -179,7 +130,6 @@ void notify_tao_creation(tao* created_tao){
     }
 }
 
-
 void notify_tao_start(tao* created_tao){
     // [TODO] SEMAFORO PER LA SCRITTURA
     /* For each client interested in the TAO */
@@ -206,7 +156,6 @@ void notify_tao_start(tao* created_tao){
     }
 }
 
-
 void notify_tao_end(tao* created_tao){
     // [TODO] SEMAFORO PER LA SCRITTURA
     /* For each client interested in the TAO */
@@ -232,8 +181,7 @@ void notify_tao_end(tao* created_tao){
     }
 }
 
-
-notify_auction_result(int client_pid, char* name, int quantity, int unit_bid){
+void notify_auction_result(int client_pid, char* name, int quantity, int unit_bid){
     /* Allocates the simple_message message */
     auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
     msg->mtype = AUCTION_STATUS_MTYPE;
@@ -271,10 +219,7 @@ void assign_resources(tao* current_tao){
     // per quel bid invia il messaggio di vincita/perdita
     // annulla i campi di quel bid
 
-
-
     int k = 0;
-
     int i = 0;
     for(; i < MAX_BIDS; i++){
         int max_bid_n = get_max_bid(current_tao);
@@ -349,6 +294,7 @@ void listen_introductions(){
     int i = 0;
     for (; i < MAX_CLIENTS; i++) {
         if ( msgrcv(pid_msqid[i][1], intr, sizeof(introduction) - sizeof(long), INTRODUCTION_MTYPE, 0) != -1 ){
+            client_list[registered_clients] = intr->pid;
             registered_clients++;
             //printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
             int j = 0;
@@ -361,7 +307,6 @@ void listen_introductions(){
     }
     free(intr);
 }
-
 
 void create_tao_process(int id_tao, int lifetime, int tao_processes_msqid){
     char str_lifetime [32];
@@ -491,10 +436,60 @@ void gc(){
     free(avail_resources);
 }
 
+void notify_clients_unregistration(){
+    // [TODO] SEMAFORO PER LA SCRITTURA
+    /* For each client interested in the TAO */
+    int i = 0;
+    for (; i < registered_clients; i++){
+      int client_pid = client_list[i];
 
+      /* Allocates the simple_message message */
+      auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
+      msg->mtype = AUCTION_STATUS_MTYPE;
+      msg->type = UNREGISTRATION;
+
+      /* Gets the message queue id of the client */
+      int j = 0;
+      for (; j < MAX_CLIENTS; j++){
+        if (pid_msqid[j][0] == client_pid){
+          msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
+        }
+      }
+      free(msg);
+    }
+}
+
+
+// la deregistrazione di un cliente -> eliminazione da  lista -> non più considerato nelle restanti funzioni
+static void sigint_signal_handler () {
+	notify_clients_unregistration();
+
+  wait(5);
+
+  // si uccidono
+  // l'auctioneer pulisce la lista dei clienti e li uccide
+  // pulisce la lista di clienti
+
+
+	fprintf(stdout, "[auctioneer] \x1b[31mRemoving all the IPC structures... \x1b[0m \n");
+    ipc_gc();
+
+    fprintf(stdout, "[auctioneer] \x1b[31mCleaning heap... \x1b[0m \n");
+    gc();
+
+    fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
+    fflush(stdout);
+	 _exit(EXIT_SUCCESS);
+}
+
+void listen_sigint_signal(){
+	if (signal(SIGINT, sigint_signal_handler)== SIG_ERR)
+		perror("signal (SIG_ERR) error");
+}
 
 int main(int argc, char** argv){
     printf("[auctioneer] Started auctioneer.\tPid: %d\tPPid: %d\n", getpid(), getppid());
+
 
     /**
      * Loads the message queue id from the passed argument.
@@ -506,6 +501,8 @@ int main(int argc, char** argv){
         fprintf(stderr, "[auctioneer] Error: master_msqid (-m) argument not valid.\n");
         return -1;
     }
+
+	  listen_sigint_signal();
 
     /* Sends each client his own message queue */
     distribute_msqs();

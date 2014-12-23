@@ -289,7 +289,7 @@ void listen_auction_status(){
 					}
 					res = res->next;
 				}
-			} else if (msg->type == AUCTION_ENDED) {
+			} else if (msg->type == AUCTION_ENDED || msg->type == AUCTION_RESULT) {
 				resource* res = req_resources->list;
 				while(res){
 					if(strcmp(res->name, msg->resource) == 0){
@@ -301,7 +301,7 @@ void listen_auction_status(){
 					}
 					res = res->next;
 				}
-			} else if (msg->type == AUCTION_RESULT){
+			} else if (){
 				if (msg->quantity > 0){
 					printf("[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
 				}

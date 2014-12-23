@@ -9,7 +9,8 @@ enum auction_status_type {
     AUCTION_CREATED = 0,
     AUCTION_STARTED = 1,
     AUCTION_ENDED = 2,
-    AUCTION_RESULT = 3
+    AUCTION_RESULT = 3,
+    UNREGISTRATION = 4
 };
 
 
