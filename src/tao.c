@@ -9,17 +9,6 @@
 #include "config.h"
 
 int tao_counter;
-/**
- * Start (crates the shared memory area) the TAO with the given name.
-            // inizia l'asta
-            // clienti fanno le offerte
-            // allo scadere banditore chiude asta
-            // banditore legge contenuto tao
-            // banditore assegna risorse secondo offerte migliori = invio di un messaggio ai clienti vincitori
-            // ai clienti viene detratto il prezzo
-            // viene aggiornata la lista delle risorse richieste dal cliente
-            // deallocare memoria condivisa
- */
 
 /* Client's bid in the tao */
 typedef struct _bid{
@@ -28,10 +17,6 @@ typedef struct _bid{
     int unit_bid;       /* last bid made from this agent_pid */
 } bid;
 
-/**
- * Contiene i bids = offerte dei clienti
- * Manca taoInformation = clienti interessati a quel tao
- */
 typedef struct _tao{
     int id;
     char name[MAX_RES_NAME_LENGTH];

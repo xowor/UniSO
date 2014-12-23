@@ -14,6 +14,7 @@
 #include "messages/tao_info_to_agent.h"
 #include "messages/auction_result.h"
 #include "messages/auction_status.h"
+#include "messages/client_status.h"
 
 
 int master_msqid;
@@ -25,6 +26,10 @@ int pid_msqid[MAX_REQUIRED_RESOURCES][2];
 int pid_msqid_length = 0;
 // char* required_resources[MAX_REQUIRED_RESOURCES];
 int budget;
+int number_required_resources = 0;
+
+int agent_list[MAX_REQUIRED_RESOURCES];		/* agent's pid*/
+int number_of_agents = 0;
 
 resource_list* req_resources;       /* The list containing all the available resources */
 
@@ -98,8 +103,6 @@ int create_agent_process(){
     exit(EXIT_FAILURE);
 }
 
-
-
 /**
  * Client communicates to agents resource informations.
  */
@@ -129,6 +132,8 @@ void notify_tao_info(int pid, int availability, int cost, int shmid, int semid, 
  */
 void create_agent(char* resource_name, int shmid, int semid, int basebid){
 	int pid = create_agent_process();
+	agent_list[number_of_agents] = pid;
+	number_of_agents++;
 
 	resource* res;
 	res = req_resources->list;
@@ -207,6 +212,7 @@ void load_client_resources(){
 
 				/* Adds the read resources inside the required resources list */
 				add_resource(req_resources, name, avail, cost);
+				number_required_resources++;
 			}
 		}
     }else{
@@ -228,8 +234,10 @@ void send_introduction(){
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     /* Initializes PID */
     intr->mtype = INTRODUCTION_MTYPE;
-	intr->msqid = msqid;
+		intr->msqid = msqid;
     intr->pid = pid;
+		// intr->budget = budget / req_resources->resources_count;
+		// so_log_i('y', intr->budget);
     intr->resources_length = 0;
 
 
@@ -271,6 +279,28 @@ void notify_agent_start(int agent_pid){
         free(msg);
 }
 
+void notify_client_status(){
+	so_log('m');
+	client_status* msg = (client_status*) malloc(sizeof(client_status));
+	msg->mtype = CLIENT_STATUS_MTYPE;
+	msg->type = CLIENT_OK;
+
+	msgsnd(msqid, msg, sizeof(client_status) - sizeof(long), 0600);
+
+	free(msg);
+}
+
+void notify_unregistration(){
+
+}
+
+void delete_agent_from_list(int agent_pid){
+	int i = 0;
+	for(; i < MAX_REQUIRED_RESOURCES; i++)
+		if(agent_list[i] == agent_pid)
+			agent_list[i] = 0;
+}
+
 void listen_auction_status(){
 	FILE *file;
 	char fname[256];
@@ -285,10 +315,9 @@ void listen_auction_status(){
 	for (; i < req_resources->resources_count * 4; i++){
 		auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
 		if ( msgrcv(msqid, msg, sizeof(auction_status) - sizeof(long), AUCTION_STATUS_MTYPE, 0) != -1 ) {
-			// so_log_i('m', msg->type);
-			// so_log_i('g', i);
 			if (msg->type == AUCTION_CREATED) {
 				create_agent(msg->resource, msg->shm_id, msg->sem_id, msg->base_bid);
+				notify_client_status();
 			} else if (msg->type == AUCTION_STARTED) {
 				resource* res = req_resources->list;
 				while(res){
@@ -297,22 +326,14 @@ void listen_auction_status(){
 					}
 					res = res->next;
 				}
-			} else if (msg->type == AUCTION_ENDED || msg->type == AUCTION_RESULT) {
-				// parte che era nell'if vuoto
-				if (msg->quantity > 0){
-					FILE *file;
-					char fname[256];
-					sprintf(fname, "../results/%d.txt", client_num);
-					file = fopen(fname, "a");
-					fprintf(file, "[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
-					fclose(file);
-					// printf("[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
-				}
-				// fino a qui
+				notify_client_status();
+			} else if (msg->type == AUCTION_ENDED) {
 				resource* res = req_resources->list;
 				while(res){
 					if(strcmp(res->name, msg->resource) == 0){
 						signal(SIGCHLD, SIG_IGN);
+						delete_agent_from_list(res->agent_pid);
+						number_of_agents--;
 						kill(res->agent_pid, 0);
 						/* Removes the queue message */
 						int agent_msqid = get_agent_msqid(res->agent_pid);
@@ -320,10 +341,24 @@ void listen_auction_status(){
 					}
 					res = res->next;
 				}
-			// } else if (){
-			} else {
-
-			}
+				number_required_resources--;
+				// if(number_required_resources == 0){
+				// 	// notify_unregistration();
+				// 	// termina
+				// }
+				notify_client_status();
+			} else if (msg->type == AUCTION_RESULT){
+				if (msg->quantity > 0){
+					FILE *file;
+					char fname[256];
+					sprintf(fname, "../results/%d.txt", client_num);
+					file = fopen(fname, "a");
+					fprintf(file, "[client] [%d] Won %d units of resource %s. Total amount: %d.\n", pid, msg->quantity, msg->resource, (msg->quantity)*(msg->unit_bid));
+					fclose(file);
+					// printf("[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
+				}
+				notify_client_status();
+			} else {	}
 		}
 		free(msg);
 	}
@@ -397,6 +432,21 @@ void gc(){
 	free(req_resources);
 }
 
+void sigint_signal_handler(){
+	// uccidi gli agenti
+	int i = 0;
+	for(; i < MAX_REQUIRED_RESOURCES; i++)
+		if(agent_list[i] != 0)
+			kill(agent_list[i], SIGKILL);
+	// deregistrati dal banditore
+	exit(EXIT_SUCCESS);
+}
+
+void listen_sigint_signal(){
+	if (signal(SIGINT, sigint_signal_handler)== SIG_ERR)
+		perror("signal (SIG_ERR) error");
+	}
+
 int main(int argc, char** argv){
     pid = getpid();
     ppid = getppid();
@@ -410,6 +460,8 @@ int main(int argc, char** argv){
         fprintf(stderr, "[client][%d] Error: master_msqid (-m) or client number (-c) argument not valid.\n", pid);
         return -1;
     }
+
+		listen_sigint_signal();
 
 	listen_msqid();
 

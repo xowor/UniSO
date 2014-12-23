@@ -11,6 +11,7 @@
 int msqid;
 int aval;
 int unit_cost;
+int quantity;
 int shm_id;
 int sem_id;
 int basebid;
@@ -29,6 +30,7 @@ void replace_bids(int n, bid* new_bid, tao* auction_tao){
     auction_tao->bids[n].quantity     = new_bid->quantity;
     auction_tao->bids[n].unit_bid     = new_bid->unit_bid;
 }
+
 
 
 /**
@@ -50,10 +52,9 @@ void replace_bids(int n, bid* new_bid, tao* auction_tao){
 * 				se no --> sovrascrive l'offerta di prezzo minore
 * 		  se no --> return
 */
-int make_bid( int quantity, int unit_bid, tao* auction_tao){
+int make_bid(tao* auction_tao){
     // controlla l'offerta minima nel tao
     int i = 0;
-
     int min_bid     = 0;
     int index_min_bid = 0;
     int pid_min_bid = 0;
@@ -71,7 +72,7 @@ int make_bid( int quantity, int unit_bid, tao* auction_tao){
     bid* new_bid        = (bid*) malloc(sizeof(bid));
     new_bid->client_pid  = getppid();
     new_bid->quantity   = quantity;
-    new_bid->unit_bid   = unit_bid;
+    new_bid->unit_bid   = current_bid;
 
 
     // l'agente ha già un'offerta nel tao?
@@ -85,7 +86,7 @@ int make_bid( int quantity, int unit_bid, tao* auction_tao){
     }
 
     // controlla che l'offerta che vuole fare sia maggiore del minimo
-    if(unit_bid > min_bid){
+    if(current_bid > min_bid){
         // ha già un'offerta nel tao --> sostituisce la "propria entry"
         if(has_bid){
             replace_bids(own_bid, new_bid, auction_tao);
@@ -172,6 +173,33 @@ int best_bid(){
     return max_bid;
 }
 
+int get_availability_resources(){
+  int total_price = quantity * unit_cost;
+  while(total_price > budget){
+    quantity--;
+    total_price = quantity * unit_cost;
+  }
+  return quantity;
+}
+
+/**
+* Adds to current bid a constant (if possible).
+* @return 1 if it has done the sum, 0 otherwise.
+* */
+int increments_bid(){
+  // if((worst_bid() + BID_INCREMENT) > budget){
+  //   return -1;
+  // }
+  //
+  // current_bid = worst_bid() + BID_INCREMENT;
+  // return 0;
+  while( (worst_bid() + BID_INCREMENT) * quantity > budget ){
+    quantity--;
+    if (quantity < 0) return -1;
+  }
+  current_bid = (worst_bid() + BID_INCREMENT);
+  return 0;
+}
 
 /**
  * Makes a bid and checks the possibility.
@@ -179,19 +207,15 @@ int best_bid(){
 int make_action(int tao_id){
 	sem_p(working_tao->sem_id, working_tao->id);
     // working_tao->dummy = 42;
-    // so_log_p('y', working_tao);
-    // so_log_p('y', working_tao->bids);
-    // so_log('m');
     // if(is_among_the_best_bids() == 0){
+
     /* Tries to make a bid if   */
 	if(worst_bid() >= current_bid){
-
-        // so_log('r');
 		// if(current_bid < budget){
 
             /* If the bid can be increased (isn't greater than budget) */
 			if(increments_bid() == 0){
-				int val = make_bid(aval, current_bid, working_tao);
+				int val = make_bid(working_tao);
 
 				if(val == 0){
                     print_auction_status(working_tao);
@@ -226,11 +250,8 @@ int make_action(int tao_id){
 	 * Precondizione: l'agente si può permettere (come budget) la unit_offer
 	 * Fa l'offerta
 
-    // attesa del segnale di avvio dell'asta
-	// incrementa il semaforo
-	// fa l'offerta
-	// decrementa il semaforo
-	// aspetta di nuovo il suo turno*/
+
+*/
 
 /**
 * Listen to message from client about starting tao.
@@ -276,18 +297,7 @@ void listen_tao_info(){
 
 
 
-/**
- * Adds to current bid a constant (if possible).
- * @return 1 if it has done the sum, 0 otherwise.
- * */
-int increments_bid(){
-	if((best_bid() + BID_INCREMENT) > budget){
-		return -1;
-    }
 
-	current_bid = best_bid() + BID_INCREMENT;
-	return 0;
-}
 
 
 int main(int argc, char** argv){

@@ -10,4 +10,5 @@ typedef struct _introduction {
     int msqid;
     char resources[MAX_REQUIRED_RESOURCES][MAX_RES_NAME_LENGTH];
     int resources_length;
+    // int budget;
 } introduction;
