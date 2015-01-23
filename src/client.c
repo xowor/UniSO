@@ -348,6 +348,7 @@ void listen_auction_status(){
 		free(msg);
 		// printf("creations: %d   starts: %d    ends:%d     results:%d\n", _creations, _starts, _ends, _results);
 	}
+		// while(1){};
 }
 
 

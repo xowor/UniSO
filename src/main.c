@@ -115,9 +115,13 @@ int main(int argc, char** argv) {
             if (clnt_exit != 0)
                 exit(EXIT_FAILURE);
         }
-        //wait for any child to end
-        waitpid(-1, &status, WUNTRACED);
-        printf("\n\n\n");
+
+        int processes = MAX_CLIENTS + 1;
+        while(processes > 0){
+            //wait for all childs to end
+            waitpid(-1, &status, WUNTRACED);
+            processes--;
+        }
         exit(EXIT_SUCCESS);
     }
     exit(EXIT_FAILURE);
