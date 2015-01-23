@@ -122,7 +122,7 @@ void print_auction_status(tao* working_tao){
     int i = 0;
     for (; i < 5; i++){
         if (working_tao->bids[i].client_pid == getppid()){
-            printf("     \x1b[32m%-5d\x1b[0m : \x1b[33m%4d\x1b[0m|\e[0;37m%-4d\x1b[0m€||", working_tao->bids[i].client_pid, working_tao->bids[i].unit_bid, budget);
+            printf("     \x1b[32m%-5d\x1b[0m : \x1b[33m%4d\x1b[0m\e[2m/%-4d\x1b[0m€||", working_tao->bids[i].client_pid, working_tao->bids[i].unit_bid, budget);
         } else {
             printf("     %-5d : \x1b[33m%4d€\x1b[0m     ||", working_tao->bids[i].client_pid, working_tao->bids[i].unit_bid);
         }

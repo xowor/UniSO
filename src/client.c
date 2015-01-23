@@ -308,6 +308,11 @@ void listen_auction_status(){
 	fprintf(file, " ");
 	fclose(file);
 
+	int _creations = 0;
+	int _starts = 0;
+	int _ends = 0;
+	int _results = 0;
+
 
 	// [TODO] SEMAFORO PER LA LETTURA
 	int i = 0;
@@ -315,9 +320,11 @@ void listen_auction_status(){
 		auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
 		if ( msgrcv(msqid, msg, sizeof(auction_status) - sizeof(long), AUCTION_STATUS_MTYPE, 0) != -1 ) {
 			if (msg->type == AUCTION_CREATED) {
+				_creations++;
 				create_agent(msg->resource, msg->shm_id, msg->sem_id, msg->base_bid);
 				notify_client_status(status);
 			} else if (msg->type == AUCTION_STARTED) {
+				_starts++;
 				resource* res = req_resources->list;
 				while(res){
 					if(strcmp(res->name, msg->resource) == 0){
@@ -327,13 +334,14 @@ void listen_auction_status(){
 				}
 				notify_client_status(status);
 			} else if (msg->type == AUCTION_ENDED) {
+				_ends++;
 				resource* res = req_resources->list;
 				while(res){
 					if(strcmp(res->name, msg->resource) == 0){
 						signal(SIGCHLD, SIG_IGN);
 						delete_agent_from_list(res->agent_pid);
 						number_of_agents--;
-						kill(res->agent_pid, 0);
+						kill(res->agent_pid, SIGKILL);
 						/* Removes the queue message */
 						int agent_msqid = get_agent_msqid(res->agent_pid);
 						msgctl(agent_msqid, IPC_RMID,0);
@@ -347,12 +355,14 @@ void listen_auction_status(){
 				// }
 				notify_client_status(status);
 			} else if (msg->type == AUCTION_RESULT){
+				_results++;
 				if (msg->quantity > 0){
 					FILE *file;
 					char fname[256];
 					sprintf(fname, "../results/%d.txt", client_num);
 					file = fopen(fname, "a");
 					fprintf(file, "[client] [%d] Won %d units of resource %s. Total amount: %d.\n", pid, msg->quantity, msg->resource, (msg->quantity)*(msg->unit_bid));
+					// printf("[client] [%d] Won %d units of resource %s. Total amount: %d.\n", pid, msg->quantity, msg->resource, (msg->quantity)*(msg->unit_bid));
 					fclose(file);
 					// printf("[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
 				}
@@ -360,6 +370,7 @@ void listen_auction_status(){
 			} else {	}
 		}
 		free(msg);
+		// printf("creations: %d   starts: %d    ends:%d     results:%d\n", _creations, _starts, _ends, _results);
 	}
 }
 

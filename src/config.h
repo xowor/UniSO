@@ -1,11 +1,11 @@
 
 /* Auction dynamics */
 #define MAX_OPEN_AUCTIONS 3         /* At the same time, there are at the height 3 tao */
-#define MAX_CLIENTS 10            /* The maximum number of clients to spawn */
+#define MAX_CLIENTS 6            /* The maximum number of clients to spawn */
 #define BASE_BID 42                 /* The base bid "price" */
 #define MAX_BIDS 5                /* Maximum bids from agents in a single tao */
 #define BID_INCREMENT 20				/* How much increases every time */
-#define AUCTION_LIFETIME_MULTIPLIER 1.5   /* TAO lifetime = |partecipants| * AUCTION_LIFETIME_MULTIPLIER */
+#define AUCTION_LIFETIME_MULTIPLIER 0.1   /* TAO lifetime = |partecipants| * AUCTION_LIFETIME_MULTIPLIER */
 
 /* Resources */
 #define MAX_REQUIRED_RESOURCES 32   /* The maximum number of available resources */
