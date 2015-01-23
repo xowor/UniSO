@@ -24,7 +24,6 @@ int pid;
 int ppid;
 int pid_msqid[MAX_REQUIRED_RESOURCES][2];
 int pid_msqid_length = 0;
-// char* required_resources[MAX_REQUIRED_RESOURCES];
 int budget;
 int number_required_resources = 0;				/* n of resources wanted*/
 
@@ -70,7 +69,7 @@ int get_agent_msqid(int agent_pid) {
 int create_agent_process(){
 	int agent_processes_msqid = msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
 	char str_msqid [32];
-    sprintf(str_msqid, "%d", agent_processes_msqid);
+  sprintf(str_msqid, "%d", agent_processes_msqid);
 
 	int agent_pid = fork();
 	if ( agent_pid == -1 ){
@@ -79,20 +78,19 @@ int create_agent_process(){
         perror("fork");
         exit(EXIT_FAILURE);
     } else if ( agent_pid == 0 ) {
-		fflush(stdout);
+				fflush(stdout);
         /*  Child code */
-        // per coda di messaggi modificare argv
         char *envp[] = { NULL };
         char *argv[] = { "./agent", "-m", str_msqid, NULL };
-        /* Run the client process. */
+        /* Run agent process. */
         int agent_execve_err = execve("./agent", argv, envp);
         if (agent_execve_err == -1) {
             /* Cannot find the client binary in the working directory */
             fprintf(stderr, "[agent] Error: cannot start agent process (Try running main from ./bin).\n");
             /* strerror interprets the value of errnum, generating a string with a message that describes the error */
             fprintf(stderr, "\t%s\n", strerror(errno));
+						exit(EXIT_FAILURE);
         }
-
     } else {
         /* Parent code */
         pid_msqid[pid_msqid_length][0] = agent_pid;
@@ -100,7 +98,7 @@ int create_agent_process(){
         pid_msqid_length++;
         return agent_pid;
     }
-    exit(EXIT_FAILURE);
+    //  TO_SEE exit(EXIT_FAILURE);
 }
 
 /**
@@ -124,30 +122,28 @@ void notify_tao_info(int pid, int availability, int cost, int shmid, int semid, 
 			msgsnd(pid_msqid[j][1], msg, sizeof(tao_info_to_agent) - sizeof(long), 0600);
 		}
 	}
-    free(msg);
+  free(msg);
 }
 
 /**
  * Creates a single agent for each tao call
  */
 void create_agent(char* resource_name, int shmid, int semid, int basebid){
-	int pid = create_agent_process();
-	agent_list[number_of_agents] = pid;
+	int agent_pid = create_agent_process();
+	agent_list[number_of_agents] = agent_pid;
 	number_of_agents++;
 
 	resource* res;
 	res = req_resources->list;
-	/* Communicates to agent*/
+	/* Communicates tao information to agent */
 	while(res){
-        if(strcmp(res->name, resource_name) == 0){
-			notify_tao_info(pid, res->availability, res->cost, shmid, semid, basebid, res->name, budget);
-			res->agent_pid = pid;
+		/* Searches specific resource from list */
+    if(strcmp(res->name, resource_name) == 0){
+			notify_tao_info(agent_pid, res->availability, res->cost, shmid, semid, basebid, res->name, budget);
+			res->agent_pid = agent_pid;
 		}
 		res = res->next;
 	}
-
-    //// msgrcv CLIENTE DEVE RIMANERE IN ATTESA DI ALTRI MESSAGGI DA PARTE DEL BANDITORE
-
 }
 
 void listen_msqid(){
@@ -177,9 +173,8 @@ void load_client_resources(){
     sprintf(filename, "../resources/clients/%d.txt", client_num);
     resources = fopen(filename, "r");
     if( resources != NULL ){
-        /* Reads each line from file */
-
-        	while( fgets(line, 64, resources) != NULL ){
+      /* Reads each line from file */
+      while( fgets(line, 64, resources) != NULL ){
 				token = strtok(line, ";");
 				if(number_line == 0){
 					budget = atoi(token);
@@ -206,19 +201,18 @@ void load_client_resources(){
 						i++;
 						token = strtok(NULL, ";");
 					}
-				//printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
+					//printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
 
-				/* Adds the read resources inside the required resources list */
-				add_resource(req_resources, name, avail, cost);
-				number_required_resources++;
+					/* Adds the read resources inside the required resources list */
+					add_resource(req_resources, name, avail, cost);
+					number_required_resources++;
+	    		fclose(resources);
+				}
 			}
-		}
     }else{
         fprintf(stderr, "[client][%d][%d] Error: Unable to open resource's file. %s\n", client_num, pid, strerror(errno));
     }
-
     fflush(stdout);
-    fclose(resources);
 }
 
 /**
@@ -226,31 +220,24 @@ void load_client_resources(){
  *  this client requires.
  */
 void send_introduction(){
-    // so_log('m');
-    // [TODO] SEMAFORO PER LA SCRITTURA
     /* Allocates the introduction message */
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     /* Initializes PID */
     intr->mtype = INTRODUCTION_MTYPE;
 		intr->msqid = msqid;
     intr->pid = pid;
-		// intr->budget = budget / req_resources->resources_count;
-		// so_log_i('y', intr->budget);
     intr->resources_length = 0;
 
 
     /* For each resource required adds its name in the introduction message. */
     resource* res = req_resources->list;
-		// so_log_p('m', req_resources->list);
     int i = 0;
     do {
         strcpy(intr->resources[i], res->name);
-		// so_log_p('r', intr->resources[i]);
         intr->resources_length++;
         i++;
         res = res->next;
-    }
-    while(res);
+    } while(res);
 
     /**
      * Sends a message to the auctioneer containing the client pid and the
@@ -261,20 +248,19 @@ void send_introduction(){
 }
 
 void notify_agent_start(int agent_pid){
-	    simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
-        msg->mtype = SIMPLE_MESSAGE_MTYPE;
-        msg_content content;
-        msg->content = content;
+  	simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+    msg->mtype = SIMPLE_MESSAGE_MTYPE;
+    msg_content content;
+    msg->content = content;
 
-        /* Initializes PID */
-        msg->pid = getpid();
-        strcpy(msg->msg, AUCTION_START_MSG);
-        //strcpy(msg->content.s, created_tao->name);
+    /* Initializes PID */
+    msg->pid = getpid();
+    strcpy(msg->msg, AUCTION_START_MSG);
 
-        /* Gets the message queue id of the client */
+    /* Gets the message queue id of the client */
 		int agent_msqid = get_agent_msqid(agent_pid);
 		msgsnd(agent_msqid, msg, sizeof(simple_message) - sizeof(long), 0600);
-        free(msg);
+    free(msg);
 }
 
 void notify_client_status(){
@@ -306,8 +292,6 @@ void listen_auction_status(){
 	fprintf(file, " ");
 	fclose(file);
 
-
-	// [TODO] SEMAFORO PER LA LETTURA
 	int i = 0;
 	for (; i < req_resources->resources_count * 4; i++){
 		auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
@@ -324,12 +308,11 @@ void listen_auction_status(){
 					res = res->next;
 				}
 				notify_client_status();
-				so_log('m');
 			} else if (msg->type == AUCTION_ENDED) {
 				resource* res = req_resources->list;
 				while(res){
 					if(strcmp(res->name, msg->resource) == 0){
-						signal(SIGCHLD, SIG_IGN);
+						// signal(SIGCHLD, SIG_IGN);
 						delete_agent_from_list(res->agent_pid);
 						number_of_agents--;
 						kill(res->agent_pid, 0);

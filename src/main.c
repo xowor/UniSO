@@ -44,9 +44,9 @@ int create_auctioneer(int master_msqid){
         }
     } else {
         /* Parent code
-        writes on global variable the auctioner's pid*/
+        writes on global variable the auctioner's pid */
         auct_pid = auctioneer_pid;
-        return EXIT_SUCCESS;        /* Success */
+        return EXIT_SUCCESS;
     }
 
 
