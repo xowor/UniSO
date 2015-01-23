@@ -151,7 +151,6 @@ void notify_tao_creation(tao* created_tao){
           int j = 0;
           for (; j < MAX_CLIENTS; j++){
               if (pid_msqid[j][0] == client_pid){
-                  // so_log('r');
                   msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
                   listen_client_status(pid_msqid[j][1]);
               }
@@ -181,7 +180,6 @@ void notify_tao_start(tao* created_tao){
           for (; j < MAX_CLIENTS; j++){
               if (pid_msqid[j][0] == client_pid){
                   msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
-                      so_log('r');
                       //check if message received
                   listen_client_status(pid_msqid[j][1]);
               }
@@ -334,7 +332,6 @@ void assign_resources(tao* current_tao){
 }
 
 void listen_introductions(){
-    // [TO_SEE] SEMAFORO PER LA LETTURA
     //message from client with client_pid and array_resources_wanted
 
     introduction* intr = (introduction*) malloc(sizeof(introduction));
@@ -399,11 +396,13 @@ void start_auction_system(){
             simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
             if ( msgrcv(tao_processes_msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
                 if ( strcmp(msg->msg, TAO_PROCESS_END_MSG) == 0 ){
+                    int p_status;
+                    waitpid(msg->pid, &p_status, WUNTRACED);
+
                     current_tao = get_tao_by_id(msg->content.i);
-                    // so_log_i('b', current_tao->dummy);
                     notify_tao_end(current_tao);
                     assign_resources(current_tao);
-                    printf("[\x1b[34mAuction\x1b[0m] %-16s || Ended auction (tao id: %d)\n", current_tao->name, current_tao->id);
+                    printf("[\x1b[34mAuction\x1b[0m] %-16s ||  Ended auction (tao id: %d)\n", current_tao->name, current_tao->id);
                     // deallocare semafori TO_SEE (tutto il pool in una volta? o uno per uno)
                     semctl(current_tao->sem_id, 0, IPC_RMID, 0);
                     shmctl(current_tao->shm_id, IPC_RMID, 0);
@@ -412,15 +411,15 @@ void start_auction_system(){
                     if (tao_counter < avail_resources->resources_count){
                         current_tao = get_tao(tao_counter);
                         init_tao(current_tao);
-						            notify_tao_creation(current_tao);
+			            notify_tao_creation(current_tao);
                         tao_counter++;
                         create_tao_process(current_tao->id, current_tao->lifetime, tao_processes_msqid);
                     }
                 } else if ( strcmp(msg->msg, TAO_PROCESS_END_THREESEC) == 0 ){
-					          current_tao = get_tao(msg->content.i);
+                    current_tao = get_tao(msg->content.i);
                     start_tao(current_tao);
-					          notify_tao_start(current_tao);
-                    printf("[\x1b[34mAuction\x1b[0m] %-16s || Started auction (tao id: %d)\n", current_tao->name, current_tao->id);
+                    notify_tao_start(current_tao);
+                    printf("[\x1b[34mAuction\x1b[0m] %-16s ||  Started auction (tao id: %d)\n", current_tao->name, current_tao->id);
                 }
 
             }
@@ -451,11 +450,11 @@ void notify_clients_unregistration(){
     int i = 0;
     // propagare sig int ai client
     for (; i < MAX_CLIENTS; i++){
-      if(client_list[i] != 0)
+      if(client_list[i] != 0){
+        int p_status;
         kill(client_list[i], SIGINT);
-        so_log('c');
-        so_log('b');
-        so_log('r');
+        waitpid(client_list[i], &p_status, WUNTRACED);
+      }
     }
 }
 
@@ -468,15 +467,17 @@ static void sigint_signal_handler () {
 
   int i = 0;
   for(; i < MAX_CLIENTS; i++){
-    if(client_list[i] != 0)
-      kill(client_list[i], SIGKILL);
+    if(client_list[i] != 0){
+        int p_status;
+        kill(client_list[i], SIGINT);
+        waitpid(client_list[i], &p_status, WUNTRACED);
+    }
   }
 
 
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
-//cleaned
-	 _exit(EXIT_SUCCESS);
+    _exit(EXIT_SUCCESS);
 }
 
 void listen_sigint_signal(){

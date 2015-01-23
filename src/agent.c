@@ -79,7 +79,6 @@ int make_bid(tao* auction_tao){
     int has_bid = 0, own_bid = NULL;
     for(i = 0; i < MAX_BIDS; i++){
         if( auction_tao->bids[i].client_pid == getppid() ){
-            // so_log('b');
             has_bid = 1;
             own_bid = i;
         }
@@ -239,14 +238,7 @@ int make_action(int tao_id){
 				// printf("[agent][%d][%d][%d][%s] The agent hasn't enough funds.\n", pid, current_bid, budget, working_tao->name);
                 return -1;
 			}
-		// }else{
-        //     // printf("[agent][%d] budget < current_bid.\n", pid);
-        //     return -1;
-        // }
-	}else{
-        // so_log_i('r', current_bid);
-        // printf("[agent][%d] the bid is between the best.\n", pid);
-    }
+	} else { }
 	sem_v(working_tao->sem_id, working_tao->id);
     return 0;
 }
@@ -283,7 +275,6 @@ void listen_tao_start(){
 void listen_tao_info(){
     tao_info_to_agent* msg = (tao_info_to_agent*) malloc(sizeof(tao_info_to_agent));
     if ( msgrcv(msqid, msg, sizeof(tao_info_to_agent) - sizeof(long), TAO_INFO_TO_AGENT_MTYPE, 0) != -1 ) {
-    // [TODO] SEMAFORO PER LA LETTURA
         // so_log_is('m', getpid(), "started_agent");
 
         quantity = msg->availability;

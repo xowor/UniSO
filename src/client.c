@@ -42,27 +42,6 @@ int get_agent_msqid(int agent_pid) {
 	}
 }
 
-// void listen_auction_end(){
-// 	// [TODO] SEMAFORO PER LA LETTURA
-// 	int i = 0;
-// 	for (; i < req_resources->resources_count; i++){
-// 		simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
-// 		if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
-// 			resource* res = req_resources->list;
-// 			while(res){
-// 				if(strcmp(res->name, msg->content.s) == 0){
-// 					signal(SIGCHLD, SIG_IGN);
-// 					kill(res->agent_pid, 0);
-// 					/* Removes the queue message */
-// 					int agent_msqid = get_agent_msqid(res->agent_pid);
-// 					msgctl(agent_msqid, IPC_RMID,0);
-// 				}
-// 				res = res->next;
-// 			}
-// 		}
-// 		free(msg);
-// 	}
-// }
 
 /**
  *  Creates agent's process.
@@ -148,7 +127,6 @@ void create_agent(char* resource_name, int shmid, int semid, int basebid){
 }
 
 void listen_msqid(){
-	//TO_SEE SEMAFORO PER LA LETTURA
 	simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
 	//msgflag = 0 -> bloccante
 	if ( msgrcv(master_msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
@@ -321,7 +299,9 @@ void listen_auction_status(){
 						signal(SIGCHLD, SIG_IGN);
 						delete_agent_from_list(res->agent_pid);
 						number_of_agents--;
+						int p_status;
 						kill(res->agent_pid, SIGKILL);
+						waitpid(res->agent_pid, &p_status, WUNTRACED);
 						/* Removes the queue message */
 						int agent_msqid = get_agent_msqid(res->agent_pid);
 						msgctl(agent_msqid, IPC_RMID,0);
@@ -349,28 +329,10 @@ void listen_auction_status(){
 		// printf("creations: %d   starts: %d    ends:%d     results:%d\n", _creations, _starts, _ends, _results);
 	}
 		// while(1){};
-}
-
-
-// void listen_auction_result(){
-// 	// [TODO] SEMAFORO PER LA LETTURA
-// 	int i = 0;
-// 	for (; i < req_resources->resources_count; i++){
-// 		auction_result* msg = (auction_result*) malloc(sizeof(auction_result));
-// 		if ( msgrcv(msqid, msg, sizeof(auction_result) - sizeof(long), AUCTION_RESULT_MTYPE, 0) != -1 ) {
-// 			// sottrarre al budget
-// 			// so_log('c');
-// 		}
-// 		free(msg);
-// 	}
-// }
-
-/**
-* Cleans the heap after quitting (heard is a good pratice...)
-*/
-void gc(){
 	free(req_resources);
 }
+
+
 
 void sigint_signal_handler(){
 	// kills agents
@@ -411,11 +373,6 @@ int main(int argc, char** argv){
 	listen_auction_status();
 
 	// TO_SEE detacharsi dall'area condivisa
-
-	fprintf(stdout, "[client][%d][%d] \x1b[31mRemoving all the IPC structures... \x1b[0m \n", client_num, pid);
-
-	fprintf(stdout, "[client][%d][%d] \x1b[31mCleaning heap... \x1b[0m \n", client_num, pid);
-	gc();
 
 
   fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
