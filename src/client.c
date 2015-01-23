@@ -30,6 +30,7 @@ int number_required_resources = 0;
 
 int agent_list[MAX_REQUIRED_RESOURCES];		/* agent's pid*/
 int number_of_agents = 0;
+int status = CLIENT_OK;				/* The internal status of the client */
 
 resource_list* req_resources;       /* The list containing all the available resources */
 
@@ -279,10 +280,11 @@ void notify_agent_start(int agent_pid){
         free(msg);
 }
 
-void notify_client_status(){
+void notify_client_status(int status){
 	client_status* msg = (client_status*) malloc(sizeof(client_status));
+	msg->type = getpid();
 	msg->mtype = CLIENT_STATUS_MTYPE;
-	msg->type = CLIENT_OK;
+	msg->type = status;
 
 	msgsnd(msqid, msg, sizeof(client_status) - sizeof(long), 0600);
 
@@ -316,7 +318,7 @@ void listen_auction_status(){
 		if ( msgrcv(msqid, msg, sizeof(auction_status) - sizeof(long), AUCTION_STATUS_MTYPE, 0) != -1 ) {
 			if (msg->type == AUCTION_CREATED) {
 				create_agent(msg->resource, msg->shm_id, msg->sem_id, msg->base_bid);
-				notify_client_status();
+				notify_client_status(status);
 			} else if (msg->type == AUCTION_STARTED) {
 				resource* res = req_resources->list;
 				while(res){
@@ -325,8 +327,7 @@ void listen_auction_status(){
 					}
 					res = res->next;
 				}
-				notify_client_status();
-				so_log('m');
+				notify_client_status(status);
 			} else if (msg->type == AUCTION_ENDED) {
 				resource* res = req_resources->list;
 				while(res){
@@ -346,7 +347,7 @@ void listen_auction_status(){
 				// 	// notify_unregistration();
 				// 	// termina
 				// }
-				notify_client_status();
+				notify_client_status(status);
 			} else if (msg->type == AUCTION_RESULT){
 				if (msg->quantity > 0){
 					FILE *file;
@@ -357,7 +358,7 @@ void listen_auction_status(){
 					fclose(file);
 					// printf("[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
 				}
-				notify_client_status();
+				notify_client_status(status);
 			} else {	}
 		}
 		free(msg);
@@ -418,12 +419,6 @@ void listen_auction_status(){
 // }
 
 
-/**
-* Collects all the IPC garbage
-*/
-void ipc_gc(){
-
-}
 
 /**
 * Cleans the heap after quitting (heard is a good pratice...)
@@ -439,6 +434,7 @@ void sigint_signal_handler(){
 		if(agent_list[i] != 0)
 			kill(agent_list[i], SIGKILL);
 	// deregistrati dal banditore
+	status = CLIENT_UNREGISTERED;
 	exit(EXIT_SUCCESS);
 }
 

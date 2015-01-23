@@ -119,6 +119,8 @@ int listen_client_status(int client_msqid){
   client_status* msg = (client_status*) malloc(sizeof(client_status));
   int j = 0;
   if ( msgrcv(client_msqid, msg, sizeof(client_status) - sizeof(long), CLIENT_STATUS_MTYPE, 0) != -1 ) {
+      if (msg->type == CLIENT_UNREGISTERED)
+          client_unregistration(msg->pid);
     return 0;
   }
   return -1;
@@ -177,7 +179,7 @@ void notify_tao_start(tao* created_tao){
           for (; j < MAX_CLIENTS; j++){
               if (pid_msqid[j][0] == client_pid){
                   msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
-                      so_log('r');
+                    //   so_log('r');
                   listen_client_status(pid_msqid[j][1]);
               }
           }
@@ -383,7 +385,7 @@ void start_auction_system(){
                     // so_log_i('b', current_tao->dummy);
                     notify_tao_end(current_tao);
                     assign_resources(current_tao);
-                    printf("[\x1b[34mAuction\x1b[0m] %-16s || Ended auction (tao id: %d)\n", current_tao->name, current_tao->id);
+                    printf("[\x1b[34mAuction\x1b[0m] %-16s ||  \x1b[31mEnded\x1b[0m auction at %u (tao id: %d)\n", current_tao->name, (unsigned)time(NULL), current_tao->id);
                     semctl(current_tao->sem_id, 0, IPC_RMID, 0);
                     shmctl(current_tao->shm_id, IPC_RMID, 0);
                     // deallocare semafori
@@ -401,7 +403,7 @@ void start_auction_system(){
                     start_tao(current_tao);
 					          notify_tao_start(current_tao);
                     // so_log_i('m', i++);
-                    printf("[\x1b[34mAuction\x1b[0m] %-16s || Started auction (tao id: %d)\n", current_tao->name, current_tao->id);
+                    printf("[\x1b[34mAuction\x1b[0m] %-16s ||  \x1b[32mStarted\x1b[0m auction at %u (tao id: %d)\n", current_tao->name, (unsigned)time(NULL), current_tao->id);
                 }
 
             }

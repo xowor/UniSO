@@ -14,5 +14,6 @@ enum client_status_type {
 
 typedef struct _client_status {
     long int mtype;
+    int pid;
     enum client_status_type type;
 } client_status;
