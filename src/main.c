@@ -18,6 +18,7 @@ int status = 0;
  */
 int create_auctioneer(int master_msqid){
     char str_master_msqid [32];
+    //puts message queue's id into a char array
     sprintf(str_master_msqid, "%d", master_msqid);
 
     int auctioneer_pid = fork();
@@ -30,23 +31,28 @@ int create_auctioneer(int master_msqid){
     if ( auctioneer_pid == 0 ) {
         /*  Child code */
         char *envp[] = { NULL };
+        //executes auctioneer file
         char *argv[] = { "./auctioneer", "-m", str_master_msqid, NULL };
         /* Run the auctioneer process. */
         int auct_execve_err = execve("./auctioneer", argv, envp);
         if (auct_execve_err == -1) {
             /* Cannot find the auctioneer binary in the working directory */
+            //fprintf prints on stdout default stream
             fprintf(stderr, "[auctioneer] Error: cannot start auctioneer process (Try running main from ./bin).\n");
             /* strerror nterprets the value of errnum, generating a string with a message that describes the error */
             fprintf(stderr, "\t%s\n", strerror(errno));
         }
     } else {
-        /* Parent code */
+        /* Parent code
+        writes on global variable the auctioner's pid*/
         auct_pid = auctioneer_pid;
         return EXIT_SUCCESS;        /* Success */
     }
 
+
+    /* TO_SEE
     perror("fork");
-    exit(EXIT_FAILURE);
+    exit(EXIT_FAILURE); */
 }
 
 /**
@@ -82,8 +88,9 @@ int create_client(int master_msqid, int client_num){
         return EXIT_SUCCESS;
     }
 
+    /* TO_SEE above
     perror("fork");
-    exit(EXIT_FAILURE);
+    exit(EXIT_FAILURE); */
 }
 
 
@@ -95,7 +102,7 @@ int main(int argc, char** argv) {
     printf("[main] Started main.\t\tPid: %d\n", getpid());
     fflush(stdout);
 
-    /* Get the message queue id, with the 0600 permissions. */
+    /* Get the message queue id, with the 0600 permissions. (everything to user) */
     int master_msqid = msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
     int i = 0;
     int auctnr_exit = create_auctioneer(master_msqid);
@@ -108,6 +115,7 @@ int main(int argc, char** argv) {
             if (clnt_exit != 0)
                 exit(EXIT_FAILURE);
         }
+        //wait for any child to end
         waitpid(-1, &status, WUNTRACED);
         printf("\n\n\n");
         exit(EXIT_SUCCESS);

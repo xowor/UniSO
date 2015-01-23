@@ -29,12 +29,14 @@ typedef struct _client {
 	resource interested_resource[MAX_REQUIRED_RESOURCES];
 } client;
 
-int client_list[MAX_CLIENTS];
+//Array [i] i= pid_client || 0 if deregistered
+int client_list[MAX_CLIENTS];       //existing clients
 
-int registered_clients;
+//n of registered clients
+int registered_clients;             //existing && registered to auctioneer
 
 int master_msqid = 0;                /* The id of the message queue */
-int pid_msqid[MAX_CLIENTS][2];
+int pid_msqid[MAX_CLIENTS][2];      // 2 --> column pid, column msq_id
 // int msqsid[MAX_CLIENTS];             /* The message queues for each client */
 int semid;                           /* The id of the the TAOs creation semaphore */
 int opened_auctions = 0;             /* The number of opened auctions */
@@ -85,9 +87,9 @@ void distribute_msqs(){
 }
 
 void load_auct_resources() {
-    avail_resources = create_resource_list();
+    avail_resources = create_resource_list();             //initializes resource list empty
     load_resources("../resource.txt", avail_resources);
-    /*
+    /* TO_SEE
     // avail_resources = create_resource_list();
     // FILE* resources;
     // resources = fopen("../resource.txt", "r");
@@ -101,7 +103,7 @@ void load_auct_resources() {
 }
 
 void create_taos(){
-	/* creates tao's array with empty tao */
+	/* creates tao's array with empty tao + sem pool*/
     init_taos_array(avail_resources->resources_count);
 
 	int i = 0;
@@ -118,6 +120,7 @@ void create_taos(){
 int listen_client_status(int client_msqid){
   client_status* msg = (client_status*) malloc(sizeof(client_status));
   int j = 0;
+  //TO_SEE MSG_NOERROR flag?
   if ( msgrcv(client_msqid, msg, sizeof(client_status) - sizeof(long), CLIENT_STATUS_MTYPE, 0) != -1 ) {
     return 0;
   }
@@ -178,6 +181,7 @@ void notify_tao_start(tao* created_tao){
               if (pid_msqid[j][0] == client_pid){
                   msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
                       so_log('r');
+                      //check if message received
                   listen_client_status(pid_msqid[j][1]);
               }
           }
@@ -187,7 +191,7 @@ void notify_tao_start(tao* created_tao){
 }
 
 void notify_tao_end(tao* created_tao){
-    // [TODO] SEMAFORO PER LA SCRITTURA
+    // [TODO] SEMAFORO PER LA SCRITTURA TO_SEE
     /* For each client interested in the TAO */
     int i = 0;
     for (; i < created_tao->interested_clients_count; i++){
@@ -312,7 +316,9 @@ void assign_resources(tao* current_tao){
 }
 
 void listen_introductions(){
-    // [TODO] SEMAFORO PER LA LETTURA
+    // [TO_SEE] SEMAFORO PER LA LETTURA
+    //message from client with client_pid and array_resources_wanted
+
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     registered_clients = 0;
 
@@ -325,7 +331,7 @@ void listen_introductions(){
             int j = 0;
             /* associates the pid's client to related tao, where there is the resource interested to client */
             for (; j < intr->resources_length; j++){
-                sign_to_tao(intr->pid, intr->resources[j]);
+                sign_to_tao(intr->pid, intr->resources[j]); //add interested client to tao
             }
             pid_msqid[i][0] = intr->pid;
         }
@@ -348,8 +354,7 @@ void create_tao_process(int id_tao, int lifetime, int tao_processes_msqid){
         fprintf(stderr, "\t%s\n", strerror(errno));
         perror("fork");
         exit(EXIT_FAILURE);
-    }
-    if ( tao_process_pid == 0 ) {
+    } else if ( tao_process_pid == 0 ) {
         /*  Child code */
         char *envp[] = { NULL };
         // so_log_s('y', str_lifetime);
@@ -363,7 +368,12 @@ void create_tao_process(int id_tao, int lifetime, int tao_processes_msqid){
             /* strerror nterprets the value of errnum, generating a string with a message that describes the error */
             fprintf(stderr, "\t%s\n", strerror(errno));
         }
+    } else {
+      /* Parent code*/
+      return EXIT_SUCCESS;
     }
+
+
 }
 
 void start_auction_system(){
@@ -374,7 +384,7 @@ void start_auction_system(){
     int terminated_taos = 0;
 
     while(terminated_taos < avail_resources->resources_count){
-        if (tao_counter > 2) {
+        if (tao_counter > 2) { //there's a 4th tao waiting for 0||1||2 to finish
             simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
             if ( msgrcv(tao_processes_msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
 
@@ -384,9 +394,9 @@ void start_auction_system(){
                     notify_tao_end(current_tao);
                     assign_resources(current_tao);
                     printf("[\x1b[34mAuction\x1b[0m] %-16s || Ended auction (tao id: %d)\n", current_tao->name, current_tao->id);
+                    // deallocare semafori TO_SEE (tutto il pool in una volta? o uno per uno)
                     semctl(current_tao->sem_id, 0, IPC_RMID, 0);
                     shmctl(current_tao->shm_id, IPC_RMID, 0);
-                    // deallocare semafori
                     terminated_taos++;
 					          /* If there are other resources tao to be created*/
                     if (tao_counter < avail_resources->resources_count){
@@ -455,7 +465,7 @@ void notify_clients_unregistration(){
     for (; i < registered_clients; i++){
       int client_pid = client_list[i];
 
-      /* Allocates the simple_message message */
+      /* Allocates the auction_status message */
       auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
       msg->mtype = AUCTION_STATUS_MTYPE;
       msg->type = UNREGISTRATION;
@@ -463,6 +473,7 @@ void notify_clients_unregistration(){
       /* Gets the message queue id of the client */
       int j = 0;
       for (; j < MAX_CLIENTS; j++){
+        //send message to clients registered to auctioneer to unregister themselves
         if (pid_msqid[j][0] == client_pid){
           msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
         }
@@ -475,7 +486,7 @@ void notify_clients_unregistration(){
 // la deregistrazione di un cliente -> eliminazione da  lista -> non più considerato nelle restanti funzioni
 static void sigint_signal_handler () {
 	notify_clients_unregistration();
-
+// TO_SEE L'auctioneer deve attendere che il cliente gli invii il messaggio di deregistrazione, dopo lo uccide (zombie)
   wait(5);
 
   int i = 0;
@@ -484,11 +495,7 @@ static void sigint_signal_handler () {
       kill(client_list[i], SIGKILL);
   }
 
-  // si uccidono
-  // l'auctioneer pulisce la lista dei clienti e li uccide
-  // pulisce la lista di clienti
-
-
+//cleaning up memory blocks
 	fprintf(stdout, "[auctioneer] \x1b[31mRemoving all the IPC structures... \x1b[0m \n");
     ipc_gc();
 
@@ -497,6 +504,7 @@ static void sigint_signal_handler () {
 
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
+//cleaned
 	 _exit(EXIT_SUCCESS);
 }
 
@@ -507,7 +515,7 @@ void listen_sigint_signal(){
 
 int main(int argc, char** argv){
     printf("[auctioneer] Started auctioneer.\tPid: %d\tPPid: %d\n", getpid(), getppid());
-    //
+    // TO_SEE
     // int i = 0;
     // for(; i < MAX_CLIENTS; i++){
     //   client_list[i][0] = 0;
@@ -515,7 +523,8 @@ int main(int argc, char** argv){
     // }
 
     /**
-     * Loads the message queue id from the passed argument.
+     * Loads the message queue id from the passed argument (from MAIN)
+     -m : next position -> str_master_msquid
      */
     if (argc >= 2 && strcmp(argv[1], "-m") == 0){
         master_msqid = atoi(argv[2]);
@@ -530,18 +539,19 @@ int main(int argc, char** argv){
     /* Sends each client his own message queue */
     distribute_msqs();
 
-	/* Read resources from file */
+	  /* Read resources from file */
     load_auct_resources();
 
     /* Create only the structure of all taos, without the client's list and relative bids */
     create_taos();
 
+    /* subscription request from client to auctioneer*/
     listen_introductions();
 
 
     /* Start max 3 tao at a time */
     start_auction_system();
-
+    //canexit == 0 --> tao just finished
     while (canexit == 1) {}
 
     fprintf(stdout, "[auctioneer] \x1b[31mRemoving all the IPC structures... \x1b[0m \n");

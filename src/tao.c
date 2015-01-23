@@ -80,6 +80,7 @@ void create_tao(char name[MAX_RES_NAME_LENGTH], int cost){
 
 
 tao* get_tao(int i){
+
     if (i < taos_count)
         return taos[i];
     else
@@ -143,7 +144,7 @@ void start_tao(tao* current_tao){
 
 
 void init_tao(tao* current_tao){
-    // int shm_id = shmget(IPC_PRIVATE, sizeof(tao), 0600 | IPC_CREAT);
+    // TO_SEE int shm_id = shmget(IPC_PRIVATE, sizeof(tao), 0600 | IPC_CREAT);
     // if(shm_id == -1){
 	// 	perror("shmget");
 	// 	exit(EXIT_FAILURE);
@@ -154,8 +155,10 @@ void init_tao(tao* current_tao){
 
     // current_tao->shm_id = shm_id;
     /* The auction must be at least one second long */
+
+    //Durata tao proporzionale al num di clienti che vi partecipano
     current_tao->lifetime = (current_tao->interested_clients_count * AUCTION_LIFETIME_MULTIPLIER) + 1;
 
-    /* Disable access to the TAO shm */
+    /* Disable access to the TAO shm until the tao opens*/
     semctl(sem_id, current_tao->id, SETVAL, 0);
 }

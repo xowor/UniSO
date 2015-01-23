@@ -22,7 +22,7 @@ void listen_auction_end();
  */
 int create_agent_process();
 
-
+//TO_SEE RESOURCES NON C'E'
 /**
  * Loads the resources required by the client from file.
  */
