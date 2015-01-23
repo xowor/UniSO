@@ -203,17 +203,16 @@ void load_client_resources(){
 						token = strtok(NULL, ";");
 					}
 					//printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
-
 					/* Adds the read resources inside the required resources list */
 					add_resource(req_resources, name, avail, cost);
 					number_required_resources++;
-	    		fclose(resources);
 				}
 			}
     }else{
         fprintf(stderr, "[client][%d][%d] Error: Unable to open resource's file. %s\n", client_num, pid, strerror(errno));
     }
     fflush(stdout);
+	  fclose(resources);
 }
 
 /**
@@ -275,10 +274,6 @@ void notify_client_status(int status){
 	free(msg);
 }
 
-void notify_unregistration(){
-
-}
-
 void delete_agent_from_list(int agent_pid){
 	int i = 0;
 	for(; i < MAX_REQUIRED_RESOURCES; i++)
@@ -314,10 +309,11 @@ void listen_auction_status(){
 				resource* res = req_resources->list;
 				while(res){
 					if(strcmp(res->name, msg->resource) == 0){
-						// signal(SIGCHLD, SIG_IGN);
+						signal(SIGCHLD, SIG_IGN);
 						delete_agent_from_list(res->agent_pid);
 						number_of_agents--;
-						kill(res->agent_pid, 0);
+						/* TO_SEE EARLY */
+						kill(res->agent_pid, SIGKILL);
 						/* Removes the queue message */
 						int agent_msqid = get_agent_msqid(res->agent_pid);
 						msgctl(agent_msqid, IPC_RMID,0);
@@ -325,10 +321,6 @@ void listen_auction_status(){
 					res = res->next;
 				}
 				number_required_resources--;
-				// if(number_required_resources == 0){
-				// 	// notify_unregistration();
-				// 	// termina
-				// }
 				notify_client_status(status);
 			} else if (msg->type == AUCTION_RESULT){
 				if (msg->quantity > 0){
@@ -347,25 +339,6 @@ void listen_auction_status(){
 	}
 }
 
-// void listen_auction_start(){
-// 	// [TODO] SEMAFORO PER LA LETTURA
-// 	int i = 0;
-// 	for (; i < req_resources->resources_count; i++){
-// 		simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
-// 		if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
-//
-// 			resource* res = req_resources->list;
-// 			while(res){
-// 				if(strcmp(res->name, msg->content.s) == 0){
-// 					notify_agent_start(res->agent_pid);
-// 				}
-// 				res = res->next;
-// 			}
-// 		}
-// 		free(msg);
-// 	}
-// }
-
 
 // void listen_auction_result(){
 // 	// [TODO] SEMAFORO PER LA LETTURA
@@ -380,28 +353,6 @@ void listen_auction_status(){
 // 	}
 // }
 
-
-// // viene richiamato quando il cliente riceve il messaggio dal banditore che gli comunica
-// // dell'esistenza dell'asta di suo interesse
-// void listen_auction_creation(){
-//     // [TODO] SEMAFORO PER LA LETTURA
-//
-// 	int i = 0;
-// 	for (; i < req_resources->resources_count; i++){
-//
-// 	    tao_opening* msg = (tao_opening*) malloc(sizeof(tao_opening));
-// 			so_log('y');
-// 	    if ( msgrcv(msqid, msg, sizeof(tao_opening) - sizeof(long), TAO_OPENING_MTYPE, 0) != -1 ) {
-// 			so_log('m');
-//         	create_agent(msg->resource, msg->shmid, msg->semid, msg->base_bid);
-// 	    }
-// 		free(msg);
-// 	}
-// 	// so_log_
-// }
-
-
-
 /**
 * Cleans the heap after quitting (heard is a good pratice...)
 */
@@ -415,16 +366,13 @@ void sigint_signal_handler(){
 	for(; i < MAX_REQUIRED_RESOURCES; i++)
 		if(agent_list[i] != 0)
 			kill(agent_list[i], SIGKILL);
-
-	// deregistrati dal banditore
-	status = CLIENT_UNREGISTERED;
 	exit(EXIT_SUCCESS);
 }
 
 void listen_sigint_signal(){
 	if (signal(SIGINT, sigint_signal_handler)== SIG_ERR)
 		perror("signal (SIG_ERR) error");
-	}
+}
 
 int main(int argc, char** argv){
     pid = getpid();
@@ -439,22 +387,18 @@ int main(int argc, char** argv){
         fprintf(stderr, "[client][%d] Error: master_msqid (-m) or client number (-c) argument not valid.\n", pid);
         return -1;
     }
-
 		listen_sigint_signal();
 
 	  listen_msqid();
+
 
     load_client_resources();
 
 	send_introduction();
 
 	listen_auction_status();
-	// listen_auction_creation();
-	// listen_auction_start();
-	// listen_auction_end();
-	// listen_auction_result();
 
-	// detacharsi dall'area condivisa
+	// TO_SEE detacharsi dall'area condivisa
 
 	fprintf(stdout, "[client][%d][%d] \x1b[31mRemoving all the IPC structures... \x1b[0m \n", client_num, pid);
 
@@ -462,8 +406,8 @@ int main(int argc, char** argv){
 	gc();
 
 
-    fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
-    fflush(stdout);
+  fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
+  fflush(stdout);
 
     // se banditore comunica acquisizione di risorsa --> scrivere su file di log : risorsa acquisita; quantità; prezzoComplessivo
     // lo stato di terminazione del figlio è  restituito nell'argomento status della wait --> processo padre viene svegliato

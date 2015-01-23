@@ -50,9 +50,9 @@ int create_auctioneer(int master_msqid){
     }
 
 
-    /* TO_SEE
+    /* TO_SEE*/
     perror("fork");
-    exit(EXIT_FAILURE); */
+    exit(EXIT_FAILURE);
 }
 
 /**

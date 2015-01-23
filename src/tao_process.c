@@ -64,6 +64,7 @@ void alarm_handler() {
         signal(SIGALRM, alarm_handler);
         alarm(lifetime);
     }
+    // exit(EXIT_SUCCESS);
 }
 
 
@@ -92,4 +93,5 @@ int main(int argc, char** argv) {
     // così non aspetta 3 secondi ogni volta che viene invocato??
     alarm(3);
     while(canexit != 1){};
+    exit(EXIT_SUCCESS);
 }
