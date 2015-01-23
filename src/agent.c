@@ -9,7 +9,6 @@
 #include "messages/simple_message.h"
 
 int msqid;
-int aval;
 int unit_cost;
 int quantity;
 int shm_id;
@@ -118,12 +117,12 @@ int make_bid(tao* auction_tao){
 }
 
 void print_auction_status(tao* working_tao){
-    printf("[\x1b[34mAuction\x1b[0m] %-16s || %20s || \x1b[33m%4d€\x1b[0m || ", working_tao->name, "New bid", best_bid());
+    printf("[\x1b[34mAuction\x1b[0m] %-16s || %8s || \x1b[33m%4d€\x1b[0m || ", working_tao->name, "New bid", best_bid());
 
     int i = 0;
     for (; i < 5; i++){
         if (working_tao->bids[i].client_pid == getppid()){
-            printf("     \x1b[32m%-5d\x1b[0m : \x1b[33m%4d€\x1b[0m     ||", working_tao->bids[i].client_pid, working_tao->bids[i].unit_bid);
+            printf("     \x1b[32m%-5d\x1b[0m : \x1b[33m%4d\x1b[0m|\e[0;37m%-4d\x1b[0m€||", working_tao->bids[i].client_pid, working_tao->bids[i].unit_bid, budget);
         } else {
             printf("     %-5d : \x1b[33m%4d€\x1b[0m     ||", working_tao->bids[i].client_pid, working_tao->bids[i].unit_bid);
         }
@@ -187,19 +186,25 @@ int get_availability_resources(){
 * Adds to current bid a constant (if possible).
 * @return 1 if it has done the sum, 0 otherwise.
 * */
-int increments_bid(){
-  // if((worst_bid() + BID_INCREMENT) > budget){
-  //   return -1;
-  // }
-  //
-  // current_bid = worst_bid() + BID_INCREMENT;
-  // return 0;
-  while( (worst_bid() + BID_INCREMENT) * quantity > budget ){
-    quantity--;
-    if (quantity < 0) return -1;
-  }
-  current_bid = (worst_bid() + BID_INCREMENT);
-  return 0;
+void increment_bid(){
+    int new_bid = 0;
+    if (quantity <= 0)
+        return;
+    // if((worst_bid() + BID_INCREMENT) > budget){
+    //   return -1;
+    // }
+    //
+    // current_bid = worst_bid() + BID_INCREMENT;
+    // return 0;
+    while( (new_bid = ((worst_bid() + BID_INCREMENT) * quantity)) > budget ){
+        quantity--;
+        if (quantity <= 0);
+
+    }
+
+    if (new_bid <= budget)
+      current_bid = (worst_bid() + BID_INCREMENT);
+    return;
 }
 
 /**
@@ -215,7 +220,8 @@ int make_action(int tao_id){
 		// if(current_bid < budget){
 
             /* If the bid can be increased (isn't greater than budget) */
-			if(increments_bid() == 0){
+            increment_bid();
+			if(current_bid < budget){
 				int val = make_bid(working_tao);
 
 				if(val == 0){
@@ -280,7 +286,7 @@ void listen_tao_info(){
     // [TODO] SEMAFORO PER LA LETTURA
         // so_log_is('m', getpid(), "started_agent");
 
-        aval = msg->availability;
+        quantity = msg->availability;
         unit_cost = msg->cost;
         shm_id = msg->shmid;
         sem_id = msg->semid;
