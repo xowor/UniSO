@@ -26,7 +26,7 @@ int pid_msqid[MAX_REQUIRED_RESOURCES][2];
 int pid_msqid_length = 0;
 // char* required_resources[MAX_REQUIRED_RESOURCES];
 int budget;
-int number_required_resources = 0;
+int number_required_resources = 0;				/* n of resources wanted*/
 
 int agent_list[MAX_REQUIRED_RESOURCES];		/* agent's pid*/
 int number_of_agents = 0;
@@ -152,8 +152,9 @@ void create_agent(char* resource_name, int shmid, int semid, int basebid){
 }
 
 void listen_msqid(){
-	// [TODO] SEMAFORO PER LA LETTURA
+	//TO_SEE SEMAFORO PER LA LETTURA
 	simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+	//msgflag = 0 -> bloccante
 	if ( msgrcv(master_msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
 		msqid = msg->content.i;
 	}
@@ -207,9 +208,6 @@ void load_client_resources(){
 						token = strtok(NULL, ";");
 					}
 				//printf("[client][%d][%d] Resource required: %s %d %d \n", client_num, pid, name, avail, cost);
-
-				// resourcesNumber++;
-				// required_resources[required_resources_length++] = name;
 
 				/* Adds the read resources inside the required resources list */
 				add_resource(req_resources, name, avail, cost);
@@ -428,11 +426,12 @@ void gc(){
 }
 
 void sigint_signal_handler(){
-	// uccidi gli agenti
+	// kills agents
 	int i = 0;
 	for(; i < MAX_REQUIRED_RESOURCES; i++)
 		if(agent_list[i] != 0)
 			kill(agent_list[i], SIGKILL);
+
 	// deregistrati dal banditore
 	status = CLIENT_UNREGISTERED;
 	exit(EXIT_SUCCESS);
@@ -459,7 +458,7 @@ int main(int argc, char** argv){
 
 		listen_sigint_signal();
 
-	listen_msqid();
+	  listen_msqid();
 
     load_client_resources();
 

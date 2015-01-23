@@ -23,6 +23,7 @@ tao* working_tao;
 
 /**
 * Support function to make_bid.
+* substitutes bids[n] qualities with new ones
 */
 void replace_bids(int n, bid* new_bid, tao* auction_tao){
     auction_tao->bids[n].client_pid    = new_bid->client_pid;
