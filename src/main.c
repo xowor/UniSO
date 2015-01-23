@@ -10,15 +10,14 @@
 #include "config.h"
 
 extern int errno;       /* Externally declared (by kernel) */
-int auct_pid = 0;
-int status = 0;
+int auctioneer_pid = 0;       /* Auctioneer PID */
 
 /**
  * Creates the auctioneer process.
  */
 int create_auctioneer(int master_msqid){
+    /* puts message queue's id into a char array */
     char str_master_msqid [32];
-    //puts message queue's id into a char array
     sprintf(str_master_msqid, "%d", master_msqid);
 
     int auctioneer_pid = fork();
@@ -27,11 +26,10 @@ int create_auctioneer(int master_msqid){
         printf("[main] Error: auctioneer not created.\n");
         fprintf(stderr, "\t%s\n", strerror(errno));
         exit(EXIT_FAILURE);
-    }
-    if ( auctioneer_pid == 0 ) {
+    } else if ( auctioneer_pid == 0 ) {
         /*  Child code */
         char *envp[] = { NULL };
-        //executes auctioneer file
+        //executes auctioneer binary
         char *argv[] = { "./auctioneer", "-m", str_master_msqid, NULL };
         /* Run the auctioneer process. */
         int auct_execve_err = execve("./auctioneer", argv, envp);
@@ -43,14 +41,11 @@ int create_auctioneer(int master_msqid){
             fprintf(stderr, "\t%s\n", strerror(errno));
         }
     } else {
-        /* Parent code
-        writes on global variable the auctioner's pid */
-        auct_pid = auctioneer_pid;
+        /* Parent code */
         return EXIT_SUCCESS;
     }
 
 
-    /* TO_SEE*/
     perror("fork");
     exit(EXIT_FAILURE);
 }
@@ -87,10 +82,6 @@ int create_client(int master_msqid, int client_num){
         /* Parent code */
         return EXIT_SUCCESS;
     }
-
-    /* TO_SEE above
-    perror("fork");
-    exit(EXIT_FAILURE); */
 }
 
 
@@ -102,24 +93,25 @@ int main(int argc, char** argv) {
     printf("[main] Started main.\t\tPid: %d\n", getpid());
     fflush(stdout);
 
-    /* Get the message queue id, with the 0600 permissions. (everything to user) */
+    /* Chreate the master message queue id, with the 0600 permissions. (everything to user) */
     int master_msqid = msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
-    int i = 0;
     int auctnr_exit = create_auctioneer(master_msqid);
 
     /* Checks the auctioneer creation was successful. */
     if (auctnr_exit == 0){
+        int i = 0;
         for (i = 0; i < MAX_CLIENTS; i++){
-            int clnt_exit = create_client(master_msqid, i);
+            int client_exit = create_client(master_msqid, i);
             /* If the client creation fails, will not try to create more clients */
-            if (clnt_exit != 0)
+            if (client_exit != 0)
                 exit(EXIT_FAILURE);
         }
 
         int processes = MAX_CLIENTS + 1;
         while(processes > 0){
             //wait for all childs to end
-            waitpid(-1, &status, WUNTRACED);
+            int p_status = 0;
+            waitpid(-1, &p_status, WUNTRACED);
             processes--;
         }
         exit(EXIT_SUCCESS);

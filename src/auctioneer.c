@@ -430,6 +430,7 @@ void start_auction_system(){
             notify_tao_creation(current_tao);
             create_tao_process(current_tao->id, current_tao->lifetime, tao_processes_msqid);
             tao_counter++;
+            printf("[\x1b[34mAuction\x1b[0m] %-16s ||  Starting three seconds timer (tao id: %d)\n", current_tao->name, current_tao->id);
         }
     }
 
