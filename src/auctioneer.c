@@ -371,7 +371,7 @@ void create_tao_process(int id_tao, int lifetime, int tao_processes_msqid){
         }
     } else {
       /* Parent code*/
-      return EXIT_SUCCESS;
+    //   return EXIT_SUCCESS;
     }
 
 

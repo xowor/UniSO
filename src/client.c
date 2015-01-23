@@ -473,7 +473,6 @@ int main(int argc, char** argv){
 	// detacharsi dall'area condivisa
 
 	fprintf(stdout, "[client][%d][%d] \x1b[31mRemoving all the IPC structures... \x1b[0m \n", client_num, pid);
-	ipc_gc();
 
 	fprintf(stdout, "[client][%d][%d] \x1b[31mCleaning heap... \x1b[0m \n", client_num, pid);
 	gc();
