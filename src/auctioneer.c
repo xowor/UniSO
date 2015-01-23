@@ -122,8 +122,7 @@ int listen_client_status(int client_msqid){
   int j = 0;
   //TO_SEE MSG_NOERROR flag?
   if ( msgrcv(client_msqid, msg, sizeof(client_status) - sizeof(long), CLIENT_STATUS_MTYPE, 0) != -1 ) {
-      if (msg->type == CLIENT_UNREGISTERED)
-          client_unregistration(msg->pid);
+
     return 0;
   }
   return -1;
@@ -182,6 +181,7 @@ void notify_tao_start(tao* created_tao){
           for (; j < MAX_CLIENTS; j++){
               if (pid_msqid[j][0] == client_pid){
                   msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
+                      so_log('r');
                       //check if message received
                   listen_client_status(pid_msqid[j][1]);
               }
@@ -375,8 +375,6 @@ void create_tao_process(int id_tao, int lifetime, int tao_processes_msqid){
     } else if ( tao_process_pid == 0 ) {
         /*  Child code */
         char *envp[] = { NULL };
-        // so_log_s('y', str_lifetime);
-        // so_log_i('y', lifetime);
         char *argv[] = { "./tao_process", "-t", str_lifetime, "-m", str_tao_processes_msqid, "-i",  str_id_tao, NULL };
         /* Run the auctioneer process. */
         int auct_execve_err = execve("./tao_process", argv, envp);
@@ -386,12 +384,7 @@ void create_tao_process(int id_tao, int lifetime, int tao_processes_msqid){
             /* strerror nterprets the value of errnum, generating a string with a message that describes the error */
             fprintf(stderr, "\t%s\n", strerror(errno));
         }
-    } else {
-      /* Parent code*/
-    //   return EXIT_SUCCESS;
     }
-
-
 }
 
 void start_auction_system(){
@@ -410,7 +403,7 @@ void start_auction_system(){
                     // so_log_i('b', current_tao->dummy);
                     notify_tao_end(current_tao);
                     assign_resources(current_tao);
-                    printf("[\x1b[34mAuction\x1b[0m] %-16s ||  \x1b[31mEnded\x1b[0m auction at %u (tao id: %d)\n", current_tao->name, (unsigned)time(NULL), current_tao->id);
+                    printf("[\x1b[34mAuction\x1b[0m] %-16s || Ended auction (tao id: %d)\n", current_tao->name, current_tao->id);
                     // deallocare semafori TO_SEE (tutto il pool in una volta? o uno per uno)
                     semctl(current_tao->sem_id, 0, IPC_RMID, 0);
                     shmctl(current_tao->shm_id, IPC_RMID, 0);
@@ -427,8 +420,7 @@ void start_auction_system(){
 					          current_tao = get_tao(msg->content.i);
                     start_tao(current_tao);
 					          notify_tao_start(current_tao);
-                    // so_log_i('m', i++);
-                    printf("[\x1b[34mAuction\x1b[0m] %-16s ||  \x1b[32mStarted\x1b[0m auction at %u (tao id: %d)\n", current_tao->name, (unsigned)time(NULL), current_tao->id);
+                    printf("[\x1b[34mAuction\x1b[0m] %-16s || Started auction (tao id: %d)\n", current_tao->name, current_tao->id);
                 }
 
             }
@@ -455,26 +447,15 @@ void start_auction_system(){
 
 
 void notify_clients_unregistration(){
-    // [TODO] SEMAFORO PER LA SCRITTURA
     /* For each client interested in the TAO */
     int i = 0;
-    for (; i < registered_clients; i++){
-      int client_pid = client_list[i];
-
-      /* Allocates the auction_status message */
-      auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
-      msg->mtype = AUCTION_STATUS_MTYPE;
-      msg->type = UNREGISTRATION;
-
-      /* Gets the message queue id of the client */
-      int j = 0;
-      for (; j < MAX_CLIENTS; j++){
-        //send message to clients registered to auctioneer to unregister themselves
-        if (pid_msqid[j][0] == client_pid){
-          msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
-        }
-      }
-      free(msg);
+    // propagare sig int ai client
+    for (; i < MAX_CLIENTS; i++){
+      if(client_list[i] != 0)
+        kill(client_list[i], SIGINT);
+        so_log('c');
+        so_log('b');
+        so_log('r');
     }
 }
 

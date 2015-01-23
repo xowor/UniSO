@@ -269,10 +269,9 @@ void listen_tao_start(){
     if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
         tao_id = msg->content.i;
         // printf("[agent] Started making bids for resource %s.\tPid: %d\tPPid: %d\n", res, pid, getppid());
-        fflush(stdout);
-        // [TODO] SEMAFORO PER LA LETTURA
+        // fflush(stdout);
         current_bid = 0;
-		while(make_action(tao_id) == 0){}
+		    while(make_action(tao_id) == 0){}
     }
     free(msg);
 }

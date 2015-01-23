@@ -22,7 +22,7 @@ typedef struct _resource {
 
 typedef struct _resource_list {
     resource* list;
-    int resources_count;
+    int resources_count;    /* List's size */
 } resource_list;
 
 
@@ -35,7 +35,6 @@ resource_list* create_resource_list(){
 
 resource* add_resource(resource_list* list, char name[MAX_RES_NAME_LENGTH], int avail, int cost){
     resource* new_resource = (resource*) malloc(sizeof(resource));
-    // new_resource->name = malloc(MAX_RES_NAME_LENGTH);
     strcpy(new_resource->name, name);
     new_resource->availability = avail;
     new_resource->cost = cost;
@@ -48,9 +47,7 @@ resource* add_resource(resource_list* list, char name[MAX_RES_NAME_LENGTH], int 
 }
 
 resource* get_resource(char* name, resource_list* list){
-
     resource* tmp_resource = list->list;
-
     /* adds name's resource and common informations to each tao */
     while(tmp_resource){
         if(strcmp(tmp_resource->name, name) == 0){
