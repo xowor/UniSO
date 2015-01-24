@@ -80,7 +80,6 @@ void create_tao(char name[MAX_RES_NAME_LENGTH], int cost){
 
 
 tao* get_tao(int i){
-
     if (i < taos_count)
         return taos[i];
     else
@@ -107,7 +106,7 @@ tao* get_tao_by_id(int id){
     return tmp;
 }
 
-
+/* Registers a client to the TAO */
 void register_client_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
     int i = 0;
     for (; i < taos_count; i++){
@@ -123,40 +122,14 @@ void register_client_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
  * Shared area creation and defines the lifetime.
  */
 void start_tao(tao* current_tao){
-    /* Put the tao into the shm */
-    // tao* shm;
-    // /* Attach to shm */
-    // if (!(shm = (tao*) shmat(current_tao->shm_id, NULL, 0))) {
-    //     perror("shmat");
-    //     exit(1);
-    // }
-
-    // memcpy(shm, current_tao, sizeof(current_tao));
-    // memcpy(shm->name, current_tao->name, /*sizeof(current_tao)*/MAX_RES_NAME_LENGTH);
-    //
-    // so_log_i('c', shm->lifetime);
-    // so_log_i('c', current_tao->lifetime);
-    // shm = current_tao;
-
     /* Enable access to the TAO shm */
     semctl(sem_id, current_tao->id, SETVAL, 1);
 }
 
 
 void init_tao(tao* current_tao){
-    // TO_SEE int shm_id = shmget(IPC_PRIVATE, sizeof(tao), 0600 | IPC_CREAT);
-    // if(shm_id == -1){
-	// 	perror("shmget");
-	// 	exit(EXIT_FAILURE);
-	// }
-
-    // tao* t;
-    // t = (tao*) shmat(shm_id, NULL, 0);
-
-    // current_tao->shm_id = shm_id;
+    /* Sets the TAO lifetime proportionally to the number of clients of the TAO */
     /* The auction must be at least one second long */
-
-    //Durata tao proporzionale al num di clienti che vi partecipano
     current_tao->lifetime = (current_tao->interested_clients_count * AUCTION_LIFETIME_MULTIPLIER) + 1;
 
     /* Disable access to the TAO shm until the tao opens*/

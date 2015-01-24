@@ -26,6 +26,7 @@ int id_tao;
 void alarm_handler() {
     if (lifetime_counter == 1){
         /* Lifetime timer */
+        
         // printf("[tao_process][%d] Lifetime elapsed.\n", getpid());
         simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
         msg->mtype = SIMPLE_MESSAGE_MTYPE;
@@ -44,6 +45,7 @@ void alarm_handler() {
         //fprintf(stdout, "[tao_process] [%d] \x1b[31mQuitting... \x1b[0m \n", getpid());
     } else {
         /* Three seconds timer */
+
         // printf("[tao_process][%d] Three seconds elapsed, now waiting for %d seconds.\n", getpid(), lifetime);
 
         simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
@@ -69,14 +71,13 @@ void alarm_handler() {
 
 
 /**
-* Generates the auctioneer and some clients.
-*/
+ * Sends a message to the auctioneer when three seconds are elapsed and when
+ * the auction lifetime has elapsed.
+ */
 int main(int argc, char** argv) {
     // printf("[tao_process] \x1b[32mTao process.\t\tPid: %d\x1b[0m\n", getpid());
 
-    /**
-    * Loads the process lifetime.
-    */
+    /* Loads the process lifetime. */
     if (argc >= 4 && strcmp(argv[1], "-t")  == 0 && strcmp(argv[3], "-m") == 0 && strcmp(argv[5], "-i") == 0){
         lifetime = atoi(argv[2]);
         tao_processes_msqid = atoi(argv[4]);
@@ -85,12 +86,14 @@ int main(int argc, char** argv) {
         fprintf(stderr, "[tao_process] Error: lifetime (-t), id coda (-m) o id tao (-i) argument not valid.\n");
         return -1;
     }
-    /* timer of 3 seconds before the start of auction */
+
+    /* Sets the timer of 3 seconds before the start of auction */
     if(signal(SIGALRM, alarm_handler) == SIG_ERR)
         printf("[tao_process] [%d] Error in alarm signal.\n", getpid());
     lifetime_counter = 0;
     canexit = 0;
-    // così non aspetta 3 secondi ogni volta che viene invocato??
+
+    /*Starts the alarm */
     alarm(3);
     while(canexit != 1){};
     exit(EXIT_SUCCESS);

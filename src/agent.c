@@ -8,18 +8,19 @@
 #include "messages/tao_info_to_agent.h"
 #include "messages/simple_message.h"
 
-int msqid;
-int unit_cost;
-int quantity;
-int shm_id;
-int sem_id;
-int basebid;
-char* res;
-int budget;
-int current_bid = 0;				/* bid that starts like base_bid and grows at most like budget */
-int tao_id;
 pid_t pid;
 tao* working_tao;
+int tao_id;                         /* The TAO id */
+int msqid;                          /* The message queue (with the client) id */
+int shm_id;                         /* The TAO shared memory id */
+int sem_id;                         /* The TAO shared memory access semaphore id */
+
+char* resource_name;                /* The resource name */
+int base_bid;                       /* The base bid for the auction */
+int budget;                         /* The current budget */
+int unit_cost;                      /* The resource unit cost for the current bid */
+int quantity;                       /* The resource quantity for the current bid */
+int current_bid = 0;				/* The current bid (unit_cost * quantity) */
 
 /**
 * Support function to make_bid.
@@ -225,7 +226,7 @@ int make_action(int tao_id){
 
 				if(val == 0){
                     print_auction_status(working_tao);
-					// printf("[agent] [%d] The agent has made bid in the amount of %d for %s.\n", pid, current_bid, res);
+					// printf("[agent] [%d] The agent has made bid in the amount of %d for %s.\n", pid, current_bid, resource_name);
 				}else if(val == -2){
                     /* Make a new increased bid */
 					make_action(tao_id);
@@ -260,7 +261,7 @@ void listen_tao_start(){
     simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
     if ( msgrcv(msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
         tao_id = msg->content.i;
-        // printf("[agent] Started making bids for resource %s.\tPid: %d\tPPid: %d\n", res, pid, getppid());
+        // printf("[agent] Started making bids for resource %s.\tPid: %d\tPPid: %d\n", resource_name, pid, getppid());
         // fflush(stdout);
         current_bid = 0;
 		    while(make_action(tao_id) == 0){}
@@ -281,10 +282,10 @@ void listen_tao_info(){
         unit_cost = msg->cost;
         shm_id = msg->shmid;
         sem_id = msg->semid;
-        basebid = msg->basebid;
-        current_bid = basebid;
+        base_bid = msg->base_bid;
+        current_bid = base_bid;
         budget = msg->budget;
-        strcpy(res, msg->res);
+        strcpy(resource_name, msg->resource_name);
 
         working_tao = (tao*) shmat(shm_id, NULL, 0);
     }
@@ -295,18 +296,16 @@ void listen_tao_info(){
 
 
 
-
-
 int main(int argc, char** argv){
 	pid = getpid();
-    res = (char*) malloc(sizeof(char) * MAX_RES_NAME_LENGTH);
+    resource_name = (char*) malloc(sizeof(char) * MAX_RES_NAME_LENGTH);
 
 	// printf("[agent] Started agent.\tPid: %d\tPPid: %d\n", pid, getppid());
 
 	if (argc >= 2 && strcmp(argv[1], "-m") == 0 ){
 
         msqid = atoi(argv[2]);
-        // strcpy(res, argv[4]);
+        // strcpy(resource_name, argv[4]);
         // so_log_s('y', "agent: TAO started");
         //fprintf(stdout, "[agent][%d] Using message queue %d\n", pid, msqid);
     } else {

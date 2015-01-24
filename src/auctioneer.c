@@ -14,7 +14,6 @@
 #include "semaphore.h"
 #include "messages/introduction.h"
 #include "messages/simple_message.h"
-#include "messages/tao_opening.h"
 #include "messages/auction_result.h"
 #include "messages/auction_status.h"
 #include "messages/client_status.h"
@@ -32,7 +31,7 @@ int registered_clients_count;               /* The number of the registered clie
 
 
 int master_msqid = 0;                       /* The id of the master message queue */
-int pid_msqid[MAX_CLIENTS][2];              /* Array that associates the client PID to
+int client_pid_msqid[MAX_CLIENTS][2];              /* Array that associates the client PID to
                                              * his own message queue */
 int semid;                                  /* The id of the the TAOs creation semaphore */
 int opened_auctions = 0;                    /* The number of opened auctions */
@@ -47,11 +46,11 @@ int canexit = 0;					        /* If set to 1 will (busy) wait for the auction sys
 
 
 
-int get_msqid_from_pid(int client_pid) {
+int client_msqid_from_pid(int client_pid) {
     int j = 0;
     for (; j < MAX_CLIENTS; j++){
-        if (pid_msqid[j][0] == client_pid){
-            return pid_msqid[j][1];
+        if (client_pid_msqid[j][0] == client_pid){
+            return client_pid_msqid[j][1];
         }
     }
 }
@@ -101,7 +100,7 @@ void distribute_msqs(){
         msgsnd(master_msqid, msg, sizeof(simple_message) - sizeof(long), 0600);
         free(msg);
 
-        pid_msqid[i][1] = msqid;
+        client_pid_msqid[i][1] = msqid;
     }
 }
 
@@ -162,7 +161,7 @@ void notify_tao_creation(tao* created_tao){
           msg->base_bid = created_tao->base_bid;
 
           /* Sends the message and waits for the client status */
-          int client_msqid = get_msqid_from_pid(client_pid);
+          int client_msqid = client_msqid_from_pid(client_pid);
           msgsnd(client_msqid, msg, sizeof(auction_status) - sizeof(long), 0600);
           listen_client_status(client_msqid);
 
@@ -187,7 +186,7 @@ void notify_tao_start(tao* created_tao){
           strcpy(msg->resource, created_tao->name);
 
           /* Sends the message and waits for the client status */
-          int client_msqid = get_msqid_from_pid(client_pid);
+          int client_msqid = client_msqid_from_pid(client_pid);
           msgsnd(client_msqid, msg, sizeof(auction_status) - sizeof(long), 0600);
           listen_client_status(client_msqid);
 
@@ -212,7 +211,7 @@ void notify_tao_end(tao* created_tao){
           strcpy(msg->resource, created_tao->name);
 
           /* Sends the message and waits for the client status */
-          int client_msqid = get_msqid_from_pid(client_pid);
+          int client_msqid = client_msqid_from_pid(client_pid);
           msgsnd(client_msqid, msg, sizeof(auction_status) - sizeof(long), 0600);
           listen_client_status(client_msqid);
 
@@ -236,7 +235,7 @@ void notify_auction_result(int client_pid, char* name, int quantity, int unit_bi
     msg->unit_bid = unit_bid;
 
     /* Sends the message and waits for the client status */
-    int client_msqid = get_msqid_from_pid(client_pid);
+    int client_msqid = client_msqid_from_pid(client_pid);
     if(is_registered(client_pid) == 1){
         msgsnd(client_msqid, msg, sizeof(auction_status) - sizeof(long), 0600);
         listen_client_status(client_msqid);
@@ -351,7 +350,7 @@ void listen_introductions(){
 
     int i = 0;
     for (; i < MAX_CLIENTS; i++) {
-        if ( msgrcv(pid_msqid[i][1], intr, sizeof(introduction) - sizeof(long), INTRODUCTION_MTYPE, 0) != -1 ){
+        if ( msgrcv(client_pid_msqid[i][1], intr, sizeof(introduction) - sizeof(long), INTRODUCTION_MTYPE, 0) != -1 ){
             registered_clients[registered_clients_count] = intr->pid;
             registered_clients_count++;
             //printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
@@ -360,7 +359,7 @@ void listen_introductions(){
             for (; j < intr->resources_length; j++){
                 register_client_to_tao(intr->pid, intr->resources[j]); //add interested client to tao
             }
-            pid_msqid[i][0] = intr->pid;
+            client_pid_msqid[i][0] = intr->pid;
         }
     }
     free(intr);
@@ -480,7 +479,7 @@ void kill_clients(){
 }
 
 
-/* Handles the sigint, dispatching it to the clients */
+/* Handles the SIGINT, dispatching it to the clients */
 static void sigint_signal_handler () {
     kill_clients();
 
@@ -539,7 +538,7 @@ int main(int argc, char** argv){
 
     /* subscription request from client to auctioneer*/
     listen_introductions();
-    
+
     /* Removes the master_msq message queue */
     msgctl(master_msqid, IPC_RMID,0);
 

@@ -9,7 +9,6 @@
 #include "resource.h"
 #include "so_log.h"
 #include "messages/introduction.h"
-#include "messages/tao_opening.h"
 #include "messages/simple_message.h"
 #include "messages/tao_info_to_agent.h"
 #include "messages/auction_result.h"
@@ -22,7 +21,7 @@ int msqid;
 int client_num;
 int pid;
 int ppid;
-int pid_msqid[MAX_REQUIRED_RESOURCES][2];
+int agent_pid_msqid[MAX_REQUIRED_RESOURCES][2];
 int pid_msqid_length = 0;
 int budget;
 int number_required_resources = 0;				/* n of resources wanted*/
@@ -33,23 +32,22 @@ int status = CLIENT_OK;				/* The internal status of the client */
 
 resource_list* req_resources;       /* The list containing all the available resources */
 
-int get_agent_msqid(int agent_pid) {
+
+int agent_msqid_from_pid(int agent_pid) {
 	int j = 0;
 	for (; j < pid_msqid_length; j++){
-		if (pid_msqid[j][0] == agent_pid){
-			return pid_msqid[j][1];
+		if (agent_pid_msqid[j][0] == agent_pid){
+			return agent_pid_msqid[j][1];
 		}
 	}
 }
 
 
-/**
- *  Creates agent's process.
- */
+/* Creates agent process. */
 int create_agent_process(){
 	int agent_processes_msqid = msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
 	char str_msqid [32];
-  sprintf(str_msqid, "%d", agent_processes_msqid);
+	sprintf(str_msqid, "%d", agent_processes_msqid);
 
 	int agent_pid = fork();
 	if ( agent_pid == -1 ){
@@ -58,7 +56,7 @@ int create_agent_process(){
         perror("fork");
         exit(EXIT_FAILURE);
     } else if ( agent_pid == 0 ) {
-				fflush(stdout);
+		fflush(stdout);
         /*  Child code */
         char *envp[] = { NULL };
         char *argv[] = { "./agent", "-m", str_msqid, NULL };
@@ -69,46 +67,43 @@ int create_agent_process(){
             fprintf(stderr, "[agent] Error: cannot start agent process (Try running main from ./bin).\n");
             /* strerror interprets the value of errnum, generating a string with a message that describes the error */
             fprintf(stderr, "\t%s\n", strerror(errno));
-						exit(EXIT_FAILURE);
+			exit(EXIT_FAILURE);
         }
     } else {
         /* Parent code */
-        pid_msqid[pid_msqid_length][0] = agent_pid;
-        pid_msqid[pid_msqid_length][1] = agent_processes_msqid;
+        agent_pid_msqid[pid_msqid_length][0] = agent_pid;
+        agent_pid_msqid[pid_msqid_length][1] = agent_processes_msqid;
         pid_msqid_length++;
         return agent_pid;
     }
-    //  TO_SEE exit(EXIT_FAILURE);
 }
 
 /**
- * Client communicates to agents resource informations.
+ * Communicates to agents all the necessary informations.
  */
-void notify_tao_info(int pid, int availability, int cost, int shmid, int semid, int basebid, char res[MAX_RES_NAME_LENGTH], int budget){
+void notify_tao_info(int pid, int availability, int cost, int shmid, int semid, int base_bid, char resource_name[MAX_RES_NAME_LENGTH], int budget){
 	/* Allocates the simple_message message */
 	tao_info_to_agent* msg = (tao_info_to_agent*) malloc(sizeof(tao_info_to_agent));
 	msg->mtype = TAO_INFO_TO_AGENT_MTYPE;
-	strcpy(msg->res, res);
+	strcpy(msg->resource_name, resource_name);
 	msg->availability = availability;
 	msg->cost = cost;
 	msg->shmid = shmid;
 	msg->semid = semid;
-	msg->basebid = basebid;
+	msg->base_bid = base_bid;
 	msg->budget = budget / req_resources->resources_count;
 
 	int j = 0;
 	for (; j < pid_msqid_length; j++){
-		if (pid_msqid[j][0] == pid){
-			msgsnd(pid_msqid[j][1], msg, sizeof(tao_info_to_agent) - sizeof(long), 0600);
+		if (agent_pid_msqid[j][0] == pid){
+			msgsnd(agent_pid_msqid[j][1], msg, sizeof(tao_info_to_agent) - sizeof(long), 0600);
 		}
 	}
   free(msg);
 }
 
-/**
- * Creates a single agent for each tao call
- */
-void create_agent(char* resource_name, int shmid, int semid, int basebid){
+/* Creates a single agent */
+void create_agent(char* resource_name, int shmid, int semid, int base_bid){
 	int agent_pid = create_agent_process();
 	agent_list[number_of_agents] = agent_pid;
 	number_of_agents++;
@@ -118,14 +113,15 @@ void create_agent(char* resource_name, int shmid, int semid, int basebid){
 	/* Communicates tao information to agent */
 	while(res){
 		/* Searches specific resource from list */
-    if(strcmp(res->name, resource_name) == 0){
-			notify_tao_info(agent_pid, res->availability, res->cost, shmid, semid, basebid, res->name, budget);
+    	if(strcmp(res->name, resource_name) == 0){
+			notify_tao_info(agent_pid, res->availability, res->cost, shmid, semid, base_bid, res->name, budget);
 			res->agent_pid = agent_pid;
 		}
 		res = res->next;
 	}
 }
 
+/* Listen for the msqid with the auctioneer */
 void listen_msqid(){
 	simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
 	//msgflag = 0 -> bloccante
@@ -190,7 +186,7 @@ void load_client_resources(){
         fprintf(stderr, "[client][%d][%d] Error: Unable to open resource's file. %s\n", client_num, pid, strerror(errno));
     }
     fflush(stdout);
-	  fclose(resources);
+	fclose(resources);
 }
 
 /**
@@ -225,6 +221,7 @@ void send_introduction(){
 	free(intr);
 }
 
+/* Notifies the start of his auction */
 void notify_agent_start(int agent_pid){
   	simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
     msg->mtype = SIMPLE_MESSAGE_MTYPE;
@@ -236,11 +233,13 @@ void notify_agent_start(int agent_pid){
     strcpy(msg->msg, AUCTION_START_MSG);
 
     /* Gets the message queue id of the client */
-		int agent_msqid = get_agent_msqid(agent_pid);
-		msgsnd(agent_msqid, msg, sizeof(simple_message) - sizeof(long), 0600);
+	int agent_msqid = agent_msqid_from_pid(agent_pid);
+	msgsnd(agent_msqid, msg, sizeof(simple_message) - sizeof(long), 0600);
     free(msg);
 }
 
+
+/* Notifies the client status to the auctioneer */
 void notify_client_status(int status){
 	client_status* msg = (client_status*) malloc(sizeof(client_status));
 	msg->type = getpid();
@@ -252,20 +251,21 @@ void notify_client_status(int status){
 	free(msg);
 }
 
-void delete_agent_from_list(int agent_pid){
+/* Removes an agent from the agents list */
+void remove_agent_from_list(int agent_pid){
 	int i = 0;
 	for(; i < MAX_REQUIRED_RESOURCES; i++)
 		if(agent_list[i] == agent_pid)
 			agent_list[i] = 0;
 }
 
+/* Lustens for action status messages */
 void listen_auction_status(){
 	FILE *file;
 	char fname[256];
 	sprintf(fname, "../results/%d.txt", client_num);
 	file = fopen(fname, "w");
 	fprintf(file, " ");
-	fclose(file);
 
 	// int _creations = 0;
 	// int _starts = 0;
@@ -275,14 +275,16 @@ void listen_auction_status(){
 
 	int i = 0;
 	for (; i < req_resources->resources_count * 4; i++){
+		/* For each auction, the client should receive 4 messagese (creation,
+		 * start, end, results) */
 		auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
 		if ( msgrcv(msqid, msg, sizeof(auction_status) - sizeof(long), AUCTION_STATUS_MTYPE, 0) != -1 ) {
 			if (msg->type == AUCTION_CREATED) {
-				// _creations++;
+				/* Auction created, the agent can be created. */
 				create_agent(msg->resource, msg->shm_id, msg->sem_id, msg->base_bid);
 				notify_client_status(status);
 			} else if (msg->type == AUCTION_STARTED) {
-				// _starts++;
+				/* Auction started, the agent can be notified of it. */
 				resource* res = req_resources->list;
 				while(res){
 					if(strcmp(res->name, msg->resource) == 0){
@@ -292,18 +294,18 @@ void listen_auction_status(){
 				}
 				notify_client_status(status);
 			} else if (msg->type == AUCTION_ENDED) {
-				// _ends++;
+				/* Auction ended, the agent can killed. */
 				resource* res = req_resources->list;
 				while(res){
 					if(strcmp(res->name, msg->resource) == 0){
 						signal(SIGCHLD, SIG_IGN);
-						delete_agent_from_list(res->agent_pid);
+						remove_agent_from_list(res->agent_pid);
 						number_of_agents--;
 						int p_status;
 						kill(res->agent_pid, SIGKILL);
 						waitpid(res->agent_pid, &p_status, WUNTRACED);
 						/* Removes the queue message */
-						int agent_msqid = get_agent_msqid(res->agent_pid);
+						int agent_msqid = agent_msqid_from_pid(res->agent_pid);
 						msgctl(agent_msqid, IPC_RMID,0);
 					}
 					res = res->next;
@@ -311,7 +313,7 @@ void listen_auction_status(){
 				number_required_resources--;
 				notify_client_status(status);
 			} else if (msg->type == AUCTION_RESULT){
-				// _results++;
+				/* Auction results received, now can be printed to file */
 				if (msg->quantity > 0){
 					FILE *file;
 					char fname[256];
@@ -319,21 +321,19 @@ void listen_auction_status(){
 					file = fopen(fname, "a");
 					fprintf(file, "[client] [%d] Won %d units of resource %s. Total amount: %d.\n", pid, msg->quantity, msg->resource, (msg->quantity)*(msg->unit_bid));
 					// printf("[client] [%d] Won %d units of resource %s. Total amount: %d.\n", pid, msg->quantity, msg->resource, (msg->quantity)*(msg->unit_bid));
-					fclose(file);
-					// printf("[client] [%d] Won %d units of resource %s\n", pid, msg->quantity, msg->resource);
 				}
 				notify_client_status(status);
-			} else {	}
+			}
 		}
 		free(msg);
 		// printf("creations: %d   starts: %d    ends:%d     results:%d\n", _creations, _starts, _ends, _results);
 	}
-		// while(1){};
 	free(req_resources);
+	fclose(file);
 }
 
 
-
+/* Handles the SIGINT and kills the agents */
 void sigint_signal_handler(){
 	// kills agents
 	int i = 0;
@@ -361,12 +361,12 @@ int main(int argc, char** argv){
         fprintf(stderr, "[client][%d] Error: master_msqid (-m) or client number (-c) argument not valid.\n", pid);
         return -1;
     }
-		listen_sigint_signal();
+	listen_sigint_signal();
 
-	  listen_msqid();
+	listen_msqid();
 
 
-    load_client_resources();
+	load_client_resources();
 
 	send_introduction();
 
@@ -375,11 +375,10 @@ int main(int argc, char** argv){
 	// TO_SEE detacharsi dall'area condivisa
 
 
-  fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
-  fflush(stdout);
+	fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
+	fflush(stdout);
 
-    // se banditore comunica acquisizione di risorsa --> scrivere su file di log : risorsa acquisita; quantità; prezzoComplessivo
-    // lo stato di terminazione del figlio è  restituito nell'argomento status della wait --> processo padre viene svegliato
+	// lo stato di terminazione del figlio è  restituito nell'argomento status della wait --> processo padre viene svegliato
 
-    return 0;
+	return 0;
 }
