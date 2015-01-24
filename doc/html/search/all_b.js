@@ -1,5 +1,14 @@
 var searchData=
 [
-  ['pid',['pid',['../struct__introduction.html#ae0d46a978d5cd6707411f276ad869b9c',1,'_introduction::pid()'],['../struct__simple__message.html#ae0d46a978d5cd6707411f276ad869b9c',1,'_simple_message::pid()'],['../client_8c.html#af500917c052066b40cf47f96b43c607b',1,'pid():&#160;client.c']]],
-  ['ppid',['ppid',['../client_8c.html#a3e6a4222de552b3170858a81898dd657',1,'client.c']]]
+  ['name',['name',['../struct__resource.html#a713453550fc4f39d1139801d89b819bd',1,'_resource::name()'],['../struct__tao.html#ae14d065f4303ecca126916431adfd475',1,'_tao::name()']]],
+  ['next',['next',['../struct__resource.html#a382de65deaad35618919e2db4447c087',1,'_resource']]],
+  ['notify_5fagent_5fstart',['notify_agent_start',['../client_8c.html#a450dc9a09b37df32fb9660cea191ceef',1,'notify_agent_start(int agent_pid):&#160;client.c'],['../client_8h.html#a450dc9a09b37df32fb9660cea191ceef',1,'notify_agent_start(int agent_pid):&#160;client.c']]],
+  ['notify_5fauction_5fresult',['notify_auction_result',['../auctioneer_8c.html#af81f57e15b10cf05c734ea753dba06ed',1,'notify_auction_result(int client_pid, char *name, int quantity, int unit_bid):&#160;auctioneer.c'],['../auctioneer_8h.html#af81f57e15b10cf05c734ea753dba06ed',1,'notify_auction_result(int client_pid, char *name, int quantity, int unit_bid):&#160;auctioneer.c']]],
+  ['notify_5fclient_5fstatus',['notify_client_status',['../client_8c.html#a6f198282e0aebc7895a9fe0d5bd9aee0',1,'notify_client_status(int status):&#160;client.c'],['../client_8h.html#a6f198282e0aebc7895a9fe0d5bd9aee0',1,'notify_client_status(int status):&#160;client.c']]],
+  ['notify_5ftao_5fcreation',['notify_tao_creation',['../auctioneer_8c.html#a62d85b3ee80c9940bf00b4a36d77e3ad',1,'notify_tao_creation(tao *created_tao):&#160;auctioneer.c'],['../auctioneer_8h.html#a62d85b3ee80c9940bf00b4a36d77e3ad',1,'notify_tao_creation(tao *created_tao):&#160;auctioneer.c']]],
+  ['notify_5ftao_5fend',['notify_tao_end',['../auctioneer_8c.html#a4879d9f750f34aa5a564ad66d391bfaa',1,'notify_tao_end(tao *created_tao):&#160;auctioneer.c'],['../auctioneer_8h.html#a4879d9f750f34aa5a564ad66d391bfaa',1,'notify_tao_end(tao *created_tao):&#160;auctioneer.c']]],
+  ['notify_5ftao_5finfo',['notify_tao_info',['../client_8c.html#a8ad0c6a58c307801c7b25527cd12c6cf',1,'notify_tao_info(int pid, int availability, int cost, int shmid, int semid, int base_bid, char resource_name[MAX_RES_NAME_LENGTH], int budget):&#160;client.c'],['../client_8h.html#a8ad0c6a58c307801c7b25527cd12c6cf',1,'notify_tao_info(int pid, int availability, int cost, int shmid, int semid, int base_bid, char resource_name[MAX_RES_NAME_LENGTH], int budget):&#160;client.c']]],
+  ['notify_5ftao_5fstart',['notify_tao_start',['../auctioneer_8c.html#ab551648ea4e1dacca38930e4e968d37a',1,'notify_tao_start(tao *created_tao):&#160;auctioneer.c'],['../auctioneer_8h.html#ab551648ea4e1dacca38930e4e968d37a',1,'notify_tao_start(tao *created_tao):&#160;auctioneer.c']]],
+  ['number_5fof_5fagents',['number_of_agents',['../client_8c.html#a1e3b076e7162e400d3db0a966ab114ce',1,'client.c']]],
+  ['number_5frequired_5fresources',['number_required_resources',['../client_8c.html#aa1c8169b3eb532dd14ba0cc9c7fdc378',1,'client.c']]]
 ];

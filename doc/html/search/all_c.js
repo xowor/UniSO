@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['quantity',['quantity',['../struct__bid.html#ae6969e17e31c17a28dbf801f91acacfb',1,'_bid']]]
+  ['opened_5fauctions',['opened_auctions',['../auctioneer_8c.html#a5339137d29dbc796af687ee05ebcd051',1,'auctioneer.c']]]
 ];

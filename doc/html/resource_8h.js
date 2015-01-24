@@ -1,6 +1,8 @@
 var resource_8h =
 [
-    [ "resource_list", "resource_8h.html#a89f93cc393d6bf2bc4ca9c415313dafd", null ],
-    [ "resourcesList", "resource_8h.html#a8e00ac70d9e1a48a426ccc506db29bc8", null ],
-    [ "add_resource", "resource_8h.html#abab3f3811b6b0a6302e89889b8262c89", null ]
+    [ "add_resource", "resource_8h.html#a01c951e5bb0b3411b90e0e7216976e8e", null ],
+    [ "create_resource_list", "resource_8h.html#a05e985a135ecab2e1883bd02b772b4cc", null ],
+    [ "get_resource", "resource_8h.html#a3518fdbed593dae174cc2e73ba55c0a6", null ],
+    [ "get_resource_from_line", "resource_8h.html#aac52b5b1b4b40eb76ce225fc23dc55e7", null ],
+    [ "load_resources", "resource_8h.html#a21fbda6eaec9e5c64b69c39b4f4e5aaa", null ]
 ];

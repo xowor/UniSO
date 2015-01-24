@@ -29,6 +29,6 @@
 *.hex
 
 
-nbproject/
-bin/
+nbproject
+bin/*
 results/*

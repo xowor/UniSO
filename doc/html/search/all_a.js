@@ -1,4 +1,20 @@
 var searchData=
 [
-  ['opened_5fauctions',['opened_auctions',['../auctioneer_8c.html#a5339137d29dbc796af687ee05ebcd051',1,'auctioneer.c']]]
+  ['main',['main',['../agent_8c.html#a3c04138a5bfe5d72780bb7e82a18e627',1,'main(int argc, char **argv):&#160;agent.c'],['../agent_8h.html#a3c04138a5bfe5d72780bb7e82a18e627',1,'main(int argc, char **argv):&#160;agent.c'],['../auctioneer_8c.html#a3c04138a5bfe5d72780bb7e82a18e627',1,'main(int argc, char **argv):&#160;auctioneer.c'],['../auctioneer_8h.html#a3c04138a5bfe5d72780bb7e82a18e627',1,'main(int argc, char **argv):&#160;agent.c'],['../client_8c.html#a3c04138a5bfe5d72780bb7e82a18e627',1,'main(int argc, char **argv):&#160;client.c'],['../client_8h.html#a3c04138a5bfe5d72780bb7e82a18e627',1,'main(int argc, char **argv):&#160;agent.c'],['../main_8c.html#a3c04138a5bfe5d72780bb7e82a18e627',1,'main(int argc, char **argv):&#160;main.c'],['../main_8h.html#a3c04138a5bfe5d72780bb7e82a18e627',1,'main(int argc, char **argv):&#160;agent.c'],['../tao__process_8c.html#a3c04138a5bfe5d72780bb7e82a18e627',1,'main(int argc, char **argv):&#160;tao_process.c'],['../tao__process_8h.html#a3c04138a5bfe5d72780bb7e82a18e627',1,'main(int argc, char **argv):&#160;agent.c']]],
+  ['main_2ec',['main.c',['../main_8c.html',1,'']]],
+  ['main_2eh',['main.h',['../main_8h.html',1,'']]],
+  ['make_5faction',['make_action',['../agent_8c.html#ad0cb958751c86baf56d998ad2b4a77a0',1,'make_action(int tao_id):&#160;agent.c'],['../agent_8h.html#ad0cb958751c86baf56d998ad2b4a77a0',1,'make_action(int tao_id):&#160;agent.c']]],
+  ['make_5fbid',['make_bid',['../agent_8c.html#a45f2fa47ece1d56a5173fcd72c467780',1,'make_bid(tao *auction_tao):&#160;agent.c'],['../agent_8h.html#a45f2fa47ece1d56a5173fcd72c467780',1,'make_bid(tao *auction_tao):&#160;agent.c']]],
+  ['master_5fmsqid',['master_msqid',['../auctioneer_8c.html#af11dd98d31be665c0a8863329dbec3ed',1,'master_msqid():&#160;auctioneer.c'],['../client_8c.html#af11dd98d31be665c0a8863329dbec3ed',1,'master_msqid():&#160;client.c']]],
+  ['max_5fbids',['MAX_BIDS',['../config_8h.html#a12f625d4935de54b98e7046e475e9863',1,'config.h']]],
+  ['max_5fclients',['MAX_CLIENTS',['../config_8h.html#a0a8f91f93d75a07f0ae45077db45b3eb',1,'config.h']]],
+  ['max_5fopen_5fauctions',['MAX_OPEN_AUCTIONS',['../config_8h.html#a4b912c4f50c4046c8728cb3ed843ed1b',1,'config.h']]],
+  ['max_5frequired_5fresources',['MAX_REQUIRED_RESOURCES',['../config_8h.html#ac91a1136ceadea84c7e339eddd81bd3b',1,'MAX_REQUIRED_RESOURCES():&#160;config.h'],['../config_8h.html#ac91a1136ceadea84c7e339eddd81bd3b',1,'MAX_REQUIRED_RESOURCES():&#160;config.h']]],
+  ['max_5fres_5fname_5flength',['MAX_RES_NAME_LENGTH',['../config_8h.html#aaa7bd013b2ed70755bc3253ecf704e46',1,'config.h']]],
+  ['max_5fsimple_5fmess_5flength',['MAX_SIMPLE_MESS_LENGTH',['../config_8h.html#a43cb33b6537da3e4eae5ee8a44c17206',1,'config.h']]],
+  ['msg',['msg',['../struct__simple__message.html#aa6fd6f909ec5f9551f92b488974cfdab',1,'_simple_message']]],
+  ['msg_5fcontent',['msg_content',['../simple__message_8c.html#af36d3181775f4e35e99c3560f05612c0',1,'msg_content():&#160;simple_message.c'],['../simple__message_8h.html#a7b1c92a5f6a7fcd0e850ede661e93828',1,'msg_content():&#160;simple_message.h']]],
+  ['msg_5fqueue_5fmsg',['MSG_QUEUE_MSG',['../config_8h.html#a449095b1e66f94fc5cd4a62ede971b3f',1,'config.h']]],
+  ['msqid',['msqid',['../struct__introduction.html#ae73e6a837794db6e63f23db2d64a8130',1,'_introduction::msqid()'],['../agent_8c.html#ae73e6a837794db6e63f23db2d64a8130',1,'msqid():&#160;agent.c'],['../client_8c.html#ae73e6a837794db6e63f23db2d64a8130',1,'msqid():&#160;client.c']]],
+  ['mtype',['mtype',['../struct__auction__result.html#aa3f836ce5342ead8107a83d39ba3569a',1,'_auction_result::mtype()'],['../struct__auction__status.html#aa3f836ce5342ead8107a83d39ba3569a',1,'_auction_status::mtype()'],['../struct__client__status.html#aa3f836ce5342ead8107a83d39ba3569a',1,'_client_status::mtype()'],['../struct__introduction.html#aa3f836ce5342ead8107a83d39ba3569a',1,'_introduction::mtype()'],['../struct__simple__message.html#aa3f836ce5342ead8107a83d39ba3569a',1,'_simple_message::mtype()'],['../struct__tao__info__to__agent.html#aa3f836ce5342ead8107a83d39ba3569a',1,'_tao_info_to_agent::mtype()']]]
 ];

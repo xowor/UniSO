@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['init_5ftaos',['init_taos',['../tao_8c.html#a92d83754f090ad184733cffaffabfd00',1,'init_taos(int number):&#160;tao.c'],['../tao_8h.html#a92d83754f090ad184733cffaffabfd00',1,'init_taos(int number):&#160;tao.c']]],
-  ['ipc_5fgc',['ipc_gc',['../auctioneer_8c.html#ad2504fc13f04edf582316950ab45f86d',1,'ipc_gc():&#160;auctioneer.c'],['../auctioneer_8h.html#ad2504fc13f04edf582316950ab45f86d',1,'ipc_gc():&#160;auctioneer.c'],['../client_8c.html#ad2504fc13f04edf582316950ab45f86d',1,'ipc_gc():&#160;client.c'],['../client_8h.html#ad2504fc13f04edf582316950ab45f86d',1,'ipc_gc():&#160;auctioneer.c']]]
+  ['deregister_5fclient',['deregister_client',['../auctioneer_8c.html#ab85727b183eb151bb2b72c9b026b6ea0',1,'deregister_client(int pid):&#160;auctioneer.c'],['../auctioneer_8h.html#ab85727b183eb151bb2b72c9b026b6ea0',1,'deregister_client(int pid):&#160;auctioneer.c']]],
+  ['distribute_5fmsqs',['distribute_msqs',['../auctioneer_8c.html#a35293ceb3f8cbe4595eb347f7dba9186',1,'distribute_msqs():&#160;auctioneer.c'],['../auctioneer_8h.html#a35293ceb3f8cbe4595eb347f7dba9186',1,'distribute_msqs():&#160;auctioneer.c']]]
 ];

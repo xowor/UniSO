@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['introduction',['introduction',['../introduction_8c.html#a478fca004cc09d59745243c58bc658b5',1,'introduction():&#160;introduction.c'],['../messages_2introduction_8c.html#a478fca004cc09d59745243c58bc658b5',1,'introduction():&#160;introduction.c'],['../introduction_8h.html#a41a90fa307e1a162b35d411c262dc839',1,'introduction():&#160;introduction.h']]]
+  ['client',['client',['../auctioneer_8c.html#a40a2aa757613197641799da6397899d0',1,'auctioneer.c']]],
+  ['client_5fstatus',['client_status',['../client__status_8c.html#a2131549294a97f5c34cbf0c9d83c3d7b',1,'client_status():&#160;client_status.c'],['../client__status_8h.html#adf4b24d39598a88460997aeb82d58631',1,'client_status():&#160;client_status.h']]]
 ];

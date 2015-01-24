@@ -1,7 +1,8 @@
 var struct__tao =
 [
     [ "base_bid", "struct__tao.html#a181eae0ba641491126ff92b6070b15ea", null ],
-    [ "bids", "struct__tao.html#ae9213d24e6f2efbd47e39e673b0e5363", null ],
+    [ "bids", "struct__tao.html#a2a1a3ce1179b927b11e3859f5c7eaaaf", null ],
+    [ "dummy", "struct__tao.html#a7c1d654b7b6114d7a0abc8d351dd1bcd", null ],
     [ "id", "struct__tao.html#a7441ef0865bcb3db9b8064dd7375c1ea", null ],
     [ "interested_clients", "struct__tao.html#a8e90c6ca0763fb9deb960af25c8a9632", null ],
     [ "interested_clients_count", "struct__tao.html#a46a3a4393378dedc21ebb6d28ea82ef3", null ],
