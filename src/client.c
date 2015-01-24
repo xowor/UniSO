@@ -374,6 +374,8 @@ int main(int argc, char** argv){
 
 	// TO_SEE detacharsi dall'area condivisa
 
+	/* Close message queue */
+	msgctl(msqid, IPC_RMID,0);
 
 	fprintf(stdout, "[client][%d][%d] \x1b[31mQuitting... \x1b[0m \n", client_num, pid);
 	fflush(stdout);

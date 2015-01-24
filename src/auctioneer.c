@@ -459,6 +459,9 @@ void start_auction_system(){
 	/* Removes the TAOS creation semaphore */
     semctl(semid, 0, IPC_RMID, 0);
 
+    /* Close message queue */
+    msgctl(tao_processes_msqid, IPC_RMID,0);
+
     free(avail_resources);
 
     canexit == 1;
@@ -474,6 +477,9 @@ void kill_clients(){
         int p_status;
         kill(registered_clients[i], SIGINT);
         waitpid(registered_clients[i], &p_status, WUNTRACED);
+
+        /* Close message queue */
+        msgctl(client_msqid_from_pid(registered_clients[i]), IPC_RMID,0);
       }
     }
 }
@@ -491,6 +497,9 @@ static void sigint_signal_handler () {
             int p_status;
             kill(registered_clients[i], SIGINT);
             waitpid(registered_clients[i], &p_status, WUNTRACED);
+
+            /* Close message queue */
+            msgctl(client_msqid_from_pid(registered_clients[i]), IPC_RMID,0);
         }
     }
 
