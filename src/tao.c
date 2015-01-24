@@ -78,7 +78,9 @@ void create_tao(char name[MAX_RES_NAME_LENGTH], int cost){
     taos[taos_count++] = new_tao;
 }
 
-
+/**
+* Gets the tao with the i index.
+*/
 tao* get_tao(int i){
     if (i < taos_count)
         return taos[i];
@@ -86,6 +88,10 @@ tao* get_tao(int i){
         return 0;
 }
 
+
+/**
+* Gets the tao with the given name.
+*/
 tao* get_tao_by_name(char name[MAX_RES_NAME_LENGTH]){
 	int i = 0;
 	tao* tmp;
@@ -96,6 +102,10 @@ tao* get_tao_by_name(char name[MAX_RES_NAME_LENGTH]){
 	return tmp;
 }
 
+
+/**
+* Gets the tao with the given id.
+*/
 tao* get_tao_by_id(int id){
     int i = 0;
     tao* tmp = 0;
@@ -106,7 +116,11 @@ tao* get_tao_by_id(int id){
     return tmp;
 }
 
-/* Registers a client to the TAO */
+
+/**
+ * Registers the the client with the given pid to the given TAO (identified by
+ * its name)
+ */
 void register_client_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
     int i = 0;
     for (; i < taos_count; i++){
@@ -118,9 +132,7 @@ void register_client_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
 }
 
 
-/**
- * Shared area creation and defines the lifetime.
- */
+/* Starts the tao enabling the semaphore */
 void start_tao(tao* current_tao){
     /* Enable access to the TAO shm */
     semctl(sem_id, current_tao->id, SETVAL, 1);

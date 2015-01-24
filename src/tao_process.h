@@ -3,7 +3,7 @@
 
 #include "tao_process.c"
 
-
+void alarm_handler();
 int main(int argc, char** argv);
 
 #endif // TAO_PROCESS_H

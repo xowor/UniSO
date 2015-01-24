@@ -3,71 +3,19 @@
 
 #include "client.c"
 
-
-/**
- * Creates the agent.
- */
-void start_agent();
-
-
-/**
- * When the auction ends, client kills relative agent and removes the
- * message queue.
- */
-void listen_auction_end();
-
-
-/**
- *  Creates agent's process.
- */
+int agent_msqid_from_pid(int agent_pid);
 int create_agent_process();
-
-//TO_SEE RESOURCES NON C'E'
-/**
- * Loads the resources required by the client from file.
- */
-void load_resources();
-
-
-
-/**
-*  Sends an introduction message to the auctioneer, telling it which resources
-*  this client requires.
-*/
+void notify_tao_info(int pid, int availability, int cost, int shmid, int semid, int base_bid, char resource_name[MAX_RES_NAME_LENGTH], int budget);
+void create_agent(char* resource_name, int shmid, int semid, int base_bid);
+void listen_msqid();
+void load_client_resources();
 void send_introduction();
-
-
-
-/**
- * Listen to the auction opening message. The function stops until has received
- * an auction opening message.
- */
-void listen_auction_creation();
-
-
-/**
- * Listen to the auction starting message. The function stops until has received
- * an auction starting message.
- */
-void listen_auction_start();
-
-
-
-/**
- * Collects all the IPC garbage
- */
-void ipc_gc();
-
-
-
-/**
- * Cleans the heap after quitting (heard is a good pratice...)
- */
-void gc();
-
-
-
+void notify_agent_start(int agent_pid);
+void notify_client_status(int status);
+void remove_agent_from_list(int agent_pid);
+void listen_auction_status();
+void sigint_signal_handler();
+void listen_sigint_signal();
 int main(int argc, char** argv);
-
 
 #endif // CLIENT_H
