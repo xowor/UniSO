@@ -51,7 +51,11 @@ CCADMIN=CCadmin
 
 
 # build
-build: resource tao main auctioneer agent client tao_process
+build: dir resource tao main auctioneer agent client tao_process
+
+dir:
+	mkdir -p ./bin
+	mkdir -p ./results
 
 log: src/so_log.c
 	gcc -c src/so_log.c -o bin/so_log -g

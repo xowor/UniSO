@@ -1,0 +1,5 @@
+Compilazione automatica:
+    make
+
+Esecuzione:
+    ./run.sh
