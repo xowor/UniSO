@@ -10,7 +10,7 @@ var searchData=
   ['send_5fintroduction',['send_introduction',['../client_8c.html#a415f5b6cc5a316a7fa47a4a156dc58a1',1,'send_introduction():&#160;client.c'],['../client_8h.html#a415f5b6cc5a316a7fa47a4a156dc58a1',1,'send_introduction():&#160;client.c']]],
   ['shm_5fid',['shm_id',['../struct__tao.html#a0e18300528e54d436a8bce8f01238424',1,'_tao']]],
   ['shmid',['shmid',['../struct__tao__opening.html#ac8807d215d2ee6d9779d76aeb1147430',1,'_tao_opening']]],
-  ['sign_5fto_5ftao',['sign_to_tao',['../tao_8c.html#ac1e519064c181a8f2c727e3e1bd4204b',1,'sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]):&#160;tao.c'],['../tao_8h.html#ac1e519064c181a8f2c727e3e1bd4204b',1,'sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]):&#160;tao.c']]],
+  ['sign_5fto_5ftao',['register_client_to_tao',['../tao_8c.html#ac1e519064c181a8f2c727e3e1bd4204b',1,'register_client_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]):&#160;tao.c'],['../tao_8h.html#ac1e519064c181a8f2c727e3e1bd4204b',1,'register_client_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]):&#160;tao.c']]],
   ['simple_5fmessage',['simple_message',['../simple__message_8c.html#a592e13d62fe5993d44637e292d8a4070',1,'simple_message():&#160;simple_message.c'],['../simple__message_8h.html#aa1d46f2549b47dc7248cd607fadd6adc',1,'simple_message():&#160;simple_message.h']]],
   ['simple_5fmessage_2ec',['simple_message.c',['../simple__message_8c.html',1,'']]],
   ['simple_5fmessage_2eh',['simple_message.h',['../simple__message_8h.html',1,'']]],

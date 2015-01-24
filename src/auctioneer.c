@@ -69,8 +69,14 @@ int is_registered(int pid){
 void deregister_client(int pid){
   int i = 0;
   for(; i < MAX_CLIENTS; i++){
-    if(registered_clients[i] == pid)
+    if(registered_clients[i] == pid){
         registered_clients[i] = 0;
+
+        /* Kills the client */
+        int p_status;
+        kill(pid, SIGINT);
+        waitpid(pid, &p_status, WUNTRACED);
+    }
   }
 }
 
@@ -165,8 +171,8 @@ void notify_tao_creation(tao* created_tao){
     }
 }
 
+/* Notifies to each client registered to the given TAO that the TAO was started. */
 void notify_tao_start(tao* created_tao){
-    // [TODO] SEMAFORO PER LA SCRITTURA
     /* For each client interested in the TAO */
     int i = 0;
     for (; i < created_tao->interested_clients_count; i++){
@@ -180,22 +186,18 @@ void notify_tao_start(tao* created_tao){
 
           strcpy(msg->resource, created_tao->name);
 
-          /* Gets the message queue id of the client */
-          int j = 0;
-          for (; j < MAX_CLIENTS; j++){
-              if (pid_msqid[j][0] == client_pid){
-                  msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
-                      //check if message received
-                  listen_client_status(pid_msqid[j][1]);
-              }
-          }
+          /* Sends the message and waits for the client status */
+          int client_msqid = get_msqid_from_pid(client_pid);
+          msgsnd(client_msqid, msg, sizeof(auction_status) - sizeof(long), 0600);
+          listen_client_status(client_msqid);
+
           free(msg);
         }
     }
 }
 
+/* Notifies to each client registered to the given TAO that the TAO was ended. */
 void notify_tao_end(tao* created_tao){
-    // [TODO] SEMAFORO PER LA SCRITTURA TO_SEE
     /* For each client interested in the TAO */
     int i = 0;
     for (; i < created_tao->interested_clients_count; i++){
@@ -209,19 +211,20 @@ void notify_tao_end(tao* created_tao){
 
           strcpy(msg->resource, created_tao->name);
 
-          /* Gets the message queue id of the client */
-          int j = 0;
-          for (; j < MAX_CLIENTS; j++){
-              if (pid_msqid[j][0] == client_pid){
-                  msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
-                  listen_client_status(pid_msqid[j][1]);
-              }
-          }
+          /* Sends the message and waits for the client status */
+          int client_msqid = get_msqid_from_pid(client_pid);
+          msgsnd(client_msqid, msg, sizeof(auction_status) - sizeof(long), 0600);
+          listen_client_status(client_msqid);
+
           free(msg);
         }
     }
 }
 
+/* Notifies to each client registered to the given TAO the auction result,
+ * specifying the name of the resource, and for each client the quantity and
+ * the unit price won by it.
+ */
 void notify_auction_result(int client_pid, char* name, int quantity, int unit_bid){
     /* Allocates the simple_message message */
     auction_status* msg = (auction_status*) malloc(sizeof(auction_status));
@@ -232,30 +235,27 @@ void notify_auction_result(int client_pid, char* name, int quantity, int unit_bi
     msg->quantity = quantity;
     msg->unit_bid = unit_bid;
 
-    /* Gets the message queue id of the client */
-    int j = 0;
-    for (; j < MAX_CLIENTS; j++){
-        if (pid_msqid[j][0] == client_pid){
-          if(is_registered(client_pid) == 1){
-            msgsnd(pid_msqid[j][1], msg, sizeof(auction_status) - sizeof(long), 0600);
-            listen_client_status(pid_msqid[j][1]);
-          }
-        }
+    /* Sends the message and waits for the client status */
+    int client_msqid = get_msqid_from_pid(client_pid);
+    if(is_registered(client_pid) == 1){
+        msgsnd(client_msqid, msg, sizeof(auction_status) - sizeof(long), 0600);
+        listen_client_status(client_msqid);
     }
+
     free(msg);
 }
 
 int get_max_bid(tao* current_tao){
     int max_bid = 0;
-    int max_index = 0;
+    int max_bid_index = 0;
     int i = 0;
     for(; i < MAX_BIDS; i++){
         if(current_tao->bids[i].unit_bid > max_bid){
             max_bid = current_tao->bids[i].unit_bid;
-            max_index = i;
+            max_bid_index = i;
         }
     }
-    return max_index;
+    return max_bid_index;
 }
 
 
@@ -268,41 +268,48 @@ int get_max_bid(tao* current_tao){
 //   }
 // }
 
+
+/* Assigns the resources after the auction end, communicating the results to each
+ * client.
+ */
 void assign_resources(tao* current_tao){
     printf("[\x1b[34mAuction\x1b[0m] %-16s || %17s || ", current_tao->name, "Assign resources");
 
-    int k = 0;
+    /* Builds a list containing the PIDs of all clients which partecipated to the auction */
     int i = 0;
-    int results[current_tao->interested_clients_count];
+    int losers[current_tao->interested_clients_count];
     for (; i < current_tao->interested_clients_count; i++){
-        results[i] = current_tao->interested_clients[i];
+        losers[i] = current_tao->interested_clients[i];
     }
 
     i = 0;
     for(; i < MAX_BIDS; i++){
-        int max_bid_n = get_max_bid(current_tao);
-        bid max_bid = current_tao->bids[max_bid_n];
+        int max_bid_index = get_max_bid(current_tao);
+        bid max_bid = current_tao->bids[max_bid_index];
         if (max_bid.client_pid > 1){
             resource* res = get_resource(current_tao->name, avail_resources);
 
             if(max_bid.quantity < res->availability){
+                /* If the quantity requested in lesser than the quantity available */
                 res->availability = res->availability - max_bid.quantity;
                 printf("     %-5d : %4d      ||", max_bid.client_pid, max_bid.quantity);
                 notify_auction_result(max_bid.client_pid, current_tao->name, max_bid.quantity, max_bid.unit_bid);
             }else{
-                res->availability = res->availability - res->availability;
+                /* If the quantity requested in greter than the quantity available */
+                /* assigns all the remaining resources*/
                 printf("     %-5d : %4d      ||", max_bid.client_pid, res->availability);
                 notify_auction_result(max_bid.client_pid, current_tao->name, res->availability, max_bid.unit_bid);
+                res->availability = 0;
             }
-            current_tao->bids[max_bid_n].unit_bid = 0;
+            current_tao->bids[max_bid_index].unit_bid = 0;
 
-
+            /* Sets to 0 the PID of the current client, so that the reult message
+             * won't be sent twice
+             */
             int j = 0;
             for (; j < current_tao->interested_clients_count; j++){
-                if (results[j] == max_bid.client_pid){
-                    results[j] = 0;
-                }
-                else {
+                if (losers[j] == max_bid.client_pid){
+                    losers[j] = 0;
                 }
             }
         }
@@ -310,17 +317,17 @@ void assign_resources(tao* current_tao){
 
     printf("\n");
 
-
-
+    /* Sends the result message to the losers clients */
     i = 0;
     for (; i < current_tao->interested_clients_count; i++){
-        if (results[i] > 1){
-            notify_auction_result(results[i], current_tao->name, 0, 0);
+        if (losers[i] > 1){
+            notify_auction_result(losers[i], current_tao->name, 0, 0);
         }
     }
 
 
 
+    // int k = 0;
     // for (; k < current_tao->interested_clients_count; k++){
     //     int client_pid = current_tao->interested_clients[k];
     //     int i = 0;
@@ -336,8 +343,8 @@ void assign_resources(tao* current_tao){
     // }
 }
 
+/* Listens for the message from client with the client_pid and array_resources_wanted */
 void listen_introductions(){
-    //message from client with client_pid and array_resources_wanted
 
     introduction* intr = (introduction*) malloc(sizeof(introduction));
     registered_clients_count = 0;
@@ -349,9 +356,9 @@ void listen_introductions(){
             registered_clients_count++;
             //printf("[auctioneer] Received auction partecipation request from pid %d\n", intr->pid);
             int j = 0;
-            /* associates the pid's client to related tao, where there is the resource interested to client */
+            /* Registers the client to related tao */
             for (; j < intr->resources_length; j++){
-                sign_to_tao(intr->pid, intr->resources[j]); //add interested client to tao
+                register_client_to_tao(intr->pid, intr->resources[j]); //add interested client to tao
             }
             pid_msqid[i][0] = intr->pid;
         }
@@ -359,6 +366,7 @@ void listen_introductions(){
     free(intr);
 }
 
+/* Creates the tao process. */
 void create_tao_process(int id_tao, int lifetime, int tao_processes_msqid){
     char str_lifetime [32];
     char str_tao_processes_msqid[32];
@@ -389,69 +397,76 @@ void create_tao_process(int id_tao, int lifetime, int tao_processes_msqid){
     }
 }
 
+/* Starts the auction main loop */
 void start_auction_system(){
     int tao_processes_msqid = msgget(IPC_PRIVATE, 0600 | IPC_CREAT);
     tao* current_tao;
-    int tao_counter = 0;
-    int i = 1;
+    int taos_total_count = avail_resources->resources_count;
+    int created_taos = 0;
     int terminated_taos = 0;
+    // int i = 1;
 
-    while(terminated_taos < avail_resources->resources_count){
-        if (tao_counter > 2) { //there's a 4th tao waiting for 0||1||2 to finish
+    while(terminated_taos < taos_total_count){
+        if (created_taos < 3) {
+            /* Creates the firs three TAOs without waiting for any tao process message */
+            current_tao = get_tao(created_taos);
+            init_tao(current_tao);
+            notify_tao_creation(current_tao);
+            create_tao_process(current_tao->id, current_tao->lifetime, tao_processes_msqid);
+            created_taos++;
+            printf("[\x1b[34mAuction\x1b[0m] %-16s ||  Starting three seconds timer (tao id: %d)\n", current_tao->name, current_tao->id);
+        } else {
             simple_message* msg = (simple_message*) malloc(sizeof(simple_message));
+            /* Waits for a message from the tao process */
             if ( msgrcv(tao_processes_msqid, msg, sizeof(simple_message) - sizeof(long), SIMPLE_MESSAGE_MTYPE, 0) != -1 ) {
                 if ( strcmp(msg->msg, TAO_PROCESS_END_MSG) == 0 ){
+                    /* The TAO must be ended */
                     int p_status;
+
+                    /* Avoids zombie creation */
                     waitpid(msg->pid, &p_status, WUNTRACED);
 
                     current_tao = get_tao_by_id(msg->content.i);
                     notify_tao_end(current_tao);
                     assign_resources(current_tao);
+                    terminated_taos++;
                     printf("[\x1b[34mAuction\x1b[0m] %-16s ||  Ended auction (tao id: %d)\n", current_tao->name, current_tao->id);
-                    // deallocare semafori TO_SEE (tutto il pool in una volta? o uno per uno)
+
+                    /* Deallocates shared memory and semaphore */
                     semctl(current_tao->sem_id, 0, IPC_RMID, 0);
                     shmctl(current_tao->shm_id, IPC_RMID, 0);
-                    terminated_taos++;
-					          /* If there are other resources tao to be created*/
-                    if (tao_counter < avail_resources->resources_count){
-                        current_tao = get_tao(tao_counter);
+
+                    /* Creates a new TAO, if there is any left */
+                    if (created_taos < taos_total_count){
+                        current_tao = get_tao(created_taos);
                         init_tao(current_tao);
 			            notify_tao_creation(current_tao);
-                        tao_counter++;
                         create_tao_process(current_tao->id, current_tao->lifetime, tao_processes_msqid);
+                        created_taos++;
+                        printf("[\x1b[34mAuction\x1b[0m] %-16s ||  Starting three seconds timer (tao id: %d)\n", current_tao->name, current_tao->id);
                     }
                 } else if ( strcmp(msg->msg, TAO_PROCESS_END_THREESEC) == 0 ){
+                    /* The three seconds timer has ticked, so the TAO must start */
                     current_tao = get_tao(msg->content.i);
                     start_tao(current_tao);
                     notify_tao_start(current_tao);
                     printf("[\x1b[34mAuction\x1b[0m] %-16s ||  Started auction (tao id: %d)\n", current_tao->name, current_tao->id);
                 }
-
             }
             free(msg);
-        } else {
-            current_tao = get_tao(tao_counter);
-            init_tao(current_tao);
-            notify_tao_creation(current_tao);
-            create_tao_process(current_tao->id, current_tao->lifetime, tao_processes_msqid);
-            tao_counter++;
-            printf("[\x1b[34mAuction\x1b[0m] %-16s ||  Starting three seconds timer (tao id: %d)\n", current_tao->name, current_tao->id);
         }
     }
 
-	/* Removes the TAOS creation semaphor */
+	/* Removes the TAOS creation semaphore */
     semctl(semid, 0, IPC_RMID, 0);
 
     free(avail_resources);
 
     canexit == 1;
-
-
-
 }
 
 
-void notify_clients_unregistration(){
+void kill_clients(){
     /* For each client interested in the TAO */
     int i = 0;
     // propagare sig int ai client
@@ -465,20 +480,20 @@ void notify_clients_unregistration(){
 }
 
 
-// la deregistrazione di un cliente -> eliminazione da  lista -> non più considerato nelle restanti funzioni
+/* Handles the sigint, dispatching it to the clients */
 static void sigint_signal_handler () {
-	notify_clients_unregistration();
-// TO_SEE L'auctioneer deve attendere che il cliente gli invii il messaggio di deregistrazione, dopo lo uccide (zombie)
-  wait(5);
+    kill_clients();
 
-  int i = 0;
-  for(; i < MAX_CLIENTS; i++){
-    if(registered_clients[i] != 0){
-        int p_status;
-        kill(registered_clients[i], SIGINT);
-        waitpid(registered_clients[i], &p_status, WUNTRACED);
+    wait(5);
+
+    int i = 0;
+    for(; i < MAX_CLIENTS; i++){
+        if(registered_clients[i] != 0){
+            int p_status;
+            kill(registered_clients[i], SIGINT);
+            waitpid(registered_clients[i], &p_status, WUNTRACED);
+        }
     }
-  }
 
 
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
@@ -494,15 +509,14 @@ void listen_sigint_signal(){
 int main(int argc, char** argv){
     printf("[auctioneer] Started auctioneer.\tPid: %d\tPPid: %d\n", getpid(), getppid());
     // TO_SEE
-    // int i = 0;
-    // for(; i < MAX_CLIENTS; i++){
-    //   registered_clients[i][0] = 0;
-    //   registered_clients[i][1] = -1;
-    // }
+    int i = 0;
+    for(; i < MAX_CLIENTS; i++){
+      registered_clients[i] = -1;
+    }
 
     /**
      * Loads the message queue id from the passed argument (from MAIN)
-     -m : next position -> str_master_msquid
+     * -m : next position -> str_master_msquid
      */
     if (argc >= 2 && strcmp(argv[1], "-m") == 0){
         master_msqid = atoi(argv[2]);
@@ -512,7 +526,7 @@ int main(int argc, char** argv){
         return -1;
     }
 
-	  listen_sigint_signal();
+    listen_sigint_signal();
 
     /* Sends each client his own message queue throught the master_msq */
     distribute_msqs();
@@ -525,18 +539,20 @@ int main(int argc, char** argv){
 
     /* subscription request from client to auctioneer*/
     listen_introductions();
+    
     /* Removes the master_msq message queue */
     msgctl(master_msqid, IPC_RMID,0);
 
 
-    /* Start max 3 tao at a time */
+    /* Starts the auction system */
     start_auction_system();
-    //canexit == 0 --> tao just finished
+
+    /* Busy wait */
+    /* canexit == 0 --> tao just finished */
     while (canexit == 1) {}
 
 
     fprintf(stdout, "[auctioneer] \x1b[31mQuitting... \x1b[0m \n");
     fflush(stdout);
-    /* because auctioneer is main's child */
     _exit(EXIT_SUCCESS);
 }

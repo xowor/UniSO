@@ -39,7 +39,7 @@ tao* get_tao_by_name(char name[MAX_RES_NAME_LENGTH]);
 * Registers the the client with the given pid to the given TAO (identified by
 * its name)
 */
-void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]);
+void register_client_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]);
 
 /**
  * Start (crates the shared memory area) the TAO with the given name.

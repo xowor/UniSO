@@ -108,7 +108,7 @@ tao* get_tao_by_id(int id){
 }
 
 
-void sign_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
+void register_client_to_tao(pid_t pid, char name[MAX_RES_NAME_LENGTH]){
     int i = 0;
     for (; i < taos_count; i++){
         if(strcmp(taos[i]->name, name) == 0){

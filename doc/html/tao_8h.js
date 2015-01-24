@@ -7,6 +7,6 @@ var tao_8h =
     [ "init_taos", "tao_8h.html#a92d83754f090ad184733cffaffabfd00", null ],
     [ "make_bid", "tao_8h.html#ab24ba74aaeeff96a66b72b00c6dfcb6a", null ],
     [ "replace_bids", "tao_8h.html#a498657c54264b12ddb7975b772d2e5b0", null ],
-    [ "sign_to_tao", "tao_8h.html#ac1e519064c181a8f2c727e3e1bd4204b", null ],
+    [ "register_client_to_tao", "tao_8h.html#ac1e519064c181a8f2c727e3e1bd4204b", null ],
     [ "start_tao", "tao_8h.html#afc3b99c358dfb7f848d9504c36034d7d", null ]
 ];
